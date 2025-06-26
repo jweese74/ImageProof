@@ -67,6 +67,20 @@ a:hover {
     z-index: 1000;
 }
 
+.nav-links {
+    display: flex;
+    gap: 1rem;
+}
+
+#nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
 .navbar a {
     color: var(--color-muted);
     padding: 0.5rem;
@@ -198,5 +212,16 @@ a:hover {
     }
     .section {
         padding: 0.5rem;
+    }
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+    }
+    .nav-links.open {
+        display: flex;
+    }
+    #nav-toggle {
+        display: block;
     }
 }
