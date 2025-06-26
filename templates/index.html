@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Home - ImageProof{% endblock %}
+
+{# CSRF token for global forms #}
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1 class="logo">ImageProof</h1>
+    <p class="tagline">Verify and Protect Your Digital Art</p>
+</section>
+
+<section class="verification">
+    <h2>Public Image Lookup</h2>
+    <form action="{{ url_for('public.lookup') }}" method="post" enctype="multipart/form-data" class="lookup-form">
+        {# CSRF token goes here #}
+        {{ csrf_token() }}
+        <div class="form-group">
+            <label for="hash-input">SHA-256 Hash</label>
+            <input id="hash-input" name="hash" type="text" class="input" aria-describedby="hash-help">
+        </div>
+        <div class="form-group">
+            <label for="file-input">Upload Image</label>
+            <input id="file-input" name="image" type="file" class="input" accept="image/*">
+        </div>
+        <button type="submit" class="btn">Verify</button>
+    </form>
+    <div id="preview" aria-live="polite"></div>
+</section>
+
+<section class="features">
+    <h2>Core Features</h2>
+    <ul>
+        <li>Free Guest Image Certification</li>
+        <li>Perceptual Hash Verification</li>
+        <li>No Storage of Originals</li>
+    </ul>
+</section>
+
+<section class="cta">
+    <a href="{{ url_for('public.register') }}" class="btn">Register Your Artwork</a>
+    <a href="{{ url_for('public.login') }}" class="btn">Login</a>
+    <a href="{{ url_for('public.signup') }}" class="btn">Sign Up</a>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
