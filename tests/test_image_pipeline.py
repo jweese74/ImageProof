@@ -6,6 +6,7 @@ os.environ["DATABASE_URI"] = "sqlite:///:memory:"
 import pytest
 from io import BytesIO
 from PIL import Image
+from PIL import ImageDraw
 import numpy as np
 
 from app.image_processing import (
