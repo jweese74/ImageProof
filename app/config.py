@@ -63,6 +63,14 @@ class BaseConfig:
         "image/tiff",
     )
 
+    # Session and CSRF security settings
+    SESSION_COOKIE_HTTPONLY: bool = True
+    SESSION_COOKIE_SAMESITE: str = "Lax"
+    SESSION_COOKIE_SECURE: bool = os.environ.get("SESSION_COOKIE_SECURE", "False").lower() in ("true", "1", "yes")
+    PERMANENT_SESSION_LIFETIME: int = int(os.environ.get("SESSION_LIFETIME", "3600"))
+
+    CSRF_FIELD_NAME: str = "csrf_token"
+
 
 class DevelopmentConfig(BaseConfig):
     """Configuration for development environment.

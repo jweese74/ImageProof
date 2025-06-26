@@ -4,6 +4,8 @@ import logging
 
 from flask import Flask
 
+from app.security import generate_csrf_token, validate_csrf_token
+
 from app import config
 from app.models import SessionLocal
 from app.routes_admin import admin_bp
@@ -32,6 +34,15 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
     app.config.from_object(config_object)
     config.configure_logging()
     logger.info("Flask app created with configuration: %s", config_object.__name__)
+
+    # CSRF protection
+    @app.before_request
+    def _csrf_protect() -> None:
+        validate_csrf_token()
+
+    @app.context_processor
+    def _inject_csrf_token() -> dict[str, str]:
+        return {config_object.CSRF_FIELD_NAME: generate_csrf_token()}
 
     # Register database session cleanup on app context teardown
     @app.teardown_appcontext
