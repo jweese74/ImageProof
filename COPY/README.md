@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 # README.md
 
 # ImageProof
@@ -8,7 +6,6 @@ ImageProof is a web application for registering and verifying the authenticity o
 
 The platform emphasizes security and integrity. Uploaded images are scanned and constrained to allowed formats and sizes, and sensitive operations (like registrations and verifications) are logged. Configurable settings (in `app/config.py`) allow deployment in both development and production environments with appropriate security measures (debug mode, content size limits, etc.). This repository is limited to 20 core files to maintain simplicity and clarity.
 
->>>>>>> f2714e7 (Initial commit of ImageProof project)
 ## File Count Ledger
 
 | File                      | Description                                       |
@@ -23,26 +20,6 @@ The platform emphasizes security and integrity. Uploaded images are scanned and 
 | **Total (Phase 4)**       | **13/20 files used**                              |
 
 # Project Structure
-<<<<<<< HEAD
-ImageProof/  
-├── app/  
-│   ├── app.py  
-│   ├── config.py  
-│   ├── image_processing.py  
-│   ├── watermark.py  
-│   ├── models.py  
-│   └── certificate.py  
-├── tests/  
-│   ├── test_image_pipeline.py  
-│   └── test_certificate.py  
-├── templates/  
-├── static/  
-├── schema.sql  
-├── seed_data.sql  
-├── pyproject.toml  
-├── .pre-commit-config.yaml  
-└── README.md  
-=======
 ImageProof/
 ├── app/
 │   ├── app.py
@@ -61,4 +38,3 @@ ImageProof/
 ├── pyproject.toml
 ├── .pre-commit-config.yaml
 └── README.md
->>>>>>> f2714e7 (Initial commit of ImageProof project)

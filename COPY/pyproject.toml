@@ -1,0 +1,60 @@
+# pyproject.toml
+[build-system]
+requires = ["poetry-core>=1.5.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "ImageProof"
+version = "0.1.0"
+description = "A web application for registering and verifying digital images."
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "~=3.12"
+flask = "*"
+mysql-connector-python = "*"
+pillow = "*"
+opencv-python-headless = "*"
+numpy = "*"
+imagehash = "*"
+python-dotenv = "*"
+python-magic = "*"
+sqlalchemy = ">=2"
+reportlab = "*"
+qrcode = "*"
+PyPDF2 = "*"
+python-barcode = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+pytest-cov = "*"
+pytest-mock = "*"
+pyfakefs = "*"
+ruff = "*"
+black = "*"
+isort = "*"
+bandit = "*"
+mypy = "*"
+pre-commit = "*"
+alembic = "*"
+types-pillow = "*"
+types-requests = "*"
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-select = ["B", "ANN"]
+extend-ignore = ["E203", "E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
