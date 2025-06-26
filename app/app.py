@@ -1,11 +1,13 @@
 """Flask application setup and database initialization for ImageProof."""
 
 import logging
+import time
 from pathlib import Path
+from threading import Thread
 
 from flask import Flask
 
-from app import config
+from app import config, logging_utils
 from app.models import SessionLocal
 from app.routes_admin import admin_bp
 from app.routes_files import files_bp
@@ -14,6 +16,20 @@ from app.routes_public import public_bp
 from app.security import generate_csrf_token, validate_csrf_token
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+_prune_thread_started = False
+
+
+def _start_log_prune_thread() -> None:
+    """Start a background thread to periodically prune old logs."""
+
+    def _prune_periodically() -> None:
+        while True:
+            logging_utils.prune_old_logs()
+            time.sleep(60 * 60 * 24)
+
+    thread = Thread(target=_prune_periodically, daemon=True)
+    thread.start()
 
 
 def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig) -> Flask:
@@ -37,7 +53,13 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
     # Ensure log folder exists before configuring logging
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     config.configure_logging()
+    logging_utils.init_logging()
     logger.info("Flask app created with configuration: %s", config_object.__name__)
+
+    global _prune_thread_started
+    if not _prune_thread_started:
+        _start_log_prune_thread()
+        _prune_thread_started = True
 
     # Ensure upload folder exists
     upload_folder = app.config.get("UPLOAD_FOLDER")
