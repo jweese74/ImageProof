@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Flagged Image Review - ImageProof{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+{% if current_user.is_authenticated and current_user.role == 'Admin' %}
+<section class="flagged-detail section">
+    <a href="{{ url_for('admin.flagged_list') }}" class="btn">Back to Flag List</a>
+    <header>
+        <h1>Flagged Image Review</h1>
+    </header>
+
+    <!-- Image Details -->
+    <div class="card" style="margin-bottom:1rem;">
+        <h2>Image Details</h2>
+        <div class="metadata">
+            <div><strong>Title:</strong> {{ image.title | e }}</div>
+            <div><strong>Artist:</strong> {{ image.artist | e }}</div>
+            <div><strong>Registered:</strong> {{ image.registered_at.strftime('%Y-%m-%d') }}</div>
+            <div class="hash-block"><strong>SHA-256:</strong> {{ image.sha256 | e }}</div>
+            <div class="hash-block"><strong>pHash:</strong> {{ image.phash | e }}</div>
+            {% if image.matching_data %}
+            <div><strong>Matching Data:</strong> {{ image.matching_data | e }}</div>
+            {% endif %}
+            <div><span class="status {{ image.status | lower | replace(' ', '-') }}">{{ image.status }}</span></div>
+            <div class="preview" style="margin-top:1rem;">
+                <img src="{{ image.preview_url }}" alt="Preview of {{ image.title }}" class="watermark-preview">
+            </div>
+        </div>
+    </div>
+
+    <!-- Flag Information -->
+    <div class="card" style="margin-bottom:1rem;">
+        <h2>Flag Information</h2>
+        <div><strong>Flagged By:</strong> {{ flag.reporter | e }}</div>
+        <div><strong>Flagged On:</strong> {{ flag.reported_at.strftime('%Y-%m-%d %H:%M') }}</div>
+        <div><strong>Reason:</strong></div>
+        <p>{{ flag.reason | e }}</p>
+        {% if action_history %}
+        <h3>Action History</h3>
+        <ul class="activity-list" style="list-style:none;padding:0;">
+            {% for log in action_history %}
+            <li style="margin-bottom:0.5rem;">
+                <span class="badge">{{ log.action | e }}</span>
+                {{ log.timestamp.strftime('%Y-%m-%d %H:%M') }} - {{ log.details | e }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    <!-- Admin Actions -->
+    <div class="card" style="margin-bottom:1rem;">
+        <h2>Admin Actions</h2>
+        <form method="post" action="{{ url_for('admin.update_flag', image_id=image.id) }}" novalidate>
+            {{ csrf_token() }}
+            <div class="form-group">
+                <label for="new_status">Change Status</label>
+                <select id="new_status" name="status" class="select">
+                    <option value="Certified">Certified</option>
+                    <option value="Disputed">Disputed</option>
+                    <option value="Revoked">Revoked</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="admin_note">Optional Note</label>
+                <textarea id="admin_note" name="note" class="input" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn">Apply Change</button>
+        </form>
+    </div>
+</section>
+{% else %}
+<p>You do not have access to this page.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
