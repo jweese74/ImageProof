@@ -6,15 +6,24 @@ import secrets
 from pathlib import Path
 from typing import Any, Dict
 
-# Load environment variables from a .env file if present
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
 # Base directory of the project (the parent directory of the app package)
 BASE_DIR: Path = Path(__file__).resolve().parent.parent
+
+# Load environment variables from a .env file if present. The file is expected
+# at the repository root (BASE_DIR/.env). If it doesn't exist, ``load_dotenv``
+# falls back to the default behaviour of searching the current working
+# directory. This occurs at import time so that configuration values are set
+# before other modules access them.
+try:
+    from dotenv import load_dotenv
+
+    env_path = BASE_DIR / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        load_dotenv()
+except ImportError:  # pragma: no cover - optional dependency
+    pass
 # Directories for static files and templates
 STATIC_DIR: Path = BASE_DIR / "static"
 TEMPLATES_DIR: Path = BASE_DIR / "templates"
