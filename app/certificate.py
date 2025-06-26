@@ -59,7 +59,8 @@ def generate_certificate(image_record: Image, *, fmt: str = "PDF") -> Path:
         raise ValueError(f"Unsupported certificate format: {fmt}")
     # Create temp directory for certificate file
     temp_dir = Path(tempfile.mkdtemp())
-    timestamp = datetime.utcnow()
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc)
     try:
         if fmt_up == "PDF":
             cert_path = temp_dir / "certificate.pdf"
