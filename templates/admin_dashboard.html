@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - ImageProof{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+{% if current_user.is_authenticated and current_user.role == 'Admin' %}
+<section class="admin-dashboard">
+    <header>
+        <h1>Admin Dashboard</h1>
+        <p class="text-muted">Welcome back, {{ current_user.username | e }}.</p>
+    </header>
+
+    <div class="cards" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px,1fr));gap:1rem;">
+        <div class="card" id="total-images">
+            <h3>{{ stats.total_images }}</h3>
+            <p>Total Registered Images</p>
+        </div>
+        <div class="card" id="active-users">
+            <h3>{{ stats.active_users }}</h3>
+            <p>Active Users</p>
+        </div>
+        <div class="card" id="flagged-images">
+            <h3>{{ stats.flagged_images }}</h3>
+            <p>Flagged Images in Review</p>
+        </div>
+        <div class="card" id="disputed-records">
+            <h3>{{ stats.disputed_records }}</h3>
+            <p>Disputed/Revoked Records</p>
+        </div>
+    </div>
+
+    <section class="admin-tools">
+        <h2>Admin Tools</h2>
+        <div class="tool-grid" style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+            <a href="{{ url_for('admin.view_flags') }}" class="btn">View Flagged Images</a>
+            <a href="{{ url_for('admin.manage_users') }}" class="btn">Manage Users</a>
+            <a href="{{ url_for('admin.system_logs') }}" class="btn">System Logs</a>
+            <a href="{{ url_for('admin.duplicate_checker') }}" class="btn">Duplicate Checker</a>
+            <a href="{{ url_for('admin.system_settings') }}" class="btn">System Settings</a>
+        </div>
+    </section>
+
+    {% if recent_actions %}
+    <section class="recent-activity">
+        <h2>Recent Activity</h2>
+        <ul class="activity-list" style="list-style:none;padding:0;">
+            {% for log in recent_actions %}
+            <li style="margin-bottom:0.5rem;">
+                <span class="badge">{{ log.action | e }}</span>
+                {{ log.timestamp.strftime('%Y-%m-%d %H:%M') }} -
+                {{ log.description | e }}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</section>
+{% else %}
+<p>You do not have access to this page.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
