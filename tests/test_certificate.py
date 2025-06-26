@@ -129,7 +129,3 @@ def test_create_registration_package_missing_files(tmp_path):
     # original_image does not exist, expect FileNotFoundError
     with pytest.raises(FileNotFoundError):
         certificate.create_registration_package(image_record, orig_file, wm_file)
-<<<<<<< HEAD
-=======
-
->>>>>>> f2714e7 (Initial commit of ImageProof project)
