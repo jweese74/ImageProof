@@ -1,11 +1,14 @@
 # app/watermark.py
 
 import logging
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+# Maximum number of overlays allowed in a single call to ``apply_overlays``.
+MAX_OVERLAYS = 3
 
 
 def _calculate_position(base_size: tuple[int, int],
@@ -89,15 +92,17 @@ def apply_image_watermark(image: Image.Image,
 
 def apply_overlays(image: Image.Image,
                    overlays: List[Dict[str, Any]]) -> Image.Image:
-    """
-    Apply multiple overlays (text or image) to the image in sequence.
-    Raises ValueError if more than 3 overlays are provided.
-    """
-    if len(overlays) > 3:
-        logger.error("Too many overlays provided (%d); max is 3", len(overlays))
-        raise ValueError("A maximum of 3 overlays is allowed.")
+    """Apply a sequence of overlays to ``image``.
 
-    result = image
+    Overlays are applied in the order provided. A :class:`ValueError` is raised
+    if more than ``MAX_OVERLAYS`` overlays are requested.
+    """
+    if len(overlays) > MAX_OVERLAYS:
+        logger.error("Too many overlays provided (%d); max is %d", len(overlays), MAX_OVERLAYS)
+        raise ValueError(f"A maximum of {MAX_OVERLAYS} overlays is allowed.")
+
+    result = image if image.mode == "RGBA" else image.convert("RGBA")
+    result = result.copy()
     for overlay in overlays:
         typ = overlay.get("type")
         if typ == "text":

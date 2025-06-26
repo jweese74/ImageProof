@@ -65,6 +65,30 @@ def test_watermark_changes():
     assert img_wm != red_rgba
 
 
+def test_apply_image_watermark_transparent_and_opaque():
+    base = Image.new("RGBA", (16, 16), (255, 0, 0, 255))
+
+    transparent_overlay = Image.new("RGBA", (8, 8), (0, 255, 0, 128))
+    result_transparent = apply_image_watermark(base, transparent_overlay, "top-left", opacity=0.5)
+
+    expected_layer = Image.new("RGBA", base.size, (255, 255, 255, 0))
+    tmp_overlay = transparent_overlay.copy()
+    tmp_overlay.putalpha(int(255 * 0.5))
+    expected_layer.paste(tmp_overlay, (0, 0), tmp_overlay)
+    expected_transparent = Image.alpha_composite(base, expected_layer)
+    assert list(result_transparent.getdata()) == list(expected_transparent.getdata())
+
+    opaque_overlay = Image.new("RGB", (8, 8), (0, 0, 255))
+    result_opaque = apply_image_watermark(base, opaque_overlay, "top-left", opacity=1.0)
+
+    expected_layer2 = Image.new("RGBA", base.size, (255, 255, 255, 0))
+    tmp_overlay2 = opaque_overlay.convert("RGBA")
+    tmp_overlay2.putalpha(int(255 * 1.0))
+    expected_layer2.paste(tmp_overlay2, (0, 0), tmp_overlay2)
+    expected_opaque = Image.alpha_composite(base, expected_layer2)
+    assert list(result_opaque.getdata()) == list(expected_opaque.getdata())
+
+
 def test_apply_overlays_limit():
     red = Image.new("RGBA", (16, 16), (255, 0, 0, 255))
     overlays = []
@@ -72,6 +96,19 @@ def test_apply_overlays_limit():
         overlays.append({"type": "text", "text": str(i), "position": "center"})
     with pytest.raises(ValueError):
         apply_overlays(red, overlays)
+
+
+def test_apply_overlays_order():
+    base = Image.new("RGBA", (8, 8), (0, 0, 0, 255))
+    blue = Image.new("RGBA", (8, 8), (0, 0, 255, 255))
+    green = Image.new("RGBA", (4, 4), (0, 255, 0, 255))
+    overlays = [
+        {"type": "image", "image": blue, "position": "top-left", "opacity": 1.0},
+        {"type": "image", "image": green, "position": "top-left", "opacity": 1.0},
+    ]
+    result = apply_overlays(base, overlays)
+    assert result.getpixel((0, 0)) == (0, 255, 0, 255)
+    assert result.getpixel((7, 7)) == (0, 0, 255, 255)
 
 
 def test_find_similar_images():
