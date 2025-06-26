@@ -30,6 +30,15 @@ TEMPLATES_DIR: Path = BASE_DIR / "templates"
 # Directory for uploaded files
 UPLOAD_DIR: Path = BASE_DIR / "uploads"
 
+# Logging configuration
+LOG_DIR: Path = BASE_DIR / "logs"
+LOG_FILE: Path = LOG_DIR / "imageproof.log"
+LOG_LEVEL_CHOICES: list[str] = ["INFO", "WARNING", "ERROR"]
+LOG_LEVEL_DEFAULT: str = "INFO"
+LOG_FILE_MAX_BYTES: int = 5 * 1024 * 1024  # 5 MB
+LOG_BACKUP_COUNT: int = 5  # number of rollovers to keep
+LOG_RETENTION_DAYS: int = 7  # prune older files
+
 
 class BaseConfig:
     """Base configuration with default settings for the ImageProof application.

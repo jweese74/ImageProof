@@ -33,6 +33,9 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
     # Initialize Flask app and load configurations
     app = Flask(__name__)
     app.config.from_object(config_object)
+
+    # Ensure log folder exists before configuring logging
+    config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     config.configure_logging()
     logger.info("Flask app created with configuration: %s", config_object.__name__)
 
