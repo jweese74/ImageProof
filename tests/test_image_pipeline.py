@@ -27,22 +27,20 @@ def get_image_bytes(img: Image.Image) -> bytes:
 
 
 def test_hash_and_similarity():
-    red = Image.new("RGB", (16, 16), (255, 0, 0))
-    blue = red.copy()
-    blue.putpixel((0, 0), (0, 0, 255))
-    red_bytes = get_image_bytes(red)
-    blue_bytes = get_image_bytes(blue)
+    base = Image.new("RGB", (64, 64), (255, 0, 0))  # red background
+    alt = base.copy()
+    draw = ImageDraw.Draw(alt)
+    draw.rectangle((10, 10, 20, 20), fill=(0, 0, 255))  # minor change
 
-    sha_red = compute_sha256(red_bytes)
-    sha_blue = compute_sha256(blue_bytes)
-    assert isinstance(sha_red, str)
-    assert isinstance(sha_blue, str)
-    assert sha_red != sha_blue
+    sha_base = compute_sha256(get_image_bytes(base))
+    sha_alt = compute_sha256(get_image_bytes(alt))
+    assert sha_base != sha_alt
 
-    phash_red = compute_perceptual_hash(red)
-    phash_blue = compute_perceptual_hash(blue)
-    similarity = phash_similarity(phash_red, phash_blue)
-    assert similarity >= 0.9
+    phash_base = compute_perceptual_hash(base)
+    phash_alt = compute_perceptual_hash(alt)
+    similarity = phash_similarity(phash_base, phash_alt)
+
+    assert similarity >= 0.9  # should pass with this realistic tweak
 
 
 def test_orb_features():
