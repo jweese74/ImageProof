@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Lookup Results - ImageProof{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+<section class="lookup-results section">
+    <h1>Lookup Results</h1>
+
+    {% if results %}
+    <div class="image-grid">
+        {% for result in results %}
+            {% if result.is_public or result.can_view %}
+            <article class="card image-card">
+                <div class="preview">
+                    {% if result.thumbnail_url %}
+                    <img src="{{ result.thumbnail_url }}" alt="Image preview of {{ result.title }}" loading="lazy">
+                    {% else %}
+                    <div class="placeholder" aria-label="No preview available"></div>
+                    {% endif %}
+                </div>
+                <div class="metadata">
+                    <h2>{{ result.title }}</h2>
+                    {% if result.artist %}
+                    <p class="text-muted">By {{ result.artist }}</p>
+                    {% endif %}
+                    <span class="status {{ result.status | lower }}">{{ result.status }}</span>
+                    <p class="text-muted">Registered {{ result.registered_at.strftime('%Y-%m-%d') }}</p>
+                </div>
+                {% if result.can_view %}
+                <div class="actions">
+                    <a href="{{ url_for('public.view_image', hash_id=result.hash_id) }}" class="btn" aria-label="View details for {{ result.title }}">View Details</a>
+                </div>
+                {% else %}
+                <p class="text-muted">Registered (Private) – <a href="{{ login_url }}">Login</a> to see more.</p>
+                {% endif %}
+            </article>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center">No matches found for your image.</p>
+    <a href="{{ register_url }}" class="btn" aria-label="Register your image now">Register Image</a>
+    {% endif %}
+</section>
+
+<aside class="sidebar" aria-label="Tips" hidden>
+    <h2>Getting Started</h2>
+    <p>Register your images to secure proof of creation.</p>
+    <p>Create an account to manage and verify private entries.</p>
+</aside>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
