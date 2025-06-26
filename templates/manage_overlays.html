@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Overlays{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+<section class="manage-overlays">
+    <h1>Manage Overlays</h1>
+
+    <!-- Upload Form Section -->
+    <div class="card">
+        <h2>Upload a New Overlay</h2>
+        <form method="POST" action="{{ url_for('member.upload_overlay') }}" enctype="multipart/form-data" novalidate>
+            {{ csrf_token() }}
+            <div class="form-group">
+                <label for="overlay_file">Overlay Image (PNG or JPG)</label>
+                <input id="overlay_file" name="overlay_file" type="file" accept=".png,.jpg,.jpeg" class="input" required>
+                {% if form and form.overlay_file.errors %}
+                    <div class="text-muted">{{ form.overlay_file.errors[0] }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="overlay_type">Overlay Type</label>
+                <select id="overlay_type" name="overlay_type" class="select" required>
+                    <option value="signature">Signature</option>
+                    <option value="watermark">Watermark</option>
+                </select>
+                {% if form and form.overlay_type.errors %}
+                    <div class="text-muted">{{ form.overlay_type.errors[0] }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn">Upload Overlay</button>
+        </form>
+    </div>
+
+    <!-- Current Overlays Gallery -->
+    <div class="card">
+        <h2>Your Overlays</h2>
+        {% if overlays %}
+            <div class="image-grid">
+                {% for overlay in overlays %}
+                <div class="card image-card">
+                    <img src="{{ url_for('static', filename='uploads/' + overlay.filename) }}" alt="{{ overlay.type }} overlay" style="max-width:100%; height:auto;">
+                    <p>{{ overlay.type|capitalize }}</p>
+                    <p class="text-muted">{{ overlay.uploaded_at.strftime('%Y-%m-%d') }}</p>
+                    <form method="POST" action="{{ url_for('member.delete_overlay', overlay_id=overlay.id) }}" onsubmit="return confirm('Delete this overlay?');">
+                        {{ csrf_token() }}
+                        <button type="submit" class="btn">Delete</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No overlays uploaded yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
