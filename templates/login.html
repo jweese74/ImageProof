@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - ImageProof{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+<section class="auth-form">
+    <h1>Log In to ImageProof</h1>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form method="POST" action="{{ url_for('public.login') }}" novalidate>
+        {# For PHP fallback: <?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?> #}
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" class="input" placeholder="name@example.com" aria-describedby="email-help" required>
+            {% if form and form.email.errors %}
+                <div class="text-muted">{{ form.email.errors[0] }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" class="input" placeholder="Password" required>
+            {% if form and form.password.errors %}
+                <div class="text-muted">{{ form.password.errors[0] }}</div>
+            {% endif %}
+        </div>
+        {# MFA code placeholder; can be shown via JS or backend when required #}
+        <div class="form-group" id="mfa-group" style="display: none;">
+            <label for="mfa_code">MFA Code</label>
+            <input id="mfa_code" name="mfa_code" type="text" class="input" placeholder="123456" autocomplete="one-time-code">
+            {% if form and form.mfa_code.errors %}
+                <div class="text-muted">{{ form.mfa_code.errors[0] }}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn">Log In</button>
+    </form>
+    <p class="text-muted"><a href="#">Forgot password?</a></p>
+    <p>Don’t have an account? <a href="{{ url_for('public.signup') }}">Sign up here.</a></p>
+</section>
+{% endblock %}
