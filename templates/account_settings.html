@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings - ImageProof{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+<section class="account-settings">
+    <h1>Account Settings</h1>
+    <p>Signed in as {{ current_user.email | e }}</p>
+    <p>MFA Status: {% if current_user.mfa_enabled %}<strong>Enabled</strong>{% else %}<strong>Disabled</strong>{% endif %}</p>
+    <p><a href="{{ url_for('member.member_home') }}">&larr; Back to Dashboard</a></p>
+
+    <!-- Section 1: Change Email -->
+    <div class="card">
+        <h2>Change Email</h2>
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% for category, message in messages %}
+                {% if category.startswith('email_') %}
+                    <div class="alert {{ category }}" role="alert">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('member.change_email') }}" novalidate>
+            {{ csrf_token() }}
+            <div class="form-group">
+                <label for="current_password_email">Current Password</label>
+                <input id="current_password_email" name="current_password" type="password" class="input" required>
+            </div>
+            <div class="form-group">
+                <label for="new_email">New Email</label>
+                <input id="new_email" name="new_email" type="email" class="input" required>
+            </div>
+            <button type="submit" class="btn">Update Email</button>
+        </form>
+    </div>
+
+    <!-- Section 2: Change Password -->
+    <div class="card">
+        <h2>Change Password</h2>
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% for category, message in messages %}
+                {% if category.startswith('password_') %}
+                    <div class="alert {{ category }}" role="alert">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('member.change_password') }}" novalidate>
+            {{ csrf_token() }}
+            <div class="form-group">
+                <label for="current_password">Current Password</label>
+                <input id="current_password" name="current_password" type="password" class="input" required>
+            </div>
+            <div class="form-group">
+                <label for="new_password">New Password</label>
+                <input id="new_password" name="new_password" type="password" class="input" aria-describedby="password-help" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm New Password</label>
+                <input id="confirm_password" name="confirm_password" type="password" class="input" required>
+            </div>
+            <p id="password-help" class="text-muted">Use at least 12 characters with a mix of letters, numbers, and symbols.</p>
+            <button type="submit" class="btn">Update Password</button>
+        </form>
+    </div>
+
+    <!-- Section 3: Multi-Factor Authentication -->
+    <div class="card">
+        <h2>Multi-Factor Authentication</h2>
+        {% if current_user.mfa_enabled %}
+            <p>MFA is currently enabled.</p>
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% for category, message in messages %}
+                    {% if category.startswith('mfa_') %}
+                        <div class="alert {{ category }}" role="alert">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            {% endwith %}
+            <form method="POST" action="{{ url_for('member.disable_mfa') }}" novalidate>
+                {{ csrf_token() }}
+                <div class="form-group">
+                    <label for="disable_password">Password</label>
+                    <input id="disable_password" name="password" type="password" class="input" required>
+                </div>
+                <div class="form-group">
+                    <label for="disable_code">Authenticator Code</label>
+                    <input id="disable_code" name="mfa_code" type="text" class="input" autocomplete="one-time-code" required>
+                </div>
+                <button type="submit" class="btn">Disable MFA</button>
+            </form>
+        {% else %}
+            <p>MFA is currently disabled.</p>
+            <form method="POST" action="{{ url_for('member.enable_mfa') }}" novalidate>
+                {{ csrf_token() }}
+                <button type="submit" class="btn">Enable MFA</button>
+            </form>
+            {% if mfa_qr %}
+                <div class="form-group" aria-live="polite">
+                    <img src="data:image/png;base64,{{ mfa_qr }}" alt="MFA QR Code">
+                </div>
+                <form method="POST" action="{{ url_for('member.confirm_mfa') }}" novalidate>
+                    {{ csrf_token() }}
+                    <div class="form-group">
+                        <label for="confirm_code">Enter Code</label>
+                        <input id="confirm_code" name="mfa_code" type="text" class="input" autocomplete="one-time-code" required>
+                    </div>
+                    <button type="submit" class="btn">Confirm MFA</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Section 4: Privacy / Data Controls -->
+    <div class="card">
+        <h2>Privacy &amp; Data Controls</h2>
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% for category, message in messages %}
+                {% if category.startswith('privacy_') %}
+                    <div class="alert {{ category }}" role="alert">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('member.request_data_export') }}" style="display:inline-block;" novalidate>
+            {{ csrf_token() }}
+            <button type="submit" class="btn">Request Data Export</button>
+        </form>
+        <form method="POST" action="{{ url_for('member.request_account_deletion') }}" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete your account?');" novalidate>
+            {{ csrf_token() }}
+            <button type="submit" class="btn">Request Account Deletion</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
