@@ -27,6 +27,8 @@ except ImportError:  # pragma: no cover - optional dependency
 # Directories for static files and templates
 STATIC_DIR: Path = BASE_DIR / "static"
 TEMPLATES_DIR: Path = BASE_DIR / "templates"
+# Directory for uploaded files
+UPLOAD_DIR: Path = BASE_DIR / "uploads"
 
 
 class BaseConfig:
@@ -62,6 +64,7 @@ class BaseConfig:
         "image/bmp",
         "image/tiff",
     )
+    UPLOAD_FOLDER: str = str(UPLOAD_DIR)
 
     # Session and CSRF security settings
     SESSION_COOKIE_HTTPONLY: bool = True

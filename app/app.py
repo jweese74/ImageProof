@@ -1,16 +1,17 @@
 """Flask application setup and database initialization for ImageProof."""
 
 import logging
+from pathlib import Path
 
 from flask import Flask
-
-from app.security import generate_csrf_token, validate_csrf_token
 
 from app import config
 from app.models import SessionLocal
 from app.routes_admin import admin_bp
+from app.routes_files import files_bp
 from app.routes_member import member_bp
 from app.routes_public import public_bp
+from app.security import generate_csrf_token, validate_csrf_token
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -35,6 +36,11 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
     config.configure_logging()
     logger.info("Flask app created with configuration: %s", config_object.__name__)
 
+    # Ensure upload folder exists
+    upload_folder = app.config.get("UPLOAD_FOLDER")
+    if upload_folder:
+        Path(upload_folder).mkdir(parents=True, exist_ok=True)
+
     # CSRF protection
     @app.before_request
     def _csrf_protect() -> None:
@@ -55,6 +61,7 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
 
     # Register blueprints for application routes
     app.register_blueprint(public_bp)
+    app.register_blueprint(files_bp)
     app.register_blueprint(member_bp, url_prefix="/member")
     app.register_blueprint(admin_bp, url_prefix="/admin")
 
