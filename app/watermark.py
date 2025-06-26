@@ -51,11 +51,8 @@ def apply_text_watermark(image: Image.Image,
         raise ValueError(f"Invalid color value: {color}")
     alpha = int(255 * opacity)
     font = ImageFont.load_default()
-    bbox = draw.textbbox((0, 0), text, font=font)
-text_width = bbox[2] - bbox[0]
-text_height = bbox[3] - bbox[1]
-
-    x, y = _calculate_position(base.size, (text_width, text_height), position)
+    text_width, text_height = draw.textsize(text, font=font)
+    x, y = _calculate_position(base.size, (text_width, text_height), position)  # ← here
     draw.text((x, y), text, fill=(rgb[0], rgb[1], rgb[2], alpha), font=font)
     logger.debug("Applied text watermark '%s' at %s", text, position)
     result = Image.alpha_composite(base, txt_layer)
