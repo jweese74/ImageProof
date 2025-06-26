@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Register New Image{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+<section class="register-image">
+    <h1>Register New Image</h1>
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('register_image_member') }}" onsubmit="return confirm('You will not be able to retrieve this original image later.');" novalidate>
+        {{ csrf_token() }}
+        <!-- Image Upload Section -->
+        <div class="card">
+            <h2>Upload Image</h2>
+            <div class="form-group">
+                <label for="original_image">Artwork File *</label>
+                <input id="original_image" name="original_image" type="file" accept=".png,.jpg,.jpeg" class="input" aria-label="Original image upload" required>
+            </div>
+            <div id="image-preview" class="watermark-preview" aria-live="polite"></div>
+        </div>
+
+        <!-- Metadata Section -->
+        <div class="card">
+            <h2>Metadata</h2>
+            <div class="form-group">
+                <label for="title">Title *</label>
+                <input id="title" name="title" type="text" class="input" aria-label="Image title" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="textarea" aria-label="Image description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="creation_date">Creation Date</label>
+                <input id="creation_date" name="creation_date" type="date" class="input" aria-label="Creation date">
+            </div>
+            <div class="form-group">
+                <label for="keywords">Keywords</label>
+                <input id="keywords" name="keywords" type="text" class="input" aria-label="Keywords comma separated" placeholder="keyword1, keyword2">
+            </div>
+            <div class="form-group">
+                <label for="creator_name">Creator Name *</label>
+                <input id="creator_name" name="creator_name" type="text" class="input" aria-label="Creator name" required>
+            </div>
+            <div class="form-group">
+                <label for="copyright_notice">Copyright Notice</label>
+                <input id="copyright_notice" name="copyright_notice" type="text" class="input" aria-label="Copyright notice">
+            </div>
+            <div class="form-group">
+                <label for="license_type">License Type</label>
+                <select id="license_type" name="license_type" class="select" aria-label="License type">
+                    <option value="">Select license</option>
+                    {% for license in licenses %}
+                    <option value="{{ license.id }}">{{ license.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Overlay Section -->
+        <div class="card">
+            <h2>Overlays</h2>
+            <div class="form-group">
+                <label for="watermark_text">Watermark Text</label>
+                <input id="watermark_text" name="watermark_text" type="text" class="input" aria-label="Watermark text">
+            </div>
+            <div class="form-group">
+                <label for="watermark_color">Watermark Color</label>
+                <input id="watermark_color" name="watermark_color" type="color" class="input" aria-label="Watermark color" value="#ffffff">
+            </div>
+            <div class="form-group">
+                <label for="watermark_position">Watermark Position</label>
+                <select id="watermark_position" name="watermark_position" class="select" aria-label="Watermark position">
+                    <option value="top-left">Top Left</option>
+                    <option value="top-right">Top Right</option>
+                    <option value="center">Center</option>
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="bottom-right">Bottom Right</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="signature_image">Signature Image (PNG)</label>
+                <input id="signature_image" name="signature_image" type="file" accept="image/png" class="input" aria-label="Signature image">
+            </div>
+            <div class="form-group">
+                <label for="watermark_image">Watermark Image</label>
+                <input id="watermark_image" name="watermark_image" type="file" accept="image/png" class="input" aria-label="Watermark image">
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn" id="preview-button" aria-label="Preview with overlays">Preview</button>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        {{ render_captcha() }}
+
+        <div class="form-group">
+            <button type="submit" class="btn">Register Image</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
