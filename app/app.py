@@ -1,8 +1,14 @@
 """Flask application setup and database initialization for ImageProof."""
+
 import logging
+
 from flask import Flask
+
 from app import config
 from app.models import SessionLocal
+from app.routes_admin import admin_bp
+from app.routes_member import member_bp
+from app.routes_public import public_bp
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -35,6 +41,12 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
 
     # Initialize database (create tables, optionally seed data)
     init_db(app, seed=False)
+
+    # Register blueprints for application routes
+    app.register_blueprint(public_bp)
+    app.register_blueprint(member_bp, url_prefix="/member")
+    app.register_blueprint(admin_bp, url_prefix="/admin")
+
     return app
 
 
@@ -54,8 +66,9 @@ def init_db(app: Flask, seed: bool = False) -> None:
     Raises:
         SQLAlchemyError: If an error occurs during table creation or data insertion.
     """
-    from app import models  # import here to avoid circular imports
     from sqlalchemy.exc import SQLAlchemyError
+
+    from app import models  # import here to avoid circular imports
 
     logger.info("Initializing database for app: %s", app.name)
     logger.info("Creating database schema...")
@@ -68,15 +81,25 @@ def init_db(app: Flask, seed: bool = False) -> None:
         try:
             with models.engine.begin() as connection:
                 connection.execute(
-                    models.text("INSERT INTO users (id, email, hashed_password) VALUES (:id, :email, :pw)"),
-                    {"id": 1, "email": "testuser@example.com",
-                     "pw": "$2b$12$d0V5m6WmIul1gUHXqYOfH.uNar5dBVK0L37tVgW0z2Jl2J2yJ4j8W"}
+                    models.text(
+                        "INSERT INTO users (id, email, hashed_password) VALUES (:id, :email, :pw)"
+                    ),
+                    {
+                        "id": 1,
+                        "email": "testuser@example.com",
+                        "pw": "$2b$12$d0V5m6WmIul1gUHXqYOfH.uNar5dBVK0L37tVgW0z2Jl2J2yJ4j8W",
+                    },
                 )
                 connection.execute(
-                    models.text("INSERT INTO images (id, user_id, sha256, phash) VALUES (:id, :user_id, :sha256, :phash)"),
-                    {"id": 1, "user_id": 1,
-                     "sha256": "0e5751c026e543b2e8ab2eb06099eda2f4a2833f8b3e0b675d18497ad5e6eead",
-                     "phash": "ffbbaaaaffbbaaaa"}
+                    models.text(
+                        "INSERT INTO images (id, user_id, sha256, phash) VALUES (:id, :user_id, :sha256, :phash)"
+                    ),
+                    {
+                        "id": 1,
+                        "user_id": 1,
+                        "sha256": "0e5751c026e543b2e8ab2eb06099eda2f4a2833f8b3e0b675d18497ad5e6eead",
+                        "phash": "ffbbaaaaffbbaaaa",
+                    },
                 )
             logger.info("Initial data seeded successfully.")
         except SQLAlchemyError as e:
