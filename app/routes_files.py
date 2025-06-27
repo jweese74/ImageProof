@@ -10,7 +10,11 @@ from werkzeug.utils import secure_filename
 
 logger = logging.getLogger(__name__)
 
-files_bp = Blueprint("files", __name__)
+files_bp = Blueprint(
+    "files",
+    __name__,
+    template_folder="../templates",
+)
 
 
 def _allowed_file(filename: str) -> bool:

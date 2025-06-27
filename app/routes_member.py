@@ -2,7 +2,11 @@
 
 from flask import Blueprint
 
-member_bp = Blueprint("member", __name__)
+member_bp = Blueprint(
+    "member",
+    __name__,
+    template_folder="../templates",
+)
 
 
 @member_bp.route("/")

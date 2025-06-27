@@ -1,6 +1,11 @@
 from flask import Blueprint
 
-stub_bp = Blueprint("stub", __name__)
+stub_bp = Blueprint(
+    "stub",
+    __name__,
+    template_folder="../templates",
+)
+
 
 @stub_bp.route("/_stub/<path:name>")
 def stub(name):

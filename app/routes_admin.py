@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from datetime import datetime
 import re
+from datetime import datetime
+from pathlib import Path
 
 from flask import (
     Blueprint,
@@ -21,7 +21,11 @@ from flask import (
 from app import logging_utils
 from app.security import require_login
 
-admin_bp = Blueprint("admin", __name__)
+admin_bp = Blueprint(
+    "admin",
+    __name__,
+    template_folder="../templates",
+)
 
 
 @admin_bp.route("/")
@@ -66,6 +70,4 @@ def download_log(fname):
     safe = re.fullmatch(r"imageproof\.log(\.\d+)?(\.gz)?", fname)
     if not safe:
         abort(404)
-    return send_from_directory(
-        current_app.config["LOG_DIR"], fname, as_attachment=True
-    )
+    return send_from_directory(current_app.config["LOG_DIR"], fname, as_attachment=True)

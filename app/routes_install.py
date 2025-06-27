@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import re
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 
+install_bp = Blueprint(
+    "install",
+    __name__,
+    template_folder="../templates",
+)
 
-install_bp = Blueprint("install", __name__)
 
 @install_bp.route("/install", methods=["GET", "POST"])
 def install_index() -> str:
