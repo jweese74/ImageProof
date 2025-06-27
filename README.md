@@ -2,10 +2,6 @@
 
 _ImageProof_ is a secure, auditable image submission and certification system designed for legal, research, and verification contexts. Built with **Flask**, **MariaDB**, and **Pillow**, the system captures images, generates perceptual hashes, embeds optional watermarks, and produces digitally signed PDF certificates for verified media.
 
-# 🖼️ ImageProof
-
-_ImageProof_ is a secure, auditable image submission and certification system designed for legal, research, and verification contexts. Built with **Flask**, **MariaDB**, and **Pillow**, the system captures images, generates perceptual hashes, embeds optional watermarks, and produces digitally signed PDF certificates for verified media.
-
 Ideal for organizations needing chain-of-custody, tamper-evident submission workflows—such as journalism, forensics, field research, or digital art authentication.
 
 ---
