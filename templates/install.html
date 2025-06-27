@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Install - ImageProof{% endblock %}
+
+{% block content %}
+<section class="auth-form">
+    <h1>Initial Setup</h1>
+    <form method="POST" action="{{ url_for('install.install_index') }}" novalidate>
+        <div class="form-group">
+            <label for="db_host">Database Host</label>
+            <input id="db_host" name="db_host" type="text" class="input" placeholder="localhost" required>
+        </div>
+        <div class="form-group">
+            <label for="db_port">Database Port</label>
+            <input id="db_port" name="db_port" type="number" class="input" placeholder="3306" required>
+        </div>
+        <div class="form-group">
+            <label for="db_name">Database Name</label>
+            <input id="db_name" name="db_name" type="text" class="input" required>
+        </div>
+        <div class="form-group">
+            <label for="db_user">Database User</label>
+            <input id="db_user" name="db_user" type="text" class="input" required>
+        </div>
+        <div class="form-group">
+            <label for="db_password">Database Password</label>
+            <input id="db_password" name="db_password" type="password" class="input" required>
+        </div>
+        <div class="form-group">
+            <label for="admin_email">Admin Email</label>
+            <input id="admin_email" name="admin_email" type="email" class="input" required>
+        </div>
+        <div class="form-group">
+            <label for="admin_password">Admin Password</label>
+            <input id="admin_password" name="admin_password" type="password" class="input" required>
+        </div>
+        <button type="submit" class="btn">Install</button>
+    </form>
+</section>
+{% endblock %}
