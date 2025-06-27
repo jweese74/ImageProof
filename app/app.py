@@ -12,10 +12,10 @@ from app import config, logging_utils
 from app.models import SessionLocal
 from app.routes_admin import admin_bp
 from app.routes_files import files_bp
+from app.routes_install import install_bp
 from app.routes_member import member_bp
 from app.routes_public import public_bp
 from app.routes_stub import stub_bp
-from app.routes_install import install_bp
 from app.security import generate_csrf_token, validate_csrf_token
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -52,7 +52,6 @@ def create_app(
         Flask: The configured Flask application instance.
     """
     # Initialize Flask app and load configurations
-    from pathlib import Path
     BASE_DIR = Path(__file__).resolve().parent.parent  # /opt/imageproof
     app = Flask(
         __name__,
@@ -85,7 +84,15 @@ def create_app(
 
     @app.context_processor
     def _inject_csrf_token() -> dict[str, callable]:
-        return {config_object.CSRF_FIELD_NAME: generate_csrf_token}
+        def csrf_field() -> str:
+            token = generate_csrf_token()
+            name = config_object.CSRF_FIELD_NAME
+            return f'<input type="hidden" name="{name}" value="{token}">'  # noqa: B903
+
+        return {
+            config_object.CSRF_FIELD_NAME: generate_csrf_token,
+            "csrf_field": csrf_field,
+        }
 
     @app.context_processor
     def _inject_current_user():
