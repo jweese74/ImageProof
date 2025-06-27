@@ -14,6 +14,7 @@ from app.routes_admin import admin_bp
 from app.routes_files import files_bp
 from app.routes_member import member_bp
 from app.routes_public import public_bp
+from app.routes_stub import stub_bp
 from app.security import generate_csrf_token, validate_csrf_token
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -108,6 +109,7 @@ def create_app(
     app.register_blueprint(files_bp)
     app.register_blueprint(member_bp, url_prefix="/member")
     app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(stub_bp)
 
     return app
 
