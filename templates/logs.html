@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}System Logs{% endblock %}
+
+{% block csrf_token %}
+    {{ csrf_token() }}
+{% endblock %}
+
+{% block content %}
+{% if current_user.is_authenticated and current_user.role == 'Admin' %}
+<section class="section">
+    <h1>System Logs</h1>
+    <form method="post" novalidate>
+        {{ csrf_token() }}
+        <div class="form-group">
+            <label for="log_level">Log Level</label>
+            <select id="log_level" name="log_level" class="select">
+                {% for level in choices %}
+                <option value="{{ level }}" {% if level == current_level %}selected{% endif %}>{{ level }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn">Update Level</button>
+    </form>
+
+    <table class="table" style="margin-top:1rem;">
+        <thead>
+            <tr>
+                <th scope="col">File</th>
+                <th scope="col">Size (MB)</th>
+                <th scope="col">Modified</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in files %}
+            <tr>
+                <td>{{ file.name }}</td>
+                <td>{{ '%.2f'|format(file.size_mb) }}</td>
+                <td>{{ file.modified.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('admin.download_log', fname=file.name) }}" class="btn">Download</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-muted">No log files found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p>You do not have access to this page.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}

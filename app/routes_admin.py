@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime
 import re
 
 from flask import (
@@ -43,11 +44,19 @@ def logs_dashboard():
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
+    files_info = [
+        {
+            "name": f.name,
+            "size_mb": f.stat().st_size / 1024 / 1024,
+            "modified": datetime.fromtimestamp(f.stat().st_mtime),
+        }
+        for f in files
+    ]
     return render_template(
         "admin/logs.html",
         current_level=logging_utils.get_log_level(),
         choices=current_app.config["LOG_LEVEL_CHOICES"],
-        files=files,
+        files=files_info,
     )
 
 
