@@ -38,6 +38,8 @@ LOG_LEVEL_DEFAULT: str = "INFO"
 LOG_FILE_MAX_BYTES: int = 5 * 1024 * 1024  # 5 MB
 LOG_BACKUP_COUNT: int = 5  # number of rollovers to keep
 LOG_RETENTION_DAYS: int = 7  # prune older files
+# Sentinel file to determine if the app has completed initial installation
+INSTALL_SENTINEL_FILE: Path = BASE_DIR / ".installed"
 
 
 class BaseConfig:

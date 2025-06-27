@@ -15,6 +15,7 @@ from app.routes_files import files_bp
 from app.routes_member import member_bp
 from app.routes_public import public_bp
 from app.routes_stub import stub_bp
+from app.routes_installer import installer_bp
 from app.security import generate_csrf_token, validate_csrf_token
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -103,6 +104,10 @@ def create_app(
 
     # Initialize database (create tables, optionally seed data)
     init_db(app, seed=False)
+
+    # If the installation sentinel is missing, expose the installer blueprint
+    if not config.INSTALL_SENTINEL_FILE.exists():
+        app.register_blueprint(installer_bp)
 
     # Register blueprints for application routes
     app.register_blueprint(public_bp)
