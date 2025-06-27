@@ -47,7 +47,14 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
         Flask: The configured Flask application instance.
     """
     # Initialize Flask app and load configurations
-    app = Flask(__name__)
+    from pathlib import Path
+    BASE_DIR = Path(__file__).resolve().parent.parent  # /opt/imageproof
+    app = Flask(
+        __name__,
+        template_folder=str(BASE_DIR / "templates"),
+        static_folder=str(BASE_DIR / "static"),
+        static_url_path="/static",
+    )
     app.config.from_object(config_object)
 
     # Ensure log folder exists before configuring logging
