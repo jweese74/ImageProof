@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 
-{% block csrf_token %}
-    {{ csrf_token() }}
-{% endblock %}
+{% block csrf_token %}{% endblock %}
 
 {% block title %}Install - ImageProof{% endblock %}
 
@@ -10,7 +8,7 @@
 <section class="auth-form">
     <h1>Initial Setup</h1>
     <form method="POST" action="{{ url_for('install.install_index') }}" novalidate>
-        {{ csrf_token() }}
+        {{ csrf_field() }}
         <div class="form-group">
             <label for="db_host">Database Host</label>
             <input id="db_host" name="db_host" type="text" class="input" placeholder="localhost" required>

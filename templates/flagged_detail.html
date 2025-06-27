@@ -2,9 +2,7 @@
 
 {% block title %}Flagged Image Review - ImageProof{% endblock %}
 
-{% block csrf_token %}
-    {{ csrf_token() }}
-{% endblock %}
+{% block csrf_token %}{% endblock %}
 
 {% block content %}
 {% if current_user.is_authenticated and current_user.role == 'Admin' %}
@@ -30,8 +28,7 @@
             <div class="preview" style="margin-top:1rem;">
                 <img src="{{ image.preview_url }}" alt="Preview of {{ image.title }}" class="watermark-preview">
             </div>
-        </div>
-    </div>
+@@ -35,50 +33,50 @@
 
     <!-- Flag Information -->
     <div class="card" style="margin-bottom:1rem;">
@@ -57,7 +54,7 @@
     <div class="card" style="margin-bottom:1rem;">
         <h2>Admin Actions</h2>
         <form method="post" action="{{ url_for('admin.update_flag', image_id=image.id) }}" novalidate>
-            {{ csrf_token() }}
+            {{ csrf_field() }}
             <div class="form-group">
                 <label for="new_status">Change Status</label>
                 <select id="new_status" name="status" class="select">

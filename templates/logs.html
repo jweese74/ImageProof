@@ -2,16 +2,14 @@
 
 {% block title %}System Logs{% endblock %}
 
-{% block csrf_token %}
-    {{ csrf_token() }}
-{% endblock %}
+{% block csrf_token %}{% endblock %}
 
 {% block content %}
 {% if current_user.is_authenticated and current_user.role == 'Admin' %}
 <section class="section">
     <h1>System Logs</h1>
     <form method="post" novalidate>
-        {{ csrf_token() }}
+        {{ csrf_field() }}
         <div class="form-group">
             <label for="log_level">Log Level</label>
             <select id="log_level" name="log_level" class="select">

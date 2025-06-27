@@ -15,8 +15,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    {# Placeholder for CSRF tokens in child templates #}
-    {% block csrf_token %}{% endblock %}
+    {# CSRF token meta tag for use in forms #}
+    {% block csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endblock %}
     <noscript>
         <div class="banner">JavaScript is disabled; some features may not work.</div>
     </noscript>

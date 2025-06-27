@@ -2,9 +2,7 @@
 
 {% block title %}Register as Guest{% endblock %}
 
-{% block csrf_token %}
-    {{ csrf_token() }}
-{% endblock %}
+{% block csrf_token %}{% endblock %}
 
 {% block content %}
 <section class="register-guest">
@@ -19,7 +17,7 @@
     {% endwith %}
     <!-- Guest upload form -->
     <form method="POST" enctype="multipart/form-data" novalidate>
-        {{ csrf_token() }}
+        {{ csrf_field() }}
         <!-- Image upload and preview -->
         <div class="card">
             <h2>Upload Image</h2>
@@ -45,15 +43,7 @@
 
         <!-- Optional watermark settings -->
         <div class="card">
-            <h2>Watermark</h2>
-            <div class="form-group">
-                <label for="watermark_text">Watermark Text</label>
-                <input id="watermark_text" name="watermark_text" type="text" class="input" aria-label="Watermark text">
-            </div>
-            <div class="form-group">
-                <label for="watermark_position">Watermark Position</label>
-                <select id="watermark_position" name="watermark_position" class="select" aria-label="Watermark position">
-                    <option value="top-left">Top Left</option>
+@@ -57,26 +55,26 @@
                     <option value="top-right">Top Right</option>
                     <option value="center">Center</option>
                     <option value="bottom-left">Bottom Left</option>

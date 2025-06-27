@@ -2,9 +2,7 @@
 
 {% block title %}Manage Overlays{% endblock %}
 
-{% block csrf_token %}
-    {{ csrf_token() }}
-{% endblock %}
+{% block csrf_token %}{% endblock %}
 
 {% block content %}
 <section class="manage-overlays">
@@ -14,7 +12,7 @@
     <div class="card">
         <h2>Upload a New Overlay</h2>
         <form method="POST" action="{{ url_for('member.upload_overlay') }}" enctype="multipart/form-data" novalidate>
-            {{ csrf_token() }}
+            {{ csrf_field() }}
             <div class="form-group">
                 <label for="overlay_file">Overlay Image (PNG or JPG)</label>
                 <input id="overlay_file" name="overlay_file" type="file" accept=".png,.jpg,.jpeg" class="input" required>
@@ -47,7 +45,7 @@
                     <p>{{ overlay.type|capitalize }}</p>
                     <p class="text-muted">{{ overlay.uploaded_at.strftime('%Y-%m-%d') }}</p>
                     <form method="POST" action="{{ url_for('member.delete_overlay', overlay_id=overlay.id) }}" onsubmit="return confirm('Delete this overlay?');">
-                        {{ csrf_token() }}
+                        {{ csrf_field() }}
                         <button type="submit" class="btn">Delete</button>
                     </form>
                 </div>

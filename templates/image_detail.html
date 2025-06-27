@@ -4,9 +4,7 @@
 {% block title %}Image Detail - ImageProof{% endblock %}
 
 {# Optional global CSRF token block #}
-{% block csrf_token %}
-    {{ csrf_token() }}
-{% endblock %}
+{% block csrf_token %}{% endblock %}
 
 {% block content %}
 <section class="image-detail section">
@@ -32,7 +30,7 @@
             <picture>
                 <source srcset="{{ image.preview_url }}" type="image/webp">
                 <img src="{{ image.preview_url }}" alt="Watermarked preview of {{ image.title }}" class="watermark-preview" loading="lazy">
-            </picture>
+@@ -36,40 +34,40 @@
         </div>
 
         <div class="metadata">
@@ -58,11 +56,11 @@
         <a href="{{ url_for('member.edit_image', image_id=image.id) }}" class="btn">Edit Metadata</a>
         <a href="{{ url_for('member.transfer_image', image_id=image.id) }}" class="btn">Transfer Ownership</a>
         <form method="post" action="{{ url_for('member.delete_image', image_id=image.id) }}" onsubmit="return confirm('Delete this image?');" style="display:inline">
-            {{ csrf_token() }}
+            {{ csrf_field() }}
             <button type="submit" class="btn">Delete Image</button>
         </form>
         <form method="post" action="{{ url_for('member.flag_image', image_id=image.id) }}" style="display:inline">
-            {{ csrf_token() }}
+            {{ csrf_field() }}
             <button type="submit" class="btn">Flag Image</button>
         </form>
         {% endif %}

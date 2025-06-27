@@ -3,9 +3,7 @@
 {% block title %}Home - ImageProof{% endblock %}
 
 {# CSRF token for global forms #}
-{% block csrf_token %}
-    {{ csrf_token() }}
-{% endblock %}
+{% block csrf_token %}{% endblock %}
 
 {% block content %}
 <section class="hero">
@@ -17,7 +15,7 @@
     <h2>Public Image Lookup</h2>
     <form action="{{ url_for('public.lookup') }}" method="post" enctype="multipart/form-data" class="lookup-form">
         {# CSRF token goes here #}
-        {{ csrf_token() }}
+        {{ csrf_field() }}
         <div class="form-group">
             <label for="hash-input">SHA-256 Hash</label>
             <input id="hash-input" name="hash" type="text" class="input" aria-describedby="hash-help">
