@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import secrets
 from flask import abort, request, session
+from functools import wraps
+from typing import Any, Callable
 
 
 def generate_csrf_token() -> str:
@@ -29,3 +31,15 @@ def validate_csrf_token() -> None:
     form_token = request.form.get("csrf_token") or request.headers.get("X-CSRFToken")
     if not session_token or session_token != form_token:
         abort(400, description="Invalid CSRF token")
+
+def require_login(role: str | None = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Dummy login-required decorator for testing."""
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
