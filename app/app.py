@@ -4,6 +4,7 @@ import logging
 import time
 from pathlib import Path
 from threading import Thread
+from types import SimpleNamespace
 
 from flask import Flask
 
@@ -32,7 +33,9 @@ def _start_log_prune_thread() -> None:
     thread.start()
 
 
-def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig) -> Flask:
+def create_app(
+    config_object: type[config.BaseConfig] = config.DevelopmentConfig,
+) -> Flask:
     """Create and configure the Flask application.
 
     This function initializes the Flask app with the given configuration, sets up logging,
@@ -81,6 +84,15 @@ def create_app(config_object: type[config.BaseConfig] = config.DevelopmentConfig
     @app.context_processor
     def _inject_csrf_token() -> dict[str, str]:
         return {config_object.CSRF_FIELD_NAME: generate_csrf_token()}
+
+    @app.context_processor
+    def _inject_current_user():
+        try:
+            from flask_login import current_user as login_user
+
+            return {"current_user": login_user}
+        except Exception:
+            return {"current_user": SimpleNamespace(is_authenticated=False)}
 
     # Register database session cleanup on app context teardown
     @app.teardown_appcontext
