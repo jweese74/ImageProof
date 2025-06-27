@@ -53,7 +53,7 @@ def logs_dashboard():
         for f in files
     ]
     return render_template(
-        "admin/logs.html",
+        "logs.html",
         current_level=logging_utils.get_log_level(),
         choices=current_app.config["LOG_LEVEL_CHOICES"],
         files=files_info,
