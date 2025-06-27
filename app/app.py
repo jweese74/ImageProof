@@ -7,6 +7,7 @@ from threading import Thread
 from types import SimpleNamespace
 
 from flask import Flask
+from markupsafe import Markup
 
 from app import config, logging_utils
 from app.models import SessionLocal
@@ -87,7 +88,9 @@ def create_app(
         def csrf_field() -> str:
             token = generate_csrf_token()
             name = config_object.CSRF_FIELD_NAME
-            return f'<input type="hidden" name="{name}" value="{token}">'  # noqa: B903
+            return Markup(
+                f'<input type="hidden" name="{name}" value="{token}">'
+            )  # noqa: B903
 
         return {
             config_object.CSRF_FIELD_NAME: generate_csrf_token,
