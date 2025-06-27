@@ -84,8 +84,8 @@ def create_app(
         validate_csrf_token()
 
     @app.context_processor
-    def _inject_csrf_token() -> dict[str, str]:
-        return {config_object.CSRF_FIELD_NAME: generate_csrf_token()}
+    def _inject_csrf_token() -> dict[str, callable]:
+        return {config_object.CSRF_FIELD_NAME: generate_csrf_token}
 
     @app.context_processor
     def _inject_current_user():
