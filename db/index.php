@@ -1,6 +1,6 @@
 <?php
 /**
- * Dummy index.php
+ * Dummy /db/index.php
  *
  * Purpose: Prevent directory browsing.
  */

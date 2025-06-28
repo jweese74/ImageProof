@@ -1,6 +1,6 @@
 <?php
 /**
- * config.php
+ * /config.php
  *
  * Central configuration file for Infinite Image Tools.
  *

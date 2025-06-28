@@ -1,6 +1,6 @@
 <?php
 /**
- * watermark.php
+ * /tools/watermark.php
  *
  * A simple tool that applies a text watermark to an image.
  * Expects an image_id in the query string, e.g. watermark.php?image_id=123

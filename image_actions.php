@@ -1,6 +1,6 @@
 <?php
 /**
- * image_actions.php
+ * /image_actions.php
  *
  * Central hub after user login.
  * Uses a database approach to track uploaded images by ID.

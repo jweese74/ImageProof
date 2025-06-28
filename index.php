@@ -1,6 +1,6 @@
 <?php
 /**
- * index.php
+ * /index.php
  *
  * Entry point for Infinite Image Tools.  
  * Requires users to log in or create an account.
