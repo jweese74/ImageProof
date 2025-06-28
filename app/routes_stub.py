@@ -1,4 +1,5 @@
-from flask import Blueprint
+from flask import Blueprint, render_template, request
+import logging
 
 stub_bp = Blueprint(
     "stub",
@@ -6,7 +7,13 @@ stub_bp = Blueprint(
     template_folder="../templates",
 )
 
+logger = logging.getLogger(__name__)
 
 @stub_bp.route("/_stub/<path:name>")
 def stub(name):
-    return f"Placeholder for {name}", 501
+    logger.warning(f"Accessed stub route: {name}")
+    try:
+        return render_template("stub.html", name=name, path=request.path), 501
+    except Exception as e:
+        logger.debug(f"Stub template not found or failed to render: {e}")
+        return f"Placeholder for {name}", 501

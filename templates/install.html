@@ -7,36 +7,56 @@
 {% block content %}
 <section class="auth-form">
     <h1>Initial Setup</h1>
+
+    {# Flash messages for feedback #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alerts">
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <form method="POST" action="{{ url_for('install.install_index') }}" novalidate>
         {{ csrf_field() }}
+
         <div class="form-group">
             <label for="db_host">Database Host</label>
-            <input id="db_host" name="db_host" type="text" class="input" placeholder="localhost" required>
+            <input id="db_host" name="db_host" type="text" class="input" placeholder="localhost" value="{{ form.db_host or '' }}" required>
         </div>
+
         <div class="form-group">
             <label for="db_port">Database Port</label>
-            <input id="db_port" name="db_port" type="number" class="input" placeholder="3306" required>
+            <input id="db_port" name="db_port" type="number" class="input" placeholder="3306" value="{{ form.db_port or '' }}" required>
         </div>
+
         <div class="form-group">
             <label for="db_name">Database Name</label>
-            <input id="db_name" name="db_name" type="text" class="input" placeholder="imageproof" required>
+            <input id="db_name" name="db_name" type="text" class="input" placeholder="imageproof" value="{{ form.db_name or '' }}" required>
         </div>
+
         <div class="form-group">
             <label for="db_user">Database User</label>
-            <input id="db_user" name="db_user" type="text" class="input" placeholder="dbuser" required>
+            <input id="db_user" name="db_user" type="text" class="input" placeholder="dbuser" value="{{ form.db_user or '' }}" required>
         </div>
+
         <div class="form-group">
             <label for="db_password">Database Password</label>
             <input id="db_password" name="db_password" type="password" class="input" placeholder="********" required>
         </div>
+
         <div class="form-group">
             <label for="admin_email">Admin Email</label>
-            <input id="admin_email" name="admin_email" type="email" class="input" placeholder="admin@example.com" required>
+            <input id="admin_email" name="admin_email" type="email" class="input" placeholder="admin@example.com" value="{{ form.admin_email or '' }}" required>
         </div>
+
         <div class="form-group">
             <label for="admin_password">Admin Password</label>
             <input id="admin_password" name="admin_password" type="password" class="input" placeholder="At least 8 characters" required>
         </div>
+
         <button type="submit" class="btn">Install</button>
     </form>
 </section>
