@@ -7,10 +7,11 @@ from threading import Thread
 from types import SimpleNamespace
 
 from flask import Flask
+from flask_login import LoginManager
 from markupsafe import Markup
 
 from app import config, logging_utils
-from app.models import SessionLocal
+from app.models import SessionLocal, User
 from app.routes_admin import admin_bp
 from app.routes_files import files_bp
 from app.routes_install import install_bp
@@ -39,20 +40,7 @@ def _start_log_prune_thread() -> None:
 def create_app(
     config_object: type[config.BaseConfig] = config.DevelopmentConfig,
 ) -> Flask:
-    """Create and configure the Flask application.
-
-    This function initializes the Flask app with the given configuration, sets up logging,
-    and ensures the database is ready. It also registers a teardown function to close
-    database sessions after each request.
-
-    Args:
-        config_object (type[config.BaseConfig]): The configuration class to use for the app.
-            Defaults to config.DevelopmentConfig.
-
-    Returns:
-        Flask: The configured Flask application instance.
-    """
-    # Initialize Flask app and load configurations
+    """Create and configure the Flask application."""
     BASE_DIR = Path(__file__).resolve().parent.parent  # /opt/imageproof
     app = Flask(
         __name__,
@@ -78,6 +66,19 @@ def create_app(
     if upload_folder:
         Path(upload_folder).mkdir(parents=True, exist_ok=True)
 
+    # Flask-Login setup
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = "public.login"
+    login_manager.login_message_category = "info"
+
+    @login_manager.user_loader
+    def load_user(user_id: str) -> User | None:
+        try:
+            return SessionLocal().query(User).get(int(user_id))
+        except Exception:
+            return None
+
     # CSRF protection
     @app.before_request
     def _csrf_protect() -> None:
@@ -90,7 +91,7 @@ def create_app(
             name = config_object.CSRF_FIELD_NAME
             return Markup(
                 f'<input type="hidden" name="{name}" value="{token}">'
-            )  # noqa: B903
+            )
 
         return {
             config_object.CSRF_FIELD_NAME: generate_csrf_token,
@@ -106,20 +107,18 @@ def create_app(
         except Exception:
             return {"current_user": SimpleNamespace(is_authenticated=False)}
 
-    # Register database session cleanup on app context teardown
     @app.teardown_appcontext
     def shutdown_session(exception: Exception | None = None) -> None:
-        """Remove database session at the end of request or app context."""
         SessionLocal.remove()
 
-    # Initialize database (create tables, optionally seed data)
+    # Initialize database schema and seed data if needed
     init_db(app, seed=False)
 
-    # If the installation sentinel is missing, expose the installer blueprint
+    # Conditionally register installer if not already installed
     if not config.INSTALL_SENTINEL_FILE.exists():
         app.register_blueprint(install_bp)
 
-    # Register blueprints for application routes
+    # Register all application blueprints
     app.register_blueprint(public_bp)
     app.register_blueprint(files_bp)
     app.register_blueprint(member_bp, url_prefix="/member")
@@ -130,31 +129,15 @@ def create_app(
 
 
 def init_db(app: Flask, seed: bool = False) -> None:
-    """Initialize the database schema and seed initial data if requested.
-
-    This function creates all database tables (if they do not exist) using the ORM models.
-    If `seed` is True, it will load initial test data into the database for development/testing.
-
-    Args:
-        app (Flask): The Flask application instance (unused, provided for interface consistency).
-        seed (bool, optional): Whether to insert initial seed data. Defaults to False.
-
-    Returns:
-        None
-
-    Raises:
-        SQLAlchemyError: If an error occurs during table creation or data insertion.
-    """
+    """Initialize the database schema and seed initial data if requested."""
     from sqlalchemy.exc import SQLAlchemyError
-
-    from app import models  # import here to avoid circular imports
+    from app import models  # Delayed import to avoid circular dependency
 
     logger.info("Initializing database for app: %s", app.name)
     logger.info("Creating database schema...")
-    # Create tables from models
     models.create_all()
     logger.info("Database schema creation complete.")
-    # Seed initial data if requested
+
     if seed:
         logger.info("Seeding initial database data...")
         try:

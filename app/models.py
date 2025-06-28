@@ -1,7 +1,7 @@
 """Database models and engine setup for ImageProof."""
 import logging
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import create_engine, text, String, DateTime, Text, ForeignKey, Index
 from sqlalchemy.dialects import mysql
@@ -36,20 +36,30 @@ class Image(Base):
     """Image record model storing uploaded image metadata and hashes."""
     __tablename__ = "images"
     __table_args__ = (
-        # Indexes for hash values to optimize lookup
         Index("idx_images_sha256", "sha256"),
         Index("idx_images_phash", "phash"),
         {"mysql_engine": "InnoDB", "mysql_charset": "utf8mb4"},
     )
 
     id: Mapped[int] = mapped_column(mysql.INTEGER(unsigned=True), primary_key=True)
-    user_id: Mapped[int] = mapped_column(mysql.INTEGER(unsigned=True),
-                                        ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[Optional[int]] = mapped_column(
+        mysql.INTEGER(unsigned=True),
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    creator_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="Certified")
+    registered_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP")
+    )
     sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     phash: Mapped[str] = mapped_column(String(16), nullable=False)
 
     # Relationships
-    user: Mapped["User"] = relationship(back_populates="images")
+    user: Mapped[Optional["User"]] = relationship(back_populates="images")
     action_logs: Mapped[List["ActionLog"]] = relationship(back_populates="image")
 
 
@@ -59,18 +69,25 @@ class ActionLog(Base):
     __table_args__ = {"mysql_engine": "InnoDB", "mysql_charset": "utf8mb4"}
 
     id: Mapped[int] = mapped_column(mysql.INTEGER(unsigned=True), primary_key=True)
-    user_id: Mapped[int] = mapped_column(mysql.INTEGER(unsigned=True),
-                                        ForeignKey("users.id"))
-    image_id: Mapped[int] = mapped_column(mysql.INTEGER(unsigned=True),
-                                         ForeignKey("images.id"))
+    user_id: Mapped[Optional[int]] = mapped_column(
+        mysql.INTEGER(unsigned=True),
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+    image_id: Mapped[Optional[int]] = mapped_column(
+        mysql.INTEGER(unsigned=True),
+        ForeignKey("images.id"),
+        nullable=True,
+    )
     action: Mapped[str] = mapped_column(String(50), nullable=False)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False,
-                                               server_default=text("CURRENT_TIMESTAMP"))
-    details: Mapped[str] = mapped_column(Text, nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+    details: Mapped[Optional[str]] = mapped_column(Text)
 
     # Relationships
-    user: Mapped["User"] = relationship(back_populates="action_logs")
-    image: Mapped["Image"] = relationship(back_populates="action_logs")
+    user: Mapped[Optional["User"]] = relationship(back_populates="action_logs")
+    image: Mapped[Optional["Image"]] = relationship(back_populates="action_logs")
 
 
 # Database engine and session configuration
@@ -95,17 +112,7 @@ except Exception as e:
 
 
 def create_all() -> None:
-    """Create all database tables defined by the ORM models.
-
-    Uses the SQLAlchemy metadata to create all tables in the connected database.
-    Should be called during application initialization to ensure the schema is up-to-date.
-
-    Returns:
-        None
-
-    Raises:
-        SQLAlchemyError: If an error occurs during table creation.
-    """
+    """Create all database tables defined by the ORM models."""
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("All tables created (if not existing).")

@@ -148,8 +148,8 @@ def generate_certificate(image_record: Image, *, fmt: str = "PDF") -> Path:
         raise
 
 def create_registration_package(image_record: Image,
-                                original_image: Path,
-                                watermarked_image: Path,
+                                original_path: Path,
+                                watermarked_path: Path,
                                 social_image: Path | None = None,
                                 signature_image: Path | None = None) -> Path:
     """Create a ZIP package containing the proof-of-authenticity certificate and related images.
@@ -164,12 +164,12 @@ def create_registration_package(image_record: Image,
     Raises FileNotFoundError if any required file path does not exist.
     """
     # Validate required files exist
-    if not original_image.exists():
-        logger.error("Original image file not found: %s", original_image)
-        raise FileNotFoundError(f"Original image file not found: {original_image}")
-    if not watermarked_image.exists():
-        logger.error("Watermarked image file not found: %s", watermarked_image)
-        raise FileNotFoundError(f"Watermarked image file not found: {watermarked_image}")
+    if not original_path.exists():
+        logger.error("Original image file not found: %s", original_path)
+        raise FileNotFoundError(f"Original image file not found: {original_path}")
+    if not watermarked_path.exists():
+        logger.error("Watermarked image file not found: %s", watermarked_path)
+        raise FileNotFoundError(f"Watermarked image file not found: {watermarked_path}")
     if social_image and not social_image.exists():
         logger.error("Social image file not found: %s", social_image)
         raise FileNotFoundError(f"Social image file not found: {social_image}")
