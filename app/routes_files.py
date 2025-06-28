@@ -5,7 +5,17 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from flask import Blueprint, abort, current_app, request, send_from_directory
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from werkzeug.utils import secure_filename
 
 logger = logging.getLogger(__name__)
@@ -22,23 +32,39 @@ def _allowed_file(filename: str) -> bool:
     return Path(filename).suffix.lower() in allowed_exts
 
 
+@files_bp.route("/upload", methods=["GET"])
+def upload_form():
+    """Render the file upload form."""
+    return render_template("upload.html")  # Assumes you have a template named upload.html
+
+
 @files_bp.route("/upload", methods=["POST"])
-def upload() -> str:
-    """Handle a simple file upload."""
+def upload():
+    """Handle a file upload via POST form."""
     if "file" not in request.files:
-        abort(400, description="No file part")
+        flash("No file part in request", "error")
+        return redirect(request.url)
+    
     file = request.files["file"]
+    
     if file.filename == "":
-        abort(400, description="No selected file")
+        flash("No file selected", "error")
+        return redirect(request.url)
+
     if not _allowed_file(file.filename):
-        abort(400, description="File type not allowed")
+        flash("File type not allowed", "error")
+        return redirect(request.url)
+
     upload_folder = current_app.config.get("UPLOAD_FOLDER")
     Path(upload_folder).mkdir(parents=True, exist_ok=True)
+
     fname = secure_filename(file.filename)
     dest = Path(upload_folder) / fname
     file.save(dest)
+
     logger.info("Saved uploaded file to %s", dest)
-    return "uploaded"
+    flash(f"File '{fname}' uploaded successfully", "success")
+    return redirect(url_for("files.upload_form"))
 
 
 @files_bp.route("/download/<path:filename>")
