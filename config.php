@@ -1,73 +1,28 @@
 <?php
-/**
- * /config.php
- *
- * Central configuration file for Infinite Image Tools.
- *
- * Note: In a production environment, consider storing these credentials
- *       in environment variables or a secure vault service.
- */
+// Database configuration
 
-/** Database Configuration */
-$db_config = [
-    'host'     => 'localhost',            // Database host
-    'port'     => '3306',                 // Database port (3306 for MySQL/MariaDB)
-    'dbname'   => 'infinite_image_tools', // Name of your database
-    'username' => 'infinite_image_user',  // Database user
-    'password' => 'infinite_image_pass',  // Database password
-    'charset'  => 'utf8mb4'               // Character set
-];
+define('DB_HOST', 'localhost');          // Database host (e.g., IP or hostname)
+define('DB_PORT', 3306);                 // Database port (default for MariaDB/MySQL)
+define('DB_NAME', 'infinite_image_tools'); // Database name
+define('DB_USER', 'infinite_image_user'); // Database username
+define('DB_PASS', 'JASmine is D3ad!');  // Database password
 
-/** SMTP (Email) Configuration */
-$smtp_config = [
-    'host'       => 'smtp.mailtrap.io',    // Host of your SMTP server
-    'port'       => 2525,                  // SMTP port (often 587 for TLS, 465 for SSL)
-    'encryption' => 'tls',                 // Encryption method (tls or ssl)
-    'username'   => 'YOUR_SMTP_USERNAME',  // SMTP user
-    'password'   => 'YOUR_SMTP_PASSWORD',  // SMTP password
-    'from_email' => 'noreply@yourdomain.com',
-    'from_name'  => 'Infinite Image Tools'
-];
+// Optional: Additional settings for error handling and debugging
+define('DB_CHARSET', 'utf8mb4');         // Database charset
+define('DB_DEBUG', true);                // Enable debugging (set to false in production)
 
-/** Application-Wide Configuration */
-$app_config = [
-    'base_url'       => 'https://yourdomain.com/', // Used for generating links/URLs
-    'debug_mode'     => true,                      // Toggle debugging output
-    'upload_path'    => __DIR__ . '/uploads',      // File system path for uploads
-    'log_path'       => __DIR__ . '/logs',         // Log directory
-    'session_lifetime' => 3600                     // Session lifetime in seconds
-];
-
-/**
- * Optional: Create a PDO object for database connections
- *           (You can also do this in a separate script.)
- */
+// Create a connection (using PDO)
 try {
-    $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=%s',
-                   $db_config['host'],
-                   $db_config['port'],
-                   $db_config['dbname'],
-                   $db_config['charset']);
-
-    $pdo = new PDO($dsn, $db_config['username'], $db_config['password'], [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Enable exceptions for errors
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Fetch data as associative arrays
     ]);
 } catch (PDOException $e) {
-    // Handle connection errors here
-    if ($app_config['debug_mode']) {
-        echo 'Database connection failed: ' . $e->getMessage();
+    if (DB_DEBUG) {
+        die("Database connection failed: " . $e->getMessage());
+    } else {
+        die("Database connection failed. Please try again later.");
     }
-    exit;
 }
-
-/**
- * Return all configurations (and the PDO object) in an array, or
- * use global variables as needed.
- */
-return [
-    'db_config'   => $db_config,
-    'smtp_config' => $smtp_config,
-    'app_config'  => $app_config,
-    'pdo'         => $pdo
-];
+?>
