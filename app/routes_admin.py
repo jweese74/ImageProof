@@ -1,10 +1,6 @@
-"""Admin-only routes for ImageProof."""
-
-from __future__ import annotations
-
+from pathlib import Path
 import re
 from datetime import datetime
-from pathlib import Path
 
 from flask import (
     Blueprint,
@@ -29,9 +25,14 @@ admin_bp = Blueprint(
 
 
 @admin_bp.route("/")
+@require_login(role="Admin")
 def admin_home() -> str:
-    """Placeholder admin route."""
-    return "ImageProof admin"
+    """Admin dashboard landing page."""
+    return render_template(
+        "admin_dashboard.html",
+        stats={},
+        recent_actions=[],
+    )
 
 
 @admin_bp.route("/logs", methods=["GET", "POST"])
