@@ -281,7 +281,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Create unique subdirectory
     echoStep("Creating processing directory...");
     $runId        = date('Ymd_His') . '_' . uniqid();
-    $userProcBase = $processedDir . '/' . $currentUserId;   // 👤 user-scoped
+    $userProcBase = $processedDir . '/' . $userId;          // user-scoped
+
 
     if (!is_dir($userProcBase) && !mkdir($userProcBase, 0775, true)) {
         echoStep("Error: unable to create user processing folder.", 'error');
@@ -461,7 +462,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
 
         $stmt->execute([
-            ':uid'   => $currentUserId,
+            ':uid'   => $userId,
             ':orig'  => $signedImage,
             ':thumb' => $thumbnail,
             ':size'  => filesize($signedImage),
