@@ -120,8 +120,8 @@ if ($loggedIn) {
 
         /* ---------- nav ---------- */
         nav {
-            text-align: right;
-            margin: 10px 5% 0
+            text-align: center;
+            margin: 10px auto 0
         }
 
         nav a {

@@ -446,6 +446,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          *  Persist ORIGINAL-AND-THUMB info to MariaDB            *
          * ------------------------------------------------------- */
         $imgInfo = getimagesize($signedImage);          // [0]=w, [1]=h, 'mime'=>…
+        
+        $relOrig  = ltrim(str_replace($_SERVER['DOCUMENT_ROOT'] . '/', '', $signedImage), '/');
+        $relThumb = ltrim(str_replace($_SERVER['DOCUMENT_ROOT'] . '/', '', $thumbnail), '/');
 
         $stmt = $pdo->prepare("
             INSERT INTO images (
@@ -463,8 +466,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt->execute([
             ':uid'   => $userId,
-            ':orig'  => $signedImage,
-            ':thumb' => $thumbnail,
+            ':orig'  => $relOrig,
+            ':thumb' => $relThumb,
             ':size'  => filesize($signedImage),
             ':w'     => $imgInfo[0]  ?? null,
             ':h'     => $imgInfo[1]  ?? null,
