@@ -273,6 +273,53 @@ if ($loggedIn) {
             <div style="text-align:center;margin-top:18px">
                 <button type="submit" name="submit" value="1">Start processing</button>
             </div>
+            <fieldset>
+                <legend>Artwork Metadata</legend>
+
+                <label>Title
+                    <input type="text" name="title" required>
+                </label>
+
+                <label>Creator (your name or studio)
+                    <input type="text" name="creator" required>
+                </label>
+
+                <label>Creation Date
+                    <input type="date" name="creation_date" required>
+                </label>
+
+                <label>Description
+                    <textarea name="description" rows="4" required></textarea>
+                </label>
+
+                <label>Intellectual&nbsp;Genre
+                    <input type="text" name="genre" placeholder="e.g. Surrealism">
+                </label>
+
+                <label>Subject / Keywords (comma-separated)
+                    <input type="text" name="keywords">
+                </label>
+
+                <label>Web Statement&nbsp;(URL)
+                    <input type="text" name="webstatement" placeholder="https://…">
+                </label>
+
+                <label>By-line&nbsp;(display credit)
+                    <input type="text" name="byline_name">
+                </label>
+
+                <label>Copyright&nbsp;Notice
+                    <input type="text" name="copyright_notice" placeholder="© 2025 Infinite Muse Arts">
+                </label>
+
+                <label>Author’s&nbsp;Position (optional)
+                    <input type="text" name="position" placeholder="Photographer / Painter / …">
+                </label>
+
+                <label>Headline (SEO headline)
+                    <input type="text" name="seo_headline">
+                </label>
+            </fieldset>
         </form>
 
     <?php else: ?>
