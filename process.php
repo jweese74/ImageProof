@@ -1,26 +1,69 @@
 <?php
-// process.php
-
-/***************************************************************
- * Infinite Muse Toolbox - Processing Script
- *
- * - Handles form submissions, processes images, applies watermarks,
- *   embeds metadata, and provides real-time feedback to users.
- ***************************************************************/
-
-// 1) Require helper files
 require_once __DIR__ . '/auth.php';
-require_login();                       //
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    validate_csrf_token();             //
+require_login();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/functions.php';
+
+validate_csrf_token();                //  ← run early
+
+$userId = current_user()['user_id'];
+
+/* =====  constants & helpers  =================================== */
+$allowedExtensions = ['png','jpg','jpeg','webp'];   // for upload filter
+$processedDir      = __DIR__ . '/processing';       // if not coming from helpers
+
+/* ================================================================
+   1.  Resolve watermark to use
+   --------------------------------------------------------------- */
+$selectedWatermark     = '';   // absolute filesystem path
+$uploadedWatermarkPath = '';   // temp one-off watermark
+
+// (a) saved watermark chosen from <select>
+if (!empty($_POST['watermark_id'])) {
+    $stmt = $pdo->prepare(
+        'SELECT path FROM watermarks WHERE watermark_id = ? AND user_id = ?'
+    );
+    $stmt->execute([$_POST['watermark_id'], $userId]);
+    if ($row = $stmt->fetch()) {
+        $selectedWatermark = __DIR__ . '/' . $row['path'];
+    }
+}
+
+// (b) one-off upload overrides the select
+if (!empty($_FILES['watermark_upload']['tmp_name'])
+    && $_FILES['watermark_upload']['error'] === UPLOAD_ERR_OK) {
+
+    $wmExt = strtolower(pathinfo($_FILES['watermark_upload']['name'], PATHINFO_EXTENSION));
+    if (in_array($wmExt, $allowedExtensions)) {
+        $runDir = sys_get_temp_dir() . '/' . uniqid('wm_run_');
+        mkdir($runDir, 0700, true);
+        $uploadedWatermarkPath = "$runDir/custom_wm.$wmExt";
+        move_uploaded_file($_FILES['watermark_upload']['tmp_name'], $uploadedWatermarkPath);
+        $selectedWatermark = $uploadedWatermarkPath;   // overrides saved one
+    }
+}
+
+/* ================================================================
+   2.  Resolve licence text
+   --------------------------------------------------------------- */
+$licenseInfo = '';
+if (!empty($_POST['license_id'])) {
+    $stmt = $pdo->prepare(
+        'SELECT text_blob FROM licenses WHERE license_id = ? AND user_id = ?'
+    );
+    $stmt->execute([$_POST['license_id'], $userId]);
+    $licenseInfo = $stmt->fetchColumn() ?: '';
+}
+if ($licenseInfo === '') {
+    $licenseInfo = "Sold for personal use and enjoyment only.";
 }
 
 /* --------------------------------------------------------------- *
- *  UPLOAD CONSTRAINTS – 200 MB hard limit per file               *
+ *  UPLOAD CONSTRAINTS – 200 MB per file
  * --------------------------------------------------------------- */
-define('MAX_UPLOAD_BYTES', 209_715_200);          // 200 MB
+define('MAX_UPLOAD_BYTES', 209_715_200);
 ini_set('upload_max_filesize', '200M');
-ini_set('post_max_size',      '210M');            // little head-room
+ini_set('post_max_size',      '210M');
 
 if (!empty($_FILES['images']['size'])) {
     foreach ((array)$_FILES['images']['size'] as $s) {
