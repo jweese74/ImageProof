@@ -10,9 +10,26 @@
 
 // 1) Require helper files
 require_once __DIR__ . '/auth.php';
-require_login();                       // 🔒
+require_login();                       //
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    validate_csrf_token();             // 🛡️
+    validate_csrf_token();             //
+}
+
+/* --------------------------------------------------------------- *
+ *  UPLOAD CONSTRAINTS – 200 MB hard limit per file               *
+ * --------------------------------------------------------------- */
+define('MAX_UPLOAD_BYTES', 209_715_200);          // 200 MB
+ini_set('upload_max_filesize', '200M');
+ini_set('post_max_size',      '210M');            // little head-room
+
+if (!empty($_FILES['images']['size'])) {
+    foreach ((array)$_FILES['images']['size'] as $s) {
+        if ($s > MAX_UPLOAD_BYTES) {
+            http_response_code(413);
+            echoStep("Error: one or more files exceed the 200 MB limit.", 'error');
+            exit;
+        }
+    }
 }
 
 require_once __DIR__ . '/process_helpers.php';
@@ -195,13 +212,18 @@ if (isset($_POST['submit'])) {
 
     // Create unique subdirectory
     echoStep("Creating processing directory...");
-    $runId = date('Ymd_His') . '_' . uniqid();
-    $runDir= $processedDir . '/' . $runId;
-    if (!mkdir($runDir, 0775, true)) {
-        echoStep("Error: Unable to create folder for processing.", 'error');
+    $runId        = date('Ymd_His') . '_' . uniqid();
+    $userProcBase = $processedDir . '/' . $currentUserId;   // 👤 user-scoped
+
+    if (!is_dir($userProcBase) && !mkdir($userProcBase, 0775, true)) {
+        echoStep("Error: unable to create user processing folder.", 'error');
         exit;
     }
-    echoStep("Processing directory created: " . fakePath($runDir), 'success');
+    $runDir = $userProcBase . '/' . $runId;
+    if (!mkdir($runDir, 0775, true)) {
+        echoStep("Error: unable to create run folder.", 'error');
+        exit;
+    }    echoStep("Processing directory created: " . fakePath($runDir), 'success');
 
     // Collect images
     echoStep("Collecting uploaded images...");
@@ -344,11 +366,41 @@ if (isset($_POST['submit'])) {
         echoStep("Generating thumbnail and preview for '" . fakePath($signedImage) . "'...", 'info');
         $thumbnail = $runDir . '/' . $fileBaseSanitised . '_thumbnail.png';
         $preview   = $runDir . '/' . $fileBaseSanitised . '_preview.png';
-        $cmdThumb  = "convert " . escapeshellarg($signedImage) . " -resize 300x300 " . escapeshellarg($thumbnail);
+        /* 400-px thumbnail per spec */
+        $cmdThumb  = "convert " . escapeshellarg($signedImage) . " -resize 400x400 " . escapeshellarg($thumbnail);
         $cmdPrev   = "convert " . escapeshellarg($signedImage) . " -resize 800x800 " . escapeshellarg($preview);
         shell_exec($cmdThumb . " 2>&1");
         shell_exec($cmdPrev  . " 2>&1");
-        echoStep("Thumbnail and preview generated successfully.", 'success');
+
+        /* ------------------------------------------------------- *
+         *  Persist ORIGINAL-AND-THUMB info to MariaDB            *
+         * ------------------------------------------------------- */
+        $imgInfo = getimagesize($signedImage);          // [0]=w, [1]=h, 'mime'=>…
+
+        $stmt = $pdo->prepare("
+            INSERT INTO images (
+                image_id,  user_id,
+                original_path, thumbnail_path,
+                filesize,   width, height, mime_type,
+                sha256,     created_at
+            ) VALUES (
+                UUID(),    :uid,
+                :orig,     :thumb,
+                :size,     :w, :h, :mime,
+                :sha,      NOW()
+            )
+        ");
+
+        $stmt->execute([
+            ':uid'   => $currentUserId,
+            ':orig'  => $signedImage,
+            ':thumb' => $thumbnail,
+            ':size'  => filesize($signedImage),
+            ':w'     => $imgInfo[0]  ?? null,
+            ':h'     => $imgInfo[1]  ?? null,
+            ':mime'  => $imgInfo['mime'] ?? null,
+            ':sha'   => hash_file('sha256', $signedImage),
+        ]);        echoStep("Thumbnail and preview generated successfully.", 'success');
 
         // Watermark thumbnail & preview with random text (or keep it simple)
         if (!empty($selectedWatermark)) {
