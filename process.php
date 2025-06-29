@@ -275,10 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($uploadedWatermarkPath) {
         $selectedWatermark = $uploadedWatermarkPath;
     }
-    
-    if ($uploadedWatermarkPath) {
-        $selectedWatermark = $uploadedWatermarkPath;
-    }
+
     // Create unique subdirectory
     echoStep("Creating processing directory...");
     $runId        = date('Ymd_His') . '_' . uniqid();
