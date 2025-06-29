@@ -57,136 +57,243 @@ if ($loggedIn) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<title>Infinite Muse Toolkit</title>
-<style>
-/* ---------- core ---------- */
-html,body{margin:0;padding:0;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-          background:#111;color:#eee}
-h1{margin:30px 0;text-align:center}
-img.header{display:block;margin:20px auto 10px;max-width:260px}
+    <meta charset="utf-8">
+    <title>Infinite Muse Toolkit</title>
+    <style>
+        /* ---------- core ---------- */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+            background: #111;
+            color: #eee
+        }
 
-/* ---------- thumb grid ---------- */
-.thumb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
-            width:90%;max-width:900px;margin:10px auto}
-.thumb-grid img{width:100%;height:auto;border-radius:4px;border:1px solid #444}
+        h1 {
+            margin: 30px 0;
+            text-align: center
+        }
 
-/* ---------- buttons ---------- */
-.big-btn{display:inline-block;padding:14px 28px;margin:20px 12px;
-         font-size:1.1em;font-weight:600;text-decoration:none;color:#fff;
-         background:#444;border:1px solid #666;border-radius:6px}
-.big-btn:hover{background:#666}
+        img.header {
+            display: block;
+            margin: 20px auto 10px;
+            max-width: 260px
+        }
 
-/* ---------- nav ---------- */
-nav{text-align:right;margin:10px 5% 0}
-nav a{color:#d2b648;text-decoration:none;margin-left:12px}
-nav a:hover{text-decoration:underline}
+        /* ---------- thumb grid ---------- */
+        .thumb-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            width: 90%;
+            max-width: 900px;
+            margin: 10px auto
+        }
 
-/* ---------- form (members) ---------- */
-form{width:80%;max-width:900px;margin:30px auto;border:1px solid #444;
-     padding:20px;border-radius:6px;background:#1a1a1a}
-fieldset{border:1px solid #555;border-radius:4px;margin-bottom:25px;padding:15px}
-label{display:block;width:90%;margin:.8rem auto .4rem}
-input[type=text],textarea,select,input[type=date]{width:90%;margin:0 auto;
-     display:block;padding:8px;border:1px solid #555;border-radius:4px;
-     background:#222;color:#eee}
-input[type=file]{margin:10px auto;display:block;color:#eee}
-button{padding:10px 20px;background:#444;color:#fff;border:1px solid #666;
-       border-radius:4px;cursor:pointer;margin:0 10px}
-button:hover{background:#666}
-.notice,.fine-print{font-size:.85em;text-align:center;color:#aaa;margin-top:25px}
-</style>
+        .thumb-grid img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            border: 1px solid #444
+        }
+
+        /* ---------- buttons ---------- */
+        .big-btn {
+            display: inline-block;
+            padding: 14px 28px;
+            margin: 20px 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-decoration: none;
+            color: #fff;
+            background: #444;
+            border: 1px solid #666;
+            border-radius: 6px
+        }
+
+        .big-btn:hover {
+            background: #666
+        }
+
+        /* ---------- nav ---------- */
+        nav {
+            text-align: right;
+            margin: 10px 5% 0
+        }
+
+        nav a {
+            color: #d2b648;
+            text-decoration: none;
+            margin-left: 12px
+        }
+
+        nav a:hover {
+            text-decoration: underline
+        }
+
+        /* ---------- form (members) ---------- */
+        form {
+            width: 80%;
+            max-width: 900px;
+            margin: 30px auto;
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 6px;
+            background: #1a1a1a
+        }
+
+        fieldset {
+            border: 1px solid #555;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            padding: 15px
+        }
+
+        label {
+            display: block;
+            width: 90%;
+            margin: .8rem auto .4rem
+        }
+
+        input[type=text],
+        textarea,
+        select,
+        input[type=date] {
+            width: 90%;
+            margin: 0 auto;
+            display: block;
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #222;
+            color: #eee
+        }
+
+        input[type=file] {
+            margin: 10px auto;
+            display: block;
+            color: #eee
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px
+        }
+
+        button:hover {
+            background: #666
+        }
+
+        .notice,
+        .fine-print {
+            font-size: .85em;
+            text-align: center;
+            color: #aaa;
+            margin-top: 25px
+        }
+    </style>
 </head>
+
 <body>
 
-<header>
-    <img src="./watermarks/muse_signature_black.png" alt="Muse signature" class="header">
-</header>
+    <header>
+        <img src="./watermarks/muse_signature_black.png" alt="Muse signature" class="header">
+    </header>
 
-<h1>Infinite Muse Toolkit</h1>
+    <h1>Infinite Muse Toolkit</h1>
 
-<?php if ($loggedIn): ?>
-    <!-- ===== MEMBER VIEW ===== -->
-    <nav>
-        <span>Welcome, <?= htmlspecialchars($user['display_name'] ?: $user['email']) ?></span>
-        | <a href="my_watermarks.php">My Watermarks</a>
-        | <a href="my_licenses.php">My Licences</a>
-        | <a href="logout.php">Logout</a>
-    </nav>
+    <?php if ($loggedIn): ?>
+        <!-- ===== MEMBER VIEW ===== -->
+        <nav>
+            <span>Welcome, <?= htmlspecialchars($user['display_name'] ?: $user['email']) ?></span>
+            | <a href="my_watermarks.php">My Watermarks</a>
+            | <a href="my_licenses.php">My Licences</a>
+            | <a href="logout.php">Logout</a>
+        </nav>
 
-    <section class="thumb-grid">
-        <?php if ($thumbs): foreach ($thumbs as $t): ?>
-            <img src="<?= htmlspecialchars($t) ?>" alt="recent thumbnail">
-        <?php endforeach; else: ?>
-            <p style="grid-column:1 / -1;text-align:center">No images yet – upload one below!</p>
-        <?php endif; ?>
-    </section>
+        <section class="thumb-grid">
+            <?php if ($thumbs): foreach ($thumbs as $t): ?>
+                    <img src="<?= htmlspecialchars($t) ?>" alt="recent thumbnail">
+                <?php endforeach;
+            else: ?>
+                <p style="grid-column:1 / -1;text-align:center">No images yet – upload one below!</p>
+            <?php endif; ?>
+        </section>
 
-    <div style="text-align:center;margin-top:10px">
-        <a href="#uploadForm" class="big-btn">Process another image</a>
-    </div>
-
-    <!-- ===== UPLOAD FORM (unchanged except CSRF token) ===== -->
-    <form action="process.php" method="post" enctype="multipart/form-data" id="uploadForm">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
-
-        <!-- watermark select -->
-        <label>Apply watermark:
-            <select name="watermark_id">
-                <option value="">— none —</option>
-                <?php foreach ($watermarkOptions as $opt): ?>
-                    <option value="<?= htmlspecialchars($opt['watermark_id']) ?>"
-                            <?= $opt['is_default'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($opt['filename']) ?>
-                        <?= $opt['is_default'] ? ' (default)' : '' ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            or <input type="file" name="watermark_upload" accept=".png,.jpg,.jpeg,.webp">
-        </label>
-
-        <!-- licence select -->
-        <label>Attach licence:
-            <select name="license_id">
-                <option value="">— none —</option>
-                <?php foreach ($licenseOptions as $opt): ?>
-                    <option value="<?= htmlspecialchars($opt['license_id']) ?>"
-                            <?= $opt['is_default'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($opt['name']) ?>
-                        <?= $opt['is_default'] ? ' (default)' : '' ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </label>
-
-        <!-- image chooser -->
-        <label>Select images (max 200 MB each):
-            <input type="file" name="images[]" multiple required>
-        </label>
-
-        <div style="text-align:center;margin-top:18px">
-            <button type="submit">Start processing</button>
+        <div style="text-align:center;margin-top:10px">
+            <a href="#uploadForm" class="big-btn">Process another image</a>
         </div>
-    </form>
 
-<?php else: ?>
-    <!-- ===== PUBLIC VIEW ===== -->
-    <section class="thumb-grid">
-        <?php if ($thumbs): foreach ($thumbs as $t): ?>
-            <img src="<?= htmlspecialchars($t) ?>" alt="latest thumbnail">
-        <?php endforeach; else: ?>
-            <p style="grid-column:1 / -1;text-align:center">No images have been processed yet.</p>
-        <?php endif; ?>
-    </section>
+        <!-- ===== UPLOAD FORM (unchanged except CSRF token) ===== -->
+        <form action="process.php" method="post" enctype="multipart/form-data" id="uploadForm">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
 
-    <div style="text-align:center">
-        <a href="login.php"    class="big-btn">Log in</a>
-        <a href="register.php" class="big-btn">Register</a>
-    </div>
-<?php endif; ?>
+            <!-- watermark select -->
+            <label>Apply watermark:
+                <select name="watermark_id">
+                    <option value="">— none —</option>
+                    <?php foreach ($watermarkOptions as $opt): ?>
+                        <option value="<?= htmlspecialchars($opt['watermark_id']) ?>"
+                            <?= $opt['is_default'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($opt['filename']) ?>
+                            <?= $opt['is_default'] ? ' (default)' : '' ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                or <input type="file" name="watermark_upload" accept=".png,.jpg,.jpeg,.webp">
+            </label>
 
-<p class="notice">Original uploads are capped at 200 MB. Thumbnails shown above refresh automatically.</p>
-<p class="fine-print">&copy; 2025 Infinite Muse Arts</p>
+            <!-- licence select -->
+            <label>Attach licence:
+                <select name="license_id">
+                    <option value="">— none —</option>
+                    <?php foreach ($licenseOptions as $opt): ?>
+                        <option value="<?= htmlspecialchars($opt['license_id']) ?>"
+                            <?= $opt['is_default'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($opt['name']) ?>
+                            <?= $opt['is_default'] ? ' (default)' : '' ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+
+            <!-- image chooser -->
+            <label>Select images (max 200 MB each):
+                <input type="file" name="images[]" multiple required>
+            </label>
+
+            <div style="text-align:center;margin-top:18px">
+                <button type="submit" name="submit" value="1">Start processing</button>
+            </div>
+        </form>
+
+    <?php else: ?>
+        <!-- ===== PUBLIC VIEW ===== -->
+        <section class="thumb-grid">
+            <?php if ($thumbs): foreach ($thumbs as $t): ?>
+                    <img src="<?= htmlspecialchars($t) ?>" alt="latest thumbnail">
+                <?php endforeach;
+            else: ?>
+                <p style="grid-column:1 / -1;text-align:center">No images have been processed yet.</p>
+            <?php endif; ?>
+        </section>
+
+        <div style="text-align:center">
+            <a href="login.php" class="big-btn">Log in</a>
+            <a href="register.php" class="big-btn">Register</a>
+        </div>
+    <?php endif; ?>
+
+    <p class="notice">Original uploads are capped at 200 MB. Thumbnails shown above refresh automatically.</p>
+    <p class="fine-print">&copy; 2025 Infinite Muse Arts</p>
 </body>
+
 </html>

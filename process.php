@@ -9,7 +9,7 @@ validate_csrf_token();                //  ← run early
 $userId = current_user()['user_id'];
 
 /* =====  constants & helpers  =================================== */
-$allowedExtensions = ['png','jpg','jpeg','webp'];   // for upload filter
+$allowedExtensions = ['png', 'jpg', 'jpeg', 'webp'];   // for upload filter
 $processedDir      = __DIR__ . '/processing';       // if not coming from helpers
 
 /* ================================================================
@@ -30,8 +30,10 @@ if (!empty($_POST['watermark_id'])) {
 }
 
 // (b) one-off upload overrides the select
-if (!empty($_FILES['watermark_upload']['tmp_name'])
-    && $_FILES['watermark_upload']['error'] === UPLOAD_ERR_OK) {
+if (
+    !empty($_FILES['watermark_upload']['tmp_name'])
+    && $_FILES['watermark_upload']['error'] === UPLOAD_ERR_OK
+) {
 
     $wmExt = strtolower(pathinfo($_FILES['watermark_upload']['name'], PATHINFO_EXTENSION));
     if (in_array($wmExt, $allowedExtensions)) {
@@ -97,6 +99,7 @@ header('X-Accel-Buffering: no'); // For Nginx to disable buffering
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Processing - Infinite Muse Toolkit</title>
@@ -108,9 +111,12 @@ header('X-Accel-Buffering: no'); // For Nginx to disable buffering
             margin: 20px;
             text-align: center;
         }
+
         h1 {
-            color: #d2b648; /* Old Gold */
+            color: #d2b648;
+            /* Old Gold */
         }
+
         #steps {
             width: 80%;
             margin: 20px auto;
@@ -121,6 +127,7 @@ header('X-Accel-Buffering: no'); // For Nginx to disable buffering
             background-color: #222;
             border-radius: 8px;
         }
+
         .step {
             margin: 10px 0;
             padding: 10px;
@@ -128,43 +135,61 @@ header('X-Accel-Buffering: no'); // For Nginx to disable buffering
             border-radius: 4px;
             font-family: monospace;
         }
+
         .step.success {
-            color: #2ecc71; /* Green */
+            color: #2ecc71;
+            /* Green */
         }
+
         .step.error {
-            color: #e74c3c; /* Red */
+            color: #e74c3c;
+            /* Red */
         }
+
         .step.info {
-            color: #3498db; /* Blue */
+            color: #3498db;
+            /* Blue */
         }
+
         .step.download {
-            color: #f1c40f; /* Bright Yellow */
-            font-size: 1.8em; /* Larger font size */
-            text-align: center; /* Center the text */
-            font-weight: bold; /* Bold text */
-            margin-top: 20px; /* Space above the link */
+            color: #f1c40f;
+            /* Bright Yellow */
+            font-size: 1.8em;
+            /* Larger font size */
+            text-align: center;
+            /* Center the text */
+            font-weight: bold;
+            /* Bold text */
+            margin-top: 20px;
+            /* Space above the link */
         }
+
         a {
-            color: #d2b648; /* Old Gold */
+            color: #d2b648;
+            /* Old Gold */
             text-decoration: none;
             font-weight: bold;
         }
+
         a:hover {
             text-decoration: underline;
         }
     </style>
 </head>
+
 <body>
     <h1>Processing - Do Not Refresh</h1>
     <div id="steps"></div>
 </body>
+
 </html>
 <?php
 // Flush the initial HTML to the browser
 flush();
 
 // 5. Define the fakePath function
-function fakePath($path) {
+function fakePath($path)
+{
     global $processedDir;
     $fakeBase = '.../processing';
     // Ensure $processedDir ends with a slash for accurate replacement
@@ -177,7 +202,7 @@ function fakePath($path) {
 }
 
 // 6. Start processing the form data
-if (isset($_POST['submit'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Grab form data
     $title           = trim($_POST['title'] ?? '');
     $description     = trim($_POST['description'] ?? '');
@@ -230,7 +255,7 @@ if (isset($_POST['submit'])) {
         $wmTmpName  = $_FILES['watermark_upload']['tmp_name'];
         $wmOrigName = $_FILES['watermark_upload']['name'];
         $wmExt      = strtolower(pathinfo($wmOrigName, PATHINFO_EXTENSION));
-        if ($wmError === UPLOAD_ERR_OK && in_array($wmExt, ['png','jpg','jpeg','webp'])) {
+        if ($wmError === UPLOAD_ERR_OK && in_array($wmExt, ['png', 'jpg', 'jpeg', 'webp'])) {
             $uniqueWmName          = 'uploaded_wm_' . uniqid() . '.' . $wmExt;
             $uploadedWatermarkPath = $processedDir . '/' . $uniqueWmName;
             if (move_uploaded_file($wmTmpName, $uploadedWatermarkPath)) {
@@ -266,7 +291,8 @@ if (isset($_POST['submit'])) {
     if (!mkdir($runDir, 0775, true)) {
         echoStep("Error: unable to create run folder.", 'error');
         exit;
-    }    echoStep("Processing directory created: " . fakePath($runDir), 'success');
+    }
+    echoStep("Processing directory created: " . fakePath($runDir), 'success');
 
     // Collect images
     echoStep("Collecting uploaded images...");
@@ -353,8 +379,8 @@ if (isset($_POST['submit'])) {
 
                 $margin       = floor($artWidth * 0.02);
                 $cmdComposite = "convert " . escapeshellarg($signedImage) . " " . escapeshellarg($resizedWm)
-                              . " -gravity southeast -geometry +{$margin}+{$margin} -composite "
-                              . escapeshellarg($signedImage);
+                    . " -gravity southeast -geometry +{$margin}+{$margin} -composite "
+                    . escapeshellarg($signedImage);
                 shell_exec($cmdComposite . " 2>&1");
                 @unlink($resizedWm);
                 echoStep("Watermark applied successfully.", 'success');
@@ -375,23 +401,23 @@ if (isset($_POST['submit'])) {
         echoStep("Embedding metadata into '" . fakePath($signedImage) . "'...", 'info');
         $licenseInfo = "Sold for personal use and enjoyment only.";
         $cmdEmbed    = "exiftool -overwrite_original "
-                     . "-Iptc:By-line=" . escapeshellarg($bylineName) . " "
-                     . "-Iptc:CopyrightNotice=" . escapeshellarg($copyrightNotice) . " "
-                     . "-XMP-dc:Creator=" . escapeshellarg($creator) . " "
-                     . "-XMP-dc:Rights=" . escapeshellarg($copyrightNotice) . " "
-                     . "-XMP-photoshop:AuthorsPosition=" . escapeshellarg($position) . " "
-                     . "-XMP-xmpRights:Marked=true "
-                     . "-XMP-xmpRights:WebStatement=" . escapeshellarg($webStatement) . " "
-                     . "-XMP-dc:Title=" . escapeshellarg($title) . " "
-                     . "-XMP-dc:Description=" . escapeshellarg($description) . " "
-                     . "-XMP-dc:Date=" . escapeshellarg($creationDate) . " "
-                     . "-XMP-photoshop:Headline=" . escapeshellarg($seoHeadline) . " "
-                     . "-XMP-dc:Subject=" . escapeshellarg($keywords) . " "
-                     . "-XMP-iptcCore:IntellectualGenre=" . escapeshellarg($genre) . " "
-                     . "-XMP-xmpMM:DocumentID=uuid:" . escapeshellarg($imageHash) . " "
-                     . "-XMP-xmpMM:InstanceID=uuid:" . escapeshellarg($imageHash) . " "
-                     . "-XMP:Rights=" . escapeshellarg($licenseInfo) . " "
-                     . escapeshellarg($signedImage);
+            . "-Iptc:By-line=" . escapeshellarg($bylineName) . " "
+            . "-Iptc:CopyrightNotice=" . escapeshellarg($copyrightNotice) . " "
+            . "-XMP-dc:Creator=" . escapeshellarg($creator) . " "
+            . "-XMP-dc:Rights=" . escapeshellarg($copyrightNotice) . " "
+            . "-XMP-photoshop:AuthorsPosition=" . escapeshellarg($position) . " "
+            . "-XMP-xmpRights:Marked=true "
+            . "-XMP-xmpRights:WebStatement=" . escapeshellarg($webStatement) . " "
+            . "-XMP-dc:Title=" . escapeshellarg($title) . " "
+            . "-XMP-dc:Description=" . escapeshellarg($description) . " "
+            . "-XMP-dc:Date=" . escapeshellarg($creationDate) . " "
+            . "-XMP-photoshop:Headline=" . escapeshellarg($seoHeadline) . " "
+            . "-XMP-dc:Subject=" . escapeshellarg($keywords) . " "
+            . "-XMP-iptcCore:IntellectualGenre=" . escapeshellarg($genre) . " "
+            . "-XMP-xmpMM:DocumentID=uuid:" . escapeshellarg($imageHash) . " "
+            . "-XMP-xmpMM:InstanceID=uuid:" . escapeshellarg($imageHash) . " "
+            . "-XMP:Rights=" . escapeshellarg($licenseInfo) . " "
+            . escapeshellarg($signedImage);
 
         exec($cmdEmbed . " 2>&1", $outputEmbed, $retEmbed);
         if ($retEmbed === 0) {
@@ -443,7 +469,8 @@ if (isset($_POST['submit'])) {
             ':h'     => $imgInfo[1]  ?? null,
             ':mime'  => $imgInfo['mime'] ?? null,
             ':sha'   => hash_file('sha256', $signedImage),
-        ]);        echoStep("Thumbnail and preview generated successfully.", 'success');
+        ]);
+        echoStep("Thumbnail and preview generated successfully.", 'success');
 
         // Watermark thumbnail & preview with random text (or keep it simple)
         if (!empty($selectedWatermark)) {
@@ -453,44 +480,44 @@ if (isset($_POST['submit'])) {
             echoStep("Watermark applied to thumbnail and preview.", 'success');
         }
 
-// New Code in process.php
+        // New Code in process.php
 
-// Extract metadata using metadata_extractor.php
-echoStep("Extracting metadata from '" . fakePath($signedImage) . "'...", 'info');
-$metadataFile = $runDir . '/' . $fileBaseSanitised . '_metadata.md';
+        // Extract metadata using metadata_extractor.php
+        echoStep("Extracting metadata from '" . fakePath($signedImage) . "'...", 'info');
+        $metadataFile = $runDir . '/' . $fileBaseSanitised . '_metadata.md';
 
-// Path to metadata_extractor.php
-$metadataExtractor = __DIR__ . '/metadata_extractor.php';
+        // Path to metadata_extractor.php
+        $metadataExtractor = __DIR__ . '/metadata_extractor.php';
 
-// Ensure the metadata extractor script exists
-if (!file_exists($metadataExtractor)) {
-    echoStep("Error: Metadata extractor script not found.", 'error');
-    exit;
-}
+        // Ensure the metadata extractor script exists
+        if (!file_exists($metadataExtractor)) {
+            echoStep("Error: Metadata extractor script not found.", 'error');
+            exit;
+        }
 
-// Command to execute the metadata extractor script
-$cmdExtract = "php " . escapeshellarg($metadataExtractor) 
-            . " --input=" . escapeshellarg($signedImage) 
+        // Command to execute the metadata extractor script
+        $cmdExtract = "php " . escapeshellarg($metadataExtractor)
+            . " --input=" . escapeshellarg($signedImage)
             . " --output=" . escapeshellarg($metadataFile);
 
-// Execute the command
-exec($cmdExtract . " 2>&1", $outputEmbed, $retEmbed);
+        // Execute the command
+        exec($cmdExtract . " 2>&1", $outputEmbed, $retEmbed);
 
-// Check for success
-if ($retEmbed === 0) {
-    echoStep("Metadata extracted to '" . fakePath($metadataFile) . "'.", 'success');
-} else {
-    echoStep("Error: Failed to extract metadata.", 'error');
-    foreach ($outputEmbed as $line) {
-        echoStep($line, 'error');
-    }
-    exit;
-}
+        // Check for success
+        if ($retEmbed === 0) {
+            echoStep("Metadata extracted to '" . fakePath($metadataFile) . "'.", 'success');
+        } else {
+            echoStep("Error: Failed to extract metadata.", 'error');
+            foreach ($outputEmbed as $line) {
+                echoStep($line, 'error');
+            }
+            exit;
+        }
 
         // Create certificate (Markdown file)
         echoStep("Generating certificate of authenticity...", 'info');
         $certMd   = $runDir . '/' . $fileBaseSanitised . '_certificate.md';
-        $mdContent= <<<EOF
+        $mdContent = <<<EOF
 # Digital Certificate of Authenticity
 
 **Title of Artwork:** *{$title}*  
@@ -550,7 +577,7 @@ EOF;
             $filesArg = '';
             foreach ($resultsToZip as $f) {
                 $base = basename($f);
-                $filesArg .= escapeshellarg($base).' ';
+                $filesArg .= escapeshellarg($base) . ' ';
             }
             $cmdZip = "cd " . escapeshellarg($runDir) . " && zip -r " . escapeshellarg($zipFile) . " $filesArg";
             exec($cmdZip . " 2>&1", $outputZip, $retZip);
