@@ -77,6 +77,5 @@ if (!function_exists('addWatermark')) {
 /**
  * If you want, you can also centralize your config variables in here:
  */
-$processedDir      = __DIR__ . '/processed'; // adjust as needed
 $defaultWatermark  = __DIR__ . '/watermarks/muse_signature_black.png';
 $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
