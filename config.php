@@ -1,45 +1,57 @@
 <?php
-// Attempt to load environment variables from a `.env` file if present
-$envPath = __DIR__ . '/.env';
-if (is_readable($envPath)) {
-    foreach (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if (str_starts_with(trim($line), '#')) {
-            continue;
-        }
-        [$key, $value] = array_map('trim', explode('=', $line, 2));
-        if ($key !== '') {
-            putenv("{$key}={$value}");
-            $_ENV[$key] = $value;
-        }
-    }
-}
+/**
+ * ImageProof – central configuration & PDO bootstrap.
+ *
+ * Sensitive values are pulled from environment variables that can be supplied
+ * either by a `.env` file (loaded via php-dotenv) or by Apache SetEnv
+ * directives.  Hard-coding secrets is no longer necessary.
+ */
 
-// Database configuration using environment variables with sensible defaults
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_PORT', getenv('DB_PORT') ?: 3306);
-define('DB_NAME', getenv('DB_NAME') ?: 'infinite_image_tools');
-define('DB_USER', getenv('DB_USER') ?: 'infinite_image_user');
-define('DB_PASS', getenv('DB_PASS') ?: 'JASmine is D3ad!');
+declare(strict_types=1);
 
-// Optional: Additional settings for error handling and debugging
-define('DB_CHARSET', 'utf8mb4');         // Database charset
-define('DB_DEBUG', filter_var(getenv('DB_DEBUG') ?: true, FILTER_VALIDATE_BOOLEAN));
+// ---------------------------------------------------------------------
+// Optional: load a .env file if one exists and you’re using Composer.
+// Comment these three lines out if you’re not using php-dotenv yet.
+// ---------------------------------------------------------------------
+// require_once __DIR__ . '/vendor/autoload.php';
+// if (class_exists(\Dotenv\Dotenv::class)) {
+//     \Dotenv\Dotenv::createImmutable(__DIR__ . '/../')->safeLoad();
+// }
 
-// Global upload limit (MB)
-define('MAX_UPLOAD_MB', getenv('MAX_UPLOAD_MB') ?: 200);
+// ---- ENV → constants ------------------------------------------------
+define('DB_HOST',  getenv('DB_HOST')  ?: 'localhost');
+define('DB_PORT',  getenv('DB_PORT')  ?: '3306');
+define('DB_NAME',  getenv('DB_NAME')  ?: 'infinite_image_tools');
+define('DB_USER',  getenv('DB_USER')  ?: 'infinite_image_user');
+define('DB_PASS',  getenv('DB_PASS')  ?: '');
+define('DB_DEBUG', filter_var(getenv('DB_DEBUG'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false);
 
-// Create a connection (using PDO)
+define('MAX_UPLOAD_MB', (int)(getenv('MAX_UPLOAD_MB') ?: 200));
+
+// ---- Enforce PHP upload limits at runtime ---------------------------
+@ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');
+@ini_set('post_max_size',       (MAX_UPLOAD_MB + 10) . 'M'); // +10 MB head-room
+
+// ---- PDO connection -------------------------------------------------
 try {
-    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    $dsn = sprintf(
+        'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+        DB_HOST,
+        DB_PORT,
+        DB_NAME
+    );
+
     $pdo = new PDO($dsn, DB_USER, DB_PASS, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Enable exceptions for errors
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Fetch data as associative arrays
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
 } catch (PDOException $e) {
+    // In dev you may wish to see the stack trace; in prod we log & die quietly.
     if (DB_DEBUG) {
-        die("Database connection failed: " . $e->getMessage());
-    } else {
-        die("Database connection failed. Please try again later.");
+        die('Database connection failed: ' . $e->getMessage());
     }
+    error_log('ImageProof DB connection error: ' . $e->getMessage());
+    http_response_code(500);
+    die('Internal Server Error');
 }
-?>
