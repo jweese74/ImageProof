@@ -1,4 +1,5 @@
 <?php
+
 /**
  * My Licences – CRUD dashboard
  * • Create / update / delete licence text blobs
@@ -40,27 +41,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($licId) {      // update
                 $pdo->prepare(
                     'UPDATE licenses SET name=?,text_blob=?,is_default=? WHERE license_id=? AND user_id=?'
-                )->execute([$name,$text,$def,$licId,$userId]);
-                $messages[]='Licence updated.';
+                )->execute([$name, $text, $def, $licId, $userId]);
+                $messages[] = 'Licence updated.';
             } else {           // insert
                 $pdo->prepare(
                     'INSERT INTO licenses (license_id,user_id,name,text_blob,is_default)
-                     VALUES (UUID(),?,?,?,?,?)'
-                )->execute([$userId,$name,$text,$def]);
-                $messages[]='Licence saved.';
+                     VALUES (UUID(),?,?,?,?)'
+                )->execute([$userId, $name, $text, $def]);
+                $messages[] = 'Licence saved.';
             }
         }
 
-    /* ---- edit --------------------------------------------------- */
+        /* ---- edit --------------------------------------------------- */
     } elseif ($action === 'edit') {
         // handled purely client-side (prefill form)
 
-    /* ---- delete ------------------------------------------------- */
+        /* ---- delete ------------------------------------------------- */
     } elseif ($action === 'delete' && !empty($_POST['lic_id'])) {
         $pdo->prepare(
             'DELETE FROM licenses WHERE license_id = ? AND user_id = ?'
-        )->execute([$_POST['lic_id'],$userId]);
-        $messages[]='Licence deleted.';
+        )->execute([$_POST['lic_id'], $userId]);
+        $messages[] = 'Licence deleted.';
     }
 }
 
@@ -74,69 +75,115 @@ $licenses = $pdo->prepare(
 $licenses->execute([$userId]);
 ?>
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<title>My Licences</title>
-<style>
-body{font-family:sans-serif;margin:40px auto;max-width:720px}
-table{width:100%;border-collapse:collapse;margin-top:1rem}
-th,td{padding:.5rem;border-bottom:1px solid #ccc;text-align:left;vertical-align:top}
-textarea{width:100%;height:120px}
-.msg{color:#27ae60}.err{color:#c0392b}
-</style>
-<script>
-function editLicence(id,name,text,def){
-    document.getElementById('lic_id').value=id;
-    document.getElementById('name').value=name;
-    document.getElementById('text_blob').value=text;
-    document.getElementById('is_default').checked=def;
-    document.getElementById('submitBtn').textContent='Update';
-}
-</script>
-</head><body>
+<html lang="en">
 
-<h1>My Licences</h1>
-<p><a href="index.php">← back to uploader</a></p>
+<head>
+    <meta charset="utf-8">
+    <title>My Licences</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 40px auto;
+            max-width: 720px
+        }
 
-<?php foreach($messages as $m){echo"<p class='msg'>".htmlspecialchars($m)."</p>";}
-      foreach($errors   as $e){echo"<p class='err'>".htmlspecialchars($e)."</p>";}?>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem
+        }
 
-<!-- form -->
-<form method="post">
-    <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(generate_csrf_token())?>">
-    <input type="hidden" name="action"     value="save">
-    <input type="hidden" name="lic_id" id="lic_id">
-    <label>Name<br><input name="name" id="name" required></label><br>
-    <label>Licence text<br><textarea name="text_blob" id="text_blob" required></textarea></label><br>
-    <label><input type="checkbox" name="is_default" id="is_default"> Make default</label><br>
-    <button type="submit" id="submitBtn">Save</button>
-</form>
+        th,
+        td {
+            padding: .5rem;
+            border-bottom: 1px solid #ccc;
+            text-align: left;
+            vertical-align: top
+        }
 
-<!-- list -->
-<table>
-<thead><tr><th>Name</th><th>Default</th><th>Text blob</th><th>Actions</th></tr></thead>
-<tbody>
-<?php foreach($licenses as $lic): ?>
-<tr>
-  <td><?=htmlspecialchars($lic['name'])?></td>
-  <td><?=$lic['is_default']?'✔':''?></td>
-  <td><pre><?=htmlspecialchars($lic['text_blob'])?></pre></td>
-  <td>
-      <button onclick="editLicence(
-          '<?=htmlspecialchars($lic['license_id'])?>',
-          '<?=htmlspecialchars(addslashes($lic['name']))?>',
-          <?=json_encode($lic['text_blob'])?>,
-          <?= $lic['is_default']? 'true':'false' ?>
+        textarea {
+            width: 100%;
+            height: 120px
+        }
+
+        .msg {
+            color: #27ae60
+        }
+
+        .err {
+            color: #c0392b
+        }
+    </style>
+    <script>
+        function editLicence(id, name, text, def) {
+            document.getElementById('lic_id').value = id;
+            document.getElementById('name').value = name;
+            document.getElementById('text_blob').value = text;
+            document.getElementById('is_default').checked = def;
+            document.getElementById('submitBtn').textContent = 'Update';
+        }
+    </script>
+</head>
+
+<body>
+
+    <h1>My Licences</h1>
+    <p><a href="index.php">← back to uploader</a></p>
+
+    <?php foreach ($messages as $m) {
+        echo "<p class='msg'>" . htmlspecialchars($m) . "</p>";
+    }
+    foreach ($errors   as $e) {
+        echo "<p class='err'>" . htmlspecialchars($e) . "</p>";
+    } ?>
+
+    <!-- form -->
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="lic_id" id="lic_id">
+        <label>Name<br><input name="name" id="name" required></label><br>
+        <label>Licence text<br><textarea name="text_blob" id="text_blob" required></textarea></label><br>
+        <label><input type="checkbox" name="is_default" id="is_default"> Make default</label><br>
+        <button type="submit" id="submitBtn">Save</button>
+    </form>
+
+    <!-- list -->
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Default</th>
+                <th>Text blob</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($licenses as $lic): ?>
+                <tr>
+                    <td><?= htmlspecialchars($lic['name']) ?></td>
+                    <td><?= $lic['is_default'] ? '✔' : '' ?></td>
+                    <td>
+                        <pre><?= htmlspecialchars($lic['text_blob']) ?></pre>
+                    </td>
+                    <td>
+                        <button onclick="editLicence(
+          '<?= htmlspecialchars($lic['license_id']) ?>',
+          '<?= htmlspecialchars(addslashes($lic['name'])) ?>',
+          <?= json_encode($lic['text_blob']) ?>,
+          <?= $lic['is_default'] ? 'true' : 'false' ?>
       );">Edit</button>
-      <form method="post" style="display:inline" onsubmit="return confirm('Delete this licence?');">
-          <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(generate_csrf_token())?>">
-          <input type="hidden" name="action"     value="delete">
-          <input type="hidden" name="lic_id"     value="<?=htmlspecialchars($lic['license_id'])?>">
-          <button type="submit">Delete</button>
-      </form>
-  </td>
-</tr>
-<?php endforeach;?>
-</tbody>
-</table>
-</body></html>
+                        <form method="post" style="display:inline" onsubmit="return confirm('Delete this licence?');">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="lic_id" value="<?= htmlspecialchars($lic['license_id']) ?>">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</body>
+
+</html>
