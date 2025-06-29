@@ -164,6 +164,24 @@ header('X-Accel-Buffering: no'); // For Nginx to disable buffering
             /* Space above the link */
         }
 
+        /* reusable glow-button */
+        .btn {
+            display: inline-block;
+            padding: 10px 22px;
+            margin: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #000;
+            background: #d2b648;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #e0c96a
+        }
+
         a {
             color: #d2b648;
             /* Old Gold */
@@ -588,7 +606,13 @@ EOF;
             if ($retZip === 0 && file_exists($zipFile)) {
                 echoStep("ZIP archive created successfully: final_assets.zip", 'success');
                 // Provide link to download via a separate script
-                echoStep("<a href='download_zip.php?runId=" . urlencode($runId) . "' target='_blank'>Download ZIP</a>", 'download');
+                $dlUrl = "download_zip.php?runId=" . urlencode($runId);
+
+                echoStep(
+                    "<button class='btn' onclick=\"window.location.href='{$dlUrl}'\">Download ZIP</button>"
+                        . "<button class='btn' onclick=\"window.location.href='index.php'\">Return to index</button>",
+                    'download'
+                );
             } else {
                 echoStep("Error: Unable to create ZIP archive.", 'error');
             }
