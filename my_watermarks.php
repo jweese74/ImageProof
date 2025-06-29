@@ -1,4 +1,5 @@
 <?php
+
 /**
  * My Watermarks – CRUD dashboard
  * • Upload PNG/JPEG/WEBP watermark images
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'No file selected or upload error.';
         } else {
             $ext = strtolower(pathinfo($_FILES['wm_file']['name'], PATHINFO_EXTENSION));
-            if (!in_array($ext, ['png','jpg','jpeg','webp'])) {
+            if (!in_array($ext, ['png', 'jpg', 'jpeg', 'webp'])) {
                 $errors[] = 'Only PNG, JPG, JPEG or WEBP files allowed.';
             } else {
                 $newName  = uniqid('wm_') . '.' . $ext;
@@ -41,15 +42,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (move_uploaded_file($_FILES['wm_file']['tmp_name'], $destAbs)) {
                     $relPath  = "watermarks/$userId/$newName";
                     /* first watermark? → mark as default */
-                    $isDefault = !$pdo->prepare(
+                    $stmt = $pdo->prepare(
                         'SELECT 1 FROM watermarks WHERE user_id = ? AND is_default = 1'
-                    )->execute([$userId])->fetch();
+                    );
+                    $stmt->execute([$userId]);
+                    // true  = first watermark for this user → make it default
+                    $isDefault = ($stmt->fetch() === false);
 
                     $pdo->prepare(
                         'INSERT INTO watermarks (watermark_id,user_id,filename,path,is_default)
-                         VALUES (UUID(),?,?,?,?,?)'
+             VALUES (UUID(),?,?,?,?)'
                     )->execute([$userId, $newName, $relPath, $isDefault ? 1 : 0]);
-
                     $messages[] = 'Watermark uploaded.';
                 } else {
                     $errors[] = 'Could not move uploaded file.';
@@ -57,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-    /* ---- set default ------------------------------------------- */
+        /* ---- set default ------------------------------------------- */
     } elseif ($action === 'set_default' && !empty($_POST['wm_id'])) {
         $wmId = $_POST['wm_id'];
         $pdo->prepare(
@@ -68,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->execute([$wmId, $userId]);
         $messages[] = 'Default watermark updated.';
 
-    /* ---- delete ------------------------------------------------- */
+        /* ---- delete ------------------------------------------------- */
     } elseif ($action === 'delete' && !empty($_POST['wm_id'])) {
         $wmId = $_POST['wm_id'];
         $row  = $pdo->prepare(
@@ -95,60 +98,103 @@ $watermarks = $pdo->prepare(
 $watermarks->execute([$userId]);
 ?>
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<title>My Watermarks</title>
-<style>
-body{font-family:sans-serif;margin:40px auto;max-width:720px}
-table{width:100%;border-collapse:collapse;margin-top:1rem}
-th,td{padding:.5rem;border-bottom:1px solid #ccc;text-align:left}
-img.thumb{max-height:60px}
-.msg{color:#27ae60}.err{color:#c0392b}
-</style></head><body>
+<html lang="en">
 
-<h1>My Watermarks</h1>
-<p><a href="index.php">← back to uploader</a></p>
+<head>
+    <meta charset="utf-8">
+    <title>My Watermarks</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 40px auto;
+            max-width: 720px
+        }
 
-<?php foreach($messages as $m){echo"<p class='msg'>".htmlspecialchars($m)."</p>";}
-      foreach($errors   as $e){echo"<p class='err'>".htmlspecialchars($e)."</p>";}?>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem
+        }
 
-<!-- upload form -->
-<form method="post" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(generate_csrf_token())?>">
-    <input type="hidden" name="action"     value="upload">
-    <label>Select PNG/JPEG/WEBP file:
-        <input type="file" name="wm_file" required>
-    </label>
-    <button type="submit">Upload</button>
-</form>
+        th,
+        td {
+            padding: .5rem;
+            border-bottom: 1px solid #ccc;
+            text-align: left
+        }
 
-<!-- list -->
-<table>
-<thead><tr><th>Preview</th><th>Filename</th><th>Default</th><th>Actions</th></tr></thead>
-<tbody>
-<?php foreach($watermarks as $wm): ?>
- <tr>
-   <td><img src="<?=htmlspecialchars($wm['path'])?>" class="thumb" alt=""></td>
-   <td><?=htmlspecialchars($wm['filename'])?></td>
-   <td><?=$wm['is_default'] ? '✔' : ''?></td>
-   <td>
-       <?php if(!$wm['is_default']): ?>
-       <form method="post" style="display:inline">
-           <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(generate_csrf_token())?>">
-           <input type="hidden" name="action"     value="set_default">
-           <input type="hidden" name="wm_id"      value="<?=htmlspecialchars($wm['watermark_id'])?>">
-           <button type="submit">Make default</button>
-       </form>
-       <?php endif; ?>
-       <form method="post" style="display:inline" onsubmit="return confirm('Delete this watermark?');">
-           <input type="hidden" name="csrf_token" value="<?=htmlspecialchars(generate_csrf_token())?>">
-           <input type="hidden" name="action"     value="delete">
-           <input type="hidden" name="wm_id"      value="<?=htmlspecialchars($wm['watermark_id'])?>">
-           <button type="submit">Delete</button>
-       </form>
-   </td>
- </tr>
-<?php endforeach;?>
-</tbody>
-</table>
-</body></html>
+        img.thumb {
+            max-height: 60px
+        }
+
+        .msg {
+            color: #27ae60
+        }
+
+        .err {
+            color: #c0392b
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>My Watermarks</h1>
+    <p><a href="index.php">← back to uploader</a></p>
+
+    <?php foreach ($messages as $m) {
+        echo "<p class='msg'>" . htmlspecialchars($m) . "</p>";
+    }
+    foreach ($errors   as $e) {
+        echo "<p class='err'>" . htmlspecialchars($e) . "</p>";
+    } ?>
+
+    <!-- upload form -->
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+        <input type="hidden" name="action" value="upload">
+        <label>Select PNG/JPEG/WEBP file:
+            <input type="file" name="wm_file" required>
+        </label>
+        <button type="submit">Upload</button>
+    </form>
+
+    <!-- list -->
+    <table>
+        <thead>
+            <tr>
+                <th>Preview</th>
+                <th>Filename</th>
+                <th>Default</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($watermarks as $wm): ?>
+                <tr>
+                    <td><img src="<?= htmlspecialchars($wm['path']) ?>" class="thumb" alt=""></td>
+                    <td><?= htmlspecialchars($wm['filename']) ?></td>
+                    <td><?= $wm['is_default'] ? '✔' : '' ?></td>
+                    <td>
+                        <?php if (!$wm['is_default']): ?>
+                            <form method="post" style="display:inline">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                                <input type="hidden" name="action" value="set_default">
+                                <input type="hidden" name="wm_id" value="<?= htmlspecialchars($wm['watermark_id']) ?>">
+                                <button type="submit">Make default</button>
+                            </form>
+                        <?php endif; ?>
+                        <form method="post" style="display:inline" onsubmit="return confirm('Delete this watermark?');">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="wm_id" value="<?= htmlspecialchars($wm['watermark_id']) ?>">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</body>
+
+</html>
