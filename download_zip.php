@@ -1,8 +1,12 @@
 <?php
 // download_zip.php
 // Serve the final ZIP for a given runId, if it exists.
+require_once 'auth.php';
+require_login();                       //
 
 require_once 'config.php';
+
+
 
 $processedDir = __DIR__ . '/processed';
 

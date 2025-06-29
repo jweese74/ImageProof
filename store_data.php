@@ -7,6 +7,9 @@
  */
 
 // 1. Include necessary files
+require_once 'auth.php';
+require_login();                       //
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/process_helpers.php';
 

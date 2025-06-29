@@ -1,9 +1,11 @@
 <?php
 // index.php
 
+require_once 'auth.php';
+require_login();                  // 🔒 session guard
+
 require_once 'config.php';
-require_once 'functions.php'; // Configuration & helper functions
-require_once 'process.php';   // POST form-processing logic
+require_once 'functions.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -248,6 +250,9 @@ require_once 'process.php';   // POST form-processing logic
     </p>
 
     <form method="post" enctype="multipart/form-data">
+        <!-- CSRF hidden field -->
+    <input type="hidden" name="csrf_token"
+           value="<?= htmlspecialchars(generate_csrf_token()) ?>">
         <!-- Basic Information Fieldset -->
         <fieldset>
             <legend>Basic Information</legend>

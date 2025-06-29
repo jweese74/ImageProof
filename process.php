@@ -9,9 +9,15 @@
  ***************************************************************/
 
 // 1) Require helper files
+require_once __DIR__ . '/auth.php';
+require_login();                       // 🔒
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validate_csrf_token();             // 🛡️
+}
+
 require_once __DIR__ . '/process_helpers.php';
-require_once 'config.php';
-require_once __DIR__ . '/functions.php'; // Ensure functions.php is included
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/functions.php';
 
 // 2) Disable output buffering and enable implicit flushing
 @ini_set('output_buffering', 'off');
