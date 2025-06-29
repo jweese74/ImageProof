@@ -153,15 +153,13 @@ header('X-Accel-Buffering: no'); // For Nginx to disable buffering
 
         .step.download {
             color: #f1c40f;
-            /* Bright Yellow */
             font-size: 1.8em;
-            /* Larger font size */
-            text-align: center;
-            /* Center the text */
             font-weight: bold;
-            /* Bold text */
             margin-top: 20px;
-            /* Space above the link */
+
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
         }
 
         /* reusable glow-button */
