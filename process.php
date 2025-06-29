@@ -271,13 +271,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echoStep("No watermark uploaded. Proceeding without custom watermark.", 'info');
     }
 
-    // Default watermark selection
-    $selectedWatermark = '';
+    // If the user uploaded a one-off watermark, override the saved one
     if ($uploadedWatermarkPath) {
-        // Only if the user uploaded something
         $selectedWatermark = $uploadedWatermarkPath;
     }
-
+    
+    if ($uploadedWatermarkPath) {
+        $selectedWatermark = $uploadedWatermarkPath;
+    }
     // Create unique subdirectory
     echoStep("Creating processing directory...");
     $runId        = date('Ymd_His') . '_' . uniqid();
