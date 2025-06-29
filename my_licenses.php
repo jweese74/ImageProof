@@ -10,6 +10,17 @@ require_once 'auth.php';
 require_login();
 require_once 'config.php';
 
+// ---------------------------------------------------------------
+// Markdown helper (Parsedown - tiny, MIT-licensed)
+//   • composer  :  composer require erusev/parsedown
+//   • manual    :  download Parsedown.php into the project root
+// ---------------------------------------------------------------
+require_once __DIR__ . '/vendor/parsedown/Parsedown.php';
+// or:  require_once __DIR__ . '/Parsedown.php';
+
+$md = new Parsedown();
+$md->setSafeMode(true);          // strips raw HTML → XSS protection
+
 $user       = current_user();
 $userId     = $user['user_id'];
 $errors     = [];
@@ -106,6 +117,14 @@ $licenses->execute([$userId]);
             height: 120px
         }
 
+        /* ------- new: pretty licence output -------- */
+        .lic-text {
+            white-space: pre-wrap;
+            /* word-wrap within long lines */
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
         .msg {
             color: #27ae60
         }
@@ -154,7 +173,7 @@ $licenses->execute([$userId]);
             <tr>
                 <th>Name</th>
                 <th>Default</th>
-                <th>Text blob</th>
+                <th>Text</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -163,8 +182,8 @@ $licenses->execute([$userId]);
                 <tr>
                     <td><?= htmlspecialchars($lic['name']) ?></td>
                     <td><?= $lic['is_default'] ? '✔' : '' ?></td>
-                    <td>
-                        <pre><?= htmlspecialchars($lic['text_blob']) ?></pre>
+                    <td class="lic-text">
+                        <?= $md->text($lic['text_blob']) ?>
                     </td>
                     <td>
                         <button onclick="editLicence(
