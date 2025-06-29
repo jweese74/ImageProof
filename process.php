@@ -446,9 +446,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          *  Persist ORIGINAL-AND-THUMB info to MariaDB            *
          * ------------------------------------------------------- */
         $imgInfo = getimagesize($signedImage);          // [0]=w, [1]=h, 'mime'=>…
-        
-        $relOrig  = ltrim(str_replace($_SERVER['DOCUMENT_ROOT'] . '/', '', $signedImage), '/');
-        $relThumb = ltrim(str_replace($_SERVER['DOCUMENT_ROOT'] . '/', '', $thumbnail), '/');
+
+        $webBase  = __DIR__ . '/';                     //  …/public_html/art-processing/
+        $relOrig  = ltrim(str_replace($webBase, '', $signedImage), '/');
+        $relThumb = ltrim(str_replace($webBase, '', $thumbnail), '/');
 
         $stmt = $pdo->prepare("
             INSERT INTO images (
