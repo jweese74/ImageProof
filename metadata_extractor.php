@@ -52,7 +52,7 @@ $excludedFields = [
     'Megapixels',
     'SourceFile',               // Newly excluded field
     'FileInodeChangeDate',
-	'Rights',// Newly excluded field
+    'Rights', // Newly excluded field
     // Add any other fields you wish to exclude
 ];
 
@@ -183,4 +183,3 @@ if (file_put_contents($outputFile, $markdownContent) === false) {
 }
 
 exit(0);
-?>

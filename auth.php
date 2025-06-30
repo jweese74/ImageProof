@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Session / Auth / CSRF helpers
  * ---------------------------------------------------------------
@@ -36,8 +37,8 @@ function validate_csrf_token(): void
     }
     $good = $_SESSION['csrf_token'] ?? '';
     $sent = $_POST['csrf_token']
-         ?? $_SERVER['HTTP_X_CSRFTOKEN']
-         ?? '';
+        ?? $_SERVER['HTTP_X_CSRFTOKEN']
+        ?? '';
     if (!hash_equals($good, $sent)) {
         http_response_code(403);
         die('Invalid CSRF token');

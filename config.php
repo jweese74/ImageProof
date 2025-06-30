@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ImageProof – central configuration & PDO bootstrap.
  *
@@ -23,14 +24,20 @@ define('DB_HOST',  getenv('DB_HOST')  ?: 'localhost');
 define('DB_PORT',  getenv('DB_PORT')  ?: '3306');
 define('DB_NAME',  getenv('DB_NAME')  ?: 'infinite_image_tools');
 define('DB_USER',  getenv('DB_USER')  ?: 'infinite_image_user');
-define('DB_PASS',  getenv('DB_PASS')  ?: '');
+
+// empty string is OK, but not recommended in production
+// Note: DB_PASS is intentionally left empty here; set it in your .env or Apache
+// config.  This allows you to use a different password in production without
+// changing the codebase.
+define('DB_PASS',  getenv('DB_PASS')  ?: ''); // empty string is OK, but not recommended in production
+
 define('DB_DEBUG', filter_var(getenv('DB_DEBUG'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false);
 
 define('MAX_UPLOAD_MB', (int)(getenv('MAX_UPLOAD_MB') ?: 200));
 
 // ---- Enforce PHP upload limits at runtime ---------------------------
 @ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');
-@ini_set('post_max_size',       (MAX_UPLOAD_MB + 10) . 'M'); // +10 MB head-room
+@ini_set('post_max_size', (MAX_UPLOAD_MB + 10) . 'M'); // +10 MB head-room
 
 // ---- PDO connection -------------------------------------------------
 try {
