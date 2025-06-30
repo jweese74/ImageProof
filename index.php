@@ -219,45 +219,52 @@ if ($loggedIn) {
     </style>
 
     <script>
-        // --- DOM handles ---
-        const wmSelect = document.querySelector('select[name="watermark_id"]');
-        const wmUpload = document.getElementById('watermark_upload');
-        const wmPreview = document.getElementById('wmPreview');
-        const imgChooser = document.querySelector('input[name="images[]"]');
-        const imgPreview = document.getElementById('imgPreview');
+        /**
+         * Initialise previews once the DOM is ready
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM handles ---
+            const wmSelect = document.querySelector('select[name="watermark_id"]');
+            const wmUpload = document.getElementById('watermark_upload');
+            const wmPreview = document.getElementById('wmPreview');
+            const imgChooser = document.querySelector('input[name="images[]"]');
+            const imgPreview = document.getElementById('imgPreview');
 
-        // helper: create preview from a File object
-        function fileToImg(file, imgEl) {
-            if (!file) {
-                return;
+            /** read a File → data-URL and show it */
+            function fileToImg(file, imgEl) {
+                if (!file) {
+                    imgEl.removeAttribute('src');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = e => {
+                    imgEl.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
-            const reader = new FileReader();
-            reader.onload = e => {
-                imgEl.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
 
-        function showWmFromSelect() {
-            const opt = wmSelect?.options[wmSelect.selectedIndex];
-            if (opt && opt.dataset.path) {
-                wmPreview.src = opt.dataset.path;
-            } else {
-                wmPreview.removeAttribute('src');
+            /** show the saved-watermark thumbnail selected in the <select> */
+            function showWmFromSelect() {
+                const opt = wmSelect?.options[wmSelect.selectedIndex];
+                if (opt && opt.dataset.path) {
+                    wmPreview.src = opt.dataset.path;
+                } else {
+                    wmPreview.removeAttribute('src');
+                }
             }
-        }
 
-        // events
-        wmSelect?.addEventListener('change', showWmFromSelect);
-        wmUpload?.addEventListener('change', e => {
-            fileToImg(e.target.files[0], wmPreview);
-        });
-        imgChooser?.addEventListener('change', e => {
-            fileToImg(e.target.files[0], imgPreview);
-        });
+            // live events
+            wmSelect?.addEventListener('change', showWmFromSelect);
+            wmUpload?.addEventListener('change', e => {
+                fileToImg(e.target.files[0], wmPreview);
+            });
+            imgChooser?.addEventListener('change', e => {
+                fileToImg(e.target.files[0], imgPreview);
+            });
 
-        // initial state: show default watermark if any
-        showWmFromSelect();
+            // initial display on page load
+            showWmFromSelect();
+        });
     </script>
 
 </head>
