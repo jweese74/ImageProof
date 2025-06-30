@@ -5,7 +5,7 @@
  * Metadata Extractor Script
  *
  * Usage:
- * php metadata_extractor.php --input=/path/to/signed_image.png --output=/path/to/metadata.md
+ * Usage: php app/tools/metadata_extractor.php --input=/path/to/signed_image.png --output=/path/to/metadata.md
  *
  * This script extracts metadata from a signed image using ExifTool,
  * filters out sensitive information, and formats the remaining data into a polished Markdown file.

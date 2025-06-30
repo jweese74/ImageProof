@@ -268,7 +268,7 @@ Utility and configuration agent providing file management, watermarking operatio
 
 -----
 
-**File Path**: `/index.php`
+**File Path**: `/public/index.php`
 
 **Purpose**:
 Serves as the unified landing page for both public visitors and logged-in members, displaying recent image thumbnails and providing user-specific upload forms and options.
@@ -346,7 +346,7 @@ This file operates as the central presentation and interaction point for visitor
 
 -----
 
-**File Path**: `/login.php`
+**File Path**: `/public/login.php`
 
 **Purpose**:
 Manages user authentication via email and password, providing a secure login form with CSRF protection for the ImageProof project.
@@ -414,7 +414,7 @@ Acts as a login interface, verifying user credentials, handling authentication r
 
 -----
 
-**File Path**: `/logout.php`
+**File Path**: `/public/logout.php`
 
 **Purpose**:
 Logs out the currently authenticated user by securely terminating their session and session cookie, then redirects them to the login page.
@@ -471,7 +471,7 @@ Serves as the session termination utility, ensuring complete logout and clean-up
 
 -----
 
-**File Path**: `/metadata_extractor.php`
+**File Path**: `/app/tools/metadata_extractor.php`
 
 **Purpose**:
 Extracts, sanitizes, structures, and formats metadata from signed images into a polished Markdown document suitable for sharing, display, or archiving within the ImageProof project.
@@ -534,7 +534,7 @@ This script serves as a standalone image metadata extraction and reporting utili
 
 -----
 
-**File Path**: `/my_licenses.php`
+**File Path**: `/public/my_licenses.php`
 
 **Purpose**:
 Provides a user dashboard for managing license templates, enabling CRUD (Create, Read, Update, Delete) operations and setting a default license.
@@ -611,7 +611,7 @@ Operates as a CRUD agent that manages user-specific license data, including secu
 
 -----
 
-**File Path**: `/my_watermarks.php`
+**File Path**: `/public/my_watermarks.php`
 
 **Purpose**:
 Provides users with an interface for uploading, managing, and selecting their watermark images for use within the ImageProof project.
@@ -688,7 +688,7 @@ Acts as a CRUD (Create, Read, Update, Delete) interface agent, enabling user-con
 
 -----
 
-**File Path**: `/process.php`
+**File Path**: `/public/process.php`
 
 **Purpose**:
 Handles user-submitted image uploads, applies watermark and metadata, and generates signed outputs and certificates of authenticity. Outputs a downloadable ZIP archive containing processed assets.
@@ -783,7 +783,7 @@ Serves as the **core image processing agent** of the ImageProof system. It valid
 
 -----
 
-**File Path**: `/process_helpers.php`
+**File Path**: `/app/tools/process_helpers.php`
 
 **Purpose**:
 Provides utility functions to support image processing workflows, including live feedback streaming for web UI and watermarking image files using ImageMagick CLI tools.
@@ -863,7 +863,7 @@ Acts as a front-line processing utility agent. It enhances user experience via r
 
 -----
 
-**File Path**: `/register.php`
+**File Path**: `/public/register.php`
 
 **Purpose**:
 Handles new user registration for the ImageProof platform, validating input, enforcing security policies, and storing user credentials securely.
@@ -942,7 +942,7 @@ Acts as a registration handler and form processor. It validates user input, ensu
 
 -----
 
-**File Path**: `/store_data.php`
+**File Path**: `/app/jobs/store_data.php`
 
 **Purpose**:
 Processes image metadata and form input stored during an upload session, inserting structured data into the `infinite_image_tools` relational database. This includes artworks, associated metadata, images, certificates, AI annotations, and optional submissions.

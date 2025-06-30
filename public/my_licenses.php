@@ -15,7 +15,7 @@ require_once __DIR__ . '/../app/config.php';
 //   • composer  :  composer require erusev/parsedown
 //   • manual    :  download Parsedown.php into the project root
 // ---------------------------------------------------------------
-require_once __DIR__ . '/vendor/parsedown/Parsedown.php';
+require_once __DIR__ . '/../vendor/parsedown/Parsedown.php';
 // or:  require_once __DIR__ . '/Parsedown.php';
 
 $md = new Parsedown();

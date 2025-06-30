@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../app/auth.php';
 require_login();
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/../app/config.php';
+require_once __DIR__ . '/../app/functions.php';
 
 validate_csrf_token();                //  ← run early
 
@@ -10,7 +10,7 @@ $userId = current_user()['user_id'];
 
 /* =====  constants & helpers  =================================== */
 $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp'];   // for upload filter
-$processedDir      = __DIR__ . '/processing';       // if not coming from helpers
++ $processedDir      = __DIR__ . '/../processed';
 
 /* ================================================================
    1.  Resolve watermark to use
@@ -77,9 +77,9 @@ if (!empty($_FILES['images']['size'])) {
     }
 }
 
-require_once __DIR__ . '/process_helpers.php';
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/../app/tools/process_helpers.php';
+require_once __DIR__ . '/../app/config.php';
+require_once __DIR__ . '/../app/functions.php';
 
 // 2) Disable output buffering and enable implicit flushing
 @ini_set('output_buffering', 'off');
@@ -506,7 +506,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $metadataFile = $runDir . '/' . $fileBaseSanitised . '_metadata.md';
 
         // Path to metadata_extractor.php
-        $metadataExtractor = __DIR__ . '/metadata_extractor.php';
+        $metadataExtractor = __DIR__ . '/../app/tools/metadata_extractor.php';
 
         // Ensure the metadata extractor script exists
         if (!file_exists($metadataExtractor)) {

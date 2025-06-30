@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../app/auth.php';
+require_once __DIR__ . '/../app/config.php';
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

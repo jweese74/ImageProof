@@ -1,5 +1,5 @@
 <?php
-// store_data.php
+// /apps/jobs/store_data.php
 
 /**
  * This script gathers and maps data from process.php into the infinite_image_tools database.
@@ -7,15 +7,15 @@
  */
 
 // 1. Include necessary files
-require_once __DIR__ . '/../app/auth.php';
+require_once __DIR__ . '/../auth.php';
 require_login();                        // 🔒 session-based auth
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf_token();              // 🛡️ optional: CSRF guard for consistency
 }
 
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/process_helpers.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../tools/process_helpers.php';
 
 // 2. Function to retrieve UUIDs for existing entries or create new ones
 function getOrCreateId(PDO $pdo, $table, $column, $value)
@@ -41,7 +41,7 @@ if (!isset($_GET['runId']) && !isset($_POST['runId'])) {
 }
 
 $runId = $_GET['runId'] ?? $_POST['runId'];
-$runDir = __DIR__ . "/processed/{$runId}";
+$runDir = __DIR__ . "/../../processed/{$runId}";
 
 if (!is_dir($runDir)) {
     die("Error: Processing directory for runId '{$runId}' does not exist.");

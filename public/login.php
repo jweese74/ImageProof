@@ -1,14 +1,14 @@
 <?php
 require_once __DIR__ . '/../app/auth.php';
-
-$next   = $_GET['next'] ?? 'index.php';
+require_once __DIR__ . '/../app/config.php';
+$next = $_GET['next'] ?? 'index.php';
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf_token();
 
     $email = strtolower(trim($_POST['email'] ?? ''));
-    $pwd   = $_POST['password'] ?? '';
+    $pwd = $_POST['password'] ?? '';
 
     $stmt = $pdo->prepare('SELECT user_id,password_hash FROM users WHERE email = ?');
     $stmt->execute([$email]);

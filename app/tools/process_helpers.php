@@ -1,6 +1,6 @@
 <?php
 // process_helpers.php
-require_once __DIR__ . '/../app/config.php';
+require_once __DIR__ . '/../config.php';
 
 /**
  * Streams one progress line to the “Processing” page.
@@ -77,5 +77,5 @@ if (!function_exists('addWatermark')) {
 /**
  * If you want, you can also centralize your config variables in here:
  */
-$defaultWatermark  = __DIR__ . '/watermarks/muse_signature_black.png';
+$defaultWatermark  = __DIR__ . '/../../watermarks/muse_signature_black.png';
 $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];

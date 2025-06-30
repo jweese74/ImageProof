@@ -32,7 +32,7 @@ if ($runId === '') {
    2.  Build expected file path
 ----------------------------------------------------------------- */
 $userId = current_user()['user_id'];  // UUID from session
-$processedDir = __DIR__ . '/processing';  // same as process.php
+$processedDir = dirname(__DIR__) . '/processed';
 $zipFile = $processedDir . '/' . $userId . '/' . $runId . '/final_assets.zip';
 
 if (!file_exists($zipFile)) {
