@@ -62,13 +62,13 @@ The core goal of ImageProof is to create a **searchable, decentralized registry 
 
 | Path                | Description                                      |
 |---------------------|--------------------------------------------------|
-| `/auth.php`         | Session, login, and CSRF helpers                |
-| `/functions.php`    | Watermarking, cleanup, and UI helpers           |
-| `/process.php`      | Core upload → watermark → ZIP pipeline          |
-| `/store_data.php`   | Database ingestion from processed image package |
-| `/metadata_extractor.php` | CLI markdown metadata export               |
-| `/my_licenses.php`  | License management interface                    |
-| `/my_watermarks.php`| Watermark upload and default selection          |
+| `/app/auth.php`         | Session, login, and CSRF helpers                |
+| `/app/jobs/store_data.php`   | Database ingestion from processed image package |
+| `/app/tools/metadata_extractor.php` | CLI markdown metadata export               |
+| `/app/functions.php`    | Watermarking, cleanup, and UI helpers           |
+| `/public/my_licenses.php`  | License management interface                    |
+| `/public/my_watermarks.php`| Watermark upload and default selection          |
+| `/public/process.php`      | Core upload → watermark → ZIP pipeline          |
 
 ---
 
