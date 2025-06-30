@@ -10,13 +10,13 @@
 // ---------------------------
 // Configuration
 // ---------------------------
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 $maxFileSizeMb     = 250;  // 250 MB
 $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif'];
 
-$watermarkDir      = __DIR__ . '/watermarks';       // Storage for watermark images
-$processedDir      = __DIR__ . '/processed';        // Where processed results go
+$watermarkDir      = __DIR__ . '/../watermarks';       // Storage for watermark images
+$processedDir      = __DIR__ . '/../processed';        // Where processed results go
 $defaultWatermark = ''; // So no default watermark is used
 
 // Ensure directories exist

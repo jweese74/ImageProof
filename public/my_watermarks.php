@@ -6,13 +6,13 @@
  * • List / delete / set default
  * --------------------------------------------------------------
  */
-require_once 'auth.php';
+require_once __DIR__ . '/../app/auth.php';
 require_login();
-require_once 'config.php';
+require_once __DIR__ . '/../app/config.php';
 
 $user       = current_user();
 $userId     = $user['user_id'];
-$uploadDir  = __DIR__ . "/watermarks/$userId/";
+$uploadDir  = __DIR__ . "/../watermarks/$userId/";
 $errors     = [];
 $messages   = [];
 

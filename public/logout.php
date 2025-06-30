@@ -1,5 +1,5 @@
 <?php
-require_once 'auth.php';
+require_once __DIR__ . '/../app/auth.php';
 
 // Clear all session variables
 session_unset();
@@ -22,5 +22,5 @@ if (ini_get("session.use_cookies")) {
 }
 
 // Redirect to login
-header('Location: login.php');
+header('Location: /login.php');
 exit;

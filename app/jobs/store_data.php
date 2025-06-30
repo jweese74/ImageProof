@@ -7,7 +7,7 @@
  */
 
 // 1. Include necessary files
-require_once 'auth.php';
+require_once __DIR__ . '/../app/auth.php';
 require_login();                        // 🔒 session-based auth
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

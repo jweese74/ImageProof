@@ -1,417 +1,999 @@
-# Agents Reference
-
-A consistently structured overview of the key scripts (“agents”) that make up the **Infinite Image Tools** legacy PHP stack and related utilities.  
-Each entry follows the same heading order for clarity:
-
-### File Location
-### File Name
-1. **Purpose** – What the file does and why it exists.  
-2. **Agent Role** – How it behaves in the overall system.  
-3. **Key Responsibilities** – Main behaviours / execution flow.  
-4. **Security Considerations** – Relevant security notes.  
-5. **Dependencies** – Direct runtime requirements.  
-6. **Additional Notes** – Any extra usage or deployment guidance.
-
----
-### File Location
-`/`
-
-### File Name
-`config.php`
-
-1. **Purpose**  
-   This file configures and establishes a connection to a MariaDB/MySQL database using PHP's PDO (PHP Data Objects) extension. It defines constants for database connection parameters and handles connection logic, with optional debugging support.
-
-2. **Agent Role**  
-   Acts as a **core infrastructure agent** for backend database access in PHP-based components. It provides a reusable, centralized method to initialize a secure and consistent PDO connection.
-
-3. **Key Responsibilities**  
-   - Define database connection constants (host, port, db name, user, password).
-   - Set character encoding for the connection (`utf8mb4`).
-   - Optionally enable debug output during connection failures.
-   - Attempt to connect using PDO.
-   - Configure PDO with:
-     - `ERRMODE_EXCEPTION` for proper error handling.
-     - `FETCH_ASSOC` for clean associative array results.
-
-4. **Security Considerations**  
-   - **Hardcoded credentials**: Password (`DB_PASS`) is stored in plaintext—this should be moved to environment variables or a secure secret manager in production.
-   - **Debug output**: `DB_DEBUG` is set to `true` which may reveal sensitive error details to the browser; must be disabled in production to avoid information disclosure.
-   - **Error handling**: Ensures user-friendly fallback if debugging is disabled.
-   - **PDO use**: A secure database access method when used correctly (prevents SQL injection if prepared statements are used elsewhere).
-
-5. **Dependencies**  
-   - PHP (≥ 7.0 recommended)
-   - PHP PDO extension
-   - A running MySQL/MariaDB server
-   - Network access to `DB_HOST` on `DB_PORT`
-
-6. **Additional Notes**  
-   - If this file is included in multiple scripts, use `require_once` to avoid redeclaration.
-   - Credentials should be abstracted via `.env` or system-level secrets where possible.
-   - Ensure file permissions restrict access (`chmod 600 config.php`).
-   - Consider adding connection retry logic for more robust deployments (e.g., on containerized or orchestrated systems).
-
----
-### File Location
-`/`
-
-### File Name
-`download_zip.php`
-
-1. **Purpose**  
-   This script serves a previously generated ZIP file (`final_assets.zip`) for a specific `runId` via HTTP download. It validates input, constructs the expected path, and returns the file as a downloadable asset.
-
-2. **Agent Role**  
-   Functions as a **delivery agent** responsible for serving ZIP bundles that were generated and stored during earlier image-processing or packaging stages. It finalizes the pipeline by enabling end-users to retrieve their packaged results.
-
-3. **Key Responsibilities**  
-   - Include the database configuration (`config.php`)—likely for shared session or logging context (though not used directly here).
-   - Verify the presence and validity of the `runId` parameter from the query string.
-   - Sanitize the `runId` to prevent directory traversal exploits.
-   - Check for the existence of `final_assets.zip` inside the `processed/{runId}/` directory.
-   - If found, serve the file with correct headers to prompt a ZIP download.
-   - Return appropriate HTTP error codes if validation or file lookup fails.
-
-4. **Security Considerations**  
-   - **Input sanitization**: Uses a regex to strip dangerous characters from `runId`—good practice for avoiding directory traversal attacks.
-   - **Direct file serving**: Only serves if file exists and path is resolved safely.
-   - **Lack of authentication**: The script does not verify whether the requester is authorized to access the ZIP file. In a multi-user system, this could lead to data leakage.
-   - **Fixed filename in header**: Always serves as `final_assets.zip` regardless of actual file naming—consider including `runId` in filename for clarity/user feedback.
-
-5. **Dependencies**  
-   - `config.php` (though not functionally used in this snippet)
-   - A previously generated ZIP file located at `processed/{runId}/final_assets.zip`
-   - Web server (e.g., Apache/Nginx) with access to PHP and correct MIME type handling
-
-6. **Additional Notes**  
-   - You may want to implement logging (e.g., which IP downloaded what and when).
-   - Consider rate limiting or download expiry logic for production use.
-   - Could benefit from a `Content-Security-Policy` or token-based access.
-   - If `config.php` is not needed for this endpoint, removing it would slightly reduce attack surface and loading time.
-
----
-### File Location
-`/`
-
-### File Name
-`faq.html`
-
-1. **Purpose**  
-   Serves as a user-facing Frequently Asked Questions (FAQ) page for the *Infinite Muse Toolkit*. It explains what the toolkit does, how to use it, its security model, and offers guidance for users, contributors, and potential supporters.
-
-2. **Agent Role**  
-   Acts as a **passive informational agent** within the system—non-executable but critical for transparency, onboarding, and support. It builds user trust and educates visitors on toolkit capabilities and future direction.
-
-3. **Key Responsibilities**  
-   - Explain toolkit functionality (metadata embedding, certificate generation, packaging).
-   - Reassure users on privacy and data handling.
-   - Address common user questions (e.g. commercial use, form field requirements).
-   - Offer channels for support and contribution.
-   - Promote future roadmap and community involvement.
-   - Provide responsive layout for various screen sizes using embedded CSS.
-
-4. **Security Considerations**  
-   - No direct data interaction or script execution (static HTML), so low risk surface.
-   - References to images and external CSS should be verified and secured (e.g., `/unauthenticated/js/ckeditor/ckeditor-custom.min.css`).
-   - Ensure images such as `./watermarks/muse_signature_black.png` are not vulnerable to path traversal or access control issues.
-
-5. **Dependencies**  
-   - Standard HTML5-compliant browser
-   - External stylesheet: `/unauthenticated/js/ckeditor/ckeditor-custom.min.css`
-   - Internal assets: watermark logo image(s) at `./watermarks/`
-
-6. **Additional Notes**  
-   - Could be generated dynamically by a templating engine (e.g., Flask/Jinja2) in the future for localization or user-specific content.
-   - Text content is suitable for export to markdown or inclusion in documentation.
-   - Ensure future edits remain accessible, especially for assistive technologies (ARIA roles, alt text, etc.).
-   - Consider moving contact email to a protected form to prevent spam harvesting.
-
----
-### File Location
-`/`
-
-### File Name
-`functions.php`
-
-1. **Purpose**  
-   Provides configuration values and shared utility functions for the Infinite Muse Toolbox, including image watermarking, directory setup, file management, and real-time feedback rendering. It is intended to support front-end scripts like `index.php` and `process.php`.
-
-2. **Agent Role**  
-   Acts as a **supporting utility agent**, abstracting low-level operations (e.g. directory checks, watermark logic, dynamic UI updates) so the main application scripts remain clean and focused on logic flow.
-
-3. **Key Responsibilities**  
-   - **Configuration constants**: Sets global values like max file size, allowed extensions, and storage paths.
-   - **Environment preparation**: Creates required directories (`/watermarks`, `/processed`) at runtime.
-   - **User feedback**: `echoStep()` dynamically pushes messages to the browser during processing.
-   - **File cleanup**: `clearProcessedFiles()` deletes old images from the processed directory, optionally for cron job use.
-   - **Image watermarking**: `addWatermark()` resizes and composites a user-supplied watermark onto the image and overlays additional randomized semi-transparent text using ImageMagick.
-
-4. **Security Considerations**  
-   - **Shell execution risk**: Uses `shell_exec()` and `system()` heavily; input must be tightly controlled to prevent command injection.
-   - **Temporary files**: Watermarking process creates temp files (`wm_` prefix); file names are derived from originals—validate paths to avoid overwriting unintended files.
-   - **Directory permissions**: Creates folders with `0775`—ensure file ownership and group access are appropriate for your web server user.
-   - **Debug visibility**: `echoStep()` outputs content directly to the browser, which may be verbose or leak stack details if misused in production.
-
-5. **Dependencies**  
-   - PHP (≥ 7.x)
-   - ImageMagick CLI tools: `convert`, `identify`
-   - Writable filesystem (for watermarking and file storage)
-   - `config.php` (for DB and possibly shared runtime settings)
-
-6. **Additional Notes**  
-   - Designed to be included (`require_once`) by other scripts—not intended to be accessed directly via browser.
-   - Output from `echoStep()` depends on a container element with ID `steps` in the HTML DOM; without this, no visible feedback is shown.
-   - Cron-compatible cleanup (`clearProcessedFiles()`) can be triggered via a scheduled job or batch process.
-   - Randomized watermark text feature (`$overlayText`) assumes this variable is declared elsewhere—ensure it's properly initialized before calling `addWatermark()`.
-
----
-### File Location
-`/`
-
-### File Name
-`index.php`
-
-1. **Purpose**  
-   Acts as the primary entry point and front-end interface for the Infinite Muse Toolkit. This file presents users with a styled HTML form to submit artwork-related metadata and images for processing. It ties together backend processing and frontend interaction.
-
-2. **Agent Role**  
-   Serves as a **user-facing interaction agent**, rendering the HTML form UI and triggering the backend processing logic (`process.php`) on form submission. It acts as the central hub for collecting user input, displaying tooltips, previews, and instructions.
-
-3. **Key Responsibilities**  
-   - Load supporting PHP modules:
-     - `config.php`: database connection.
-     - `functions.php`: utility functions.
-     - `process.php`: logic to handle POST submissions.
-   - Display a multi-field HTML form with:
-     - Title, description, keywords, genres, licensing, and other metadata.
-     - File upload inputs (custom watermark, multiple image files).
-     - Field validation and tooltips for user guidance.
-   - Include JavaScript for image preview functionality.
-   - Render form-styling with embedded CSS for a dark, elegant visual design.
-   - Provide important notices regarding file retention and privacy policy.
-
-4. **Security Considerations**  
-   - **Input Validation**: This file assumes `process.php` and `functions.php` handle sanitization and validation—must be verified.
-   - **File Uploads**: Relies on HTML to accept files, but file-type enforcement must also be handled server-side (e.g., MIME checks).
-   - **Session Handling**: No session or CSRF protection visible—important for production environments.
-   - **Exposed Directories**: If `watermarks/` is publicly browsable, sensitive assets may be viewable—should be protected by server config or `.htaccess`.
-
-5. **Dependencies**  
-   - PHP (≥ 7.0)
-   - `config.php`: for DB connection
-   - `functions.php`: must define reusable utilities
-   - `process.php`: form submission logic handler
-   - JavaScript (vanilla) for file preview
-   - External files:
-     - Images (e.g., `/watermarks/muse_signature_black.png`)
-
-6. **Additional Notes**  
-   - Embedded tooltips enhance UX significantly—ideal for artist onboarding.
-   - Design is responsive but may benefit from mobile-specific media queries for better scaling.
-   - The use of inline styles makes customization easy but may benefit from external CSS for scalability.
-   - Consider using a frontend JS framework or form validation library in future iterations.
-   - Clear daily file deletion policy should be tied to a secure and verifiable cron job or backend cleanup task.
-
----
-### File Location
-`/`
-
-### File Name
-`metadata_extractor.php`
-
-1. **Purpose**  
-   This script extracts metadata from an image file using ExifTool and formats selected, non-sensitive information into a well-structured Markdown file. It is intended for post-processing signed or watermarked images for documentation or audit purposes.
-
-2. **Agent Role**  
-   Acts as a **metadata extraction agent** that transforms raw Exif data into human-readable Markdown, facilitating provenance tracking, author verification, and image audit trails in the ImageProof ecosystem.
-
-3. **Key Responsibilities**  
-   - Parse command-line arguments (`--input`, `--output`).
-   - Validate the input image and environment (presence of ExifTool).
-   - Extract all available metadata from the image using ExifTool (`-j` JSON output).
-   - Remove sensitive or irrelevant fields from the metadata.
-   - Map technical Exif fields to human-friendly labels.
-   - Organize selected metadata into logical sections (e.g., Basic Information, Technical Details).
-   - Generate a structured Markdown table report and save it to the output path.
-
-4. **Security Considerations**  
-   - **Sensitive field exclusion**: Filters out potentially private or system-level metadata (e.g., file paths, inode data, permissions).
-   - **Output sanitization**: Applies `htmlspecialchars()` to avoid Markdown injection or rendering anomalies.
-   - **Shell safety**: Uses `escapeshellcmd()` and `escapeshellarg()` to prevent command injection in shell commands.
-   - **No user input via web**: Meant for CLI use only, reducing attack surface for web-based injection.
-   - Ensure file write access is scoped securely—output location should be sanitized if web-integrated in future.
-
-5. **Dependencies**  
-   - PHP (≥ 7.x recommended)
-   - [ExifTool](https://exiftool.org/) CLI utility (must be available in system PATH)
-   - Input image file with embedded metadata
-   - Write access to output location for Markdown file
-
-6. **Additional Notes**  
-   - Designed for CLI environments only (`php metadata_extractor.php --input=... --output=...`).
-   - Can be extended to support HTML output, PDF conversion, or integration into a GUI/admin panel.
-   - Can be scheduled or automated as part of a post-upload processing pipeline.
-   - When integrated into a larger app, consider externalizing exclusion lists and mappings via a config file or `.env` values for better maintainability.
-
----
-### File Location
-`/`
-
-### File Name
-`process_helpers.php`
-
-1. **Purpose**  
-   Provides helper functions and configuration variables for processing images, specifically adding a watermark and printing progress messages. Intended to support server-side automation of image preparation tasks.
-
-2. **Agent Role**  
-   Serves as a **utility agent** responsible for enhancing user feedback and automating image manipulation (e.g. watermarking). Supports CLI or web-driven workflows by reporting processing steps and modifying images in place.
-
-3. **Key Responsibilities**  
-   - Load configuration from `config.php`.
-   - Define `echoStep()` for user-facing progress updates.
-   - Define `addWatermark()` to:
-     - Measure image width.
-     - Resize watermark proportionally (~6% of image width).
-     - Apply it bottom-right with a small margin (~1%).
-     - Use ImageMagick’s `convert` and `identify` tools.
-     - Clean up temporary resized watermark files.
-   - Define shared configuration values:
-     - `$processedDir` for output location.
-     - `$defaultWatermark` path.
-     - `$allowedExtensions` for valid image types.
-
-4. **Security Considerations**  
-   - **Shell commands**: `shell_exec()` and `escapeshellarg()` are used to sanitize inputs, but extreme care must be taken—avoid user-controlled input here.
-   - **File existence**: Checks guard against null paths but do not verify image integrity or content type.
-   - **Temporary file cleanup**: Removes intermediate resized watermark image, reducing footprint.
-   - **Output flushing (`flush()`)**: Safe but consider rate-limiting or output buffering in large-scale or multi-user contexts.
-   - **Path management**: Hardcoded paths assume a specific directory structure; symlink or path traversal abuse could be an issue if external inputs are introduced later.
-
-5. **Dependencies**  
-   - PHP (≥ 7.0 recommended)
-   - `config.php` (must be in the same directory or appropriately routed)
-   - ImageMagick CLI tools (`identify`, `convert`)
-   - Web server or CLI access to execute the script
-
-6. **Additional Notes**  
-   - Designed to be included in larger scripts via `require_once`.
-   - For robustness, you may wish to:
-     - Validate image MIME types explicitly.
-     - Abstract CLI commands into a safer wrapper or log them.
-     - Wrap helper functions in a class or namespace for reusability.
-     - Allow the `$allowedExtensions` array to be configurable externally.
-   - Consider configuring fallback watermark behaviour if `$defaultWatermark` is missing.
-
----
-### File Location
-`/`
-
-### File Name
-`process.php`
-
-1. **Purpose**  
-   A core execution script in the Infinite Muse Toolbox. It handles the full lifecycle of an image processing request initiated from a form submission. This includes uploading images, sanitising and validating metadata, applying watermarks, embedding IPTC/XMP metadata, generating thumbnails/previews, extracting metadata, producing certificates, and packaging output files into a ZIP archive.
-
-2. **Agent Role**  
-   Serves as the **primary orchestration agent** in the image-processing pipeline. It binds together multiple helper scripts and external CLI tools to perform complex transformations and validations, then provides immediate browser-based visual feedback to the user throughout each step.
-
-3. **Key Responsibilities**  
-   - Initialize runtime (buffering, headers, styles).
-   - Accept and validate form data (including dates and metadata fields).
-   - Handle file uploads (images and optional watermark).
-   - For each uploaded image:
-     - Move to a unique run directory.
-     - Sanitize filename and validate extension.
-     - Remove existing metadata via `exiftool`.
-     - Convert image to PNG via `convert` (ImageMagick).
-     - Create a signed copy and apply watermark.
-     - Embed detailed metadata (IPTC/XMP).
-     - Compute hashes before/after embedding.
-     - Generate thumbnail and preview versions.
-     - Optionally watermark preview/thumbnail.
-     - Extract metadata using a separate PHP extractor.
-     - Generate Markdown certificate.
-   - Zip final outputs and offer download link via `download_zip.php`.
-
-4. **Security Considerations**  
-   - **Input Sanitization**: Uses `htmlspecialchars()` on metadata fields to avoid XSS.
-   - **File Validation**: Checks extension and upload errors; avoids unsafe file types.
-   - **Command Execution**: Uses `escapeshellarg()` to mitigate shell injection risks in external commands.
-   - **Error Exposure**: Some shell commands may still echo stderr output in verbose form—consider hiding or logging internally in production.
-   - **Writable Directory**: Assumes `$processedDir` is a safe, writable location—should not be web-accessible without `.htaccess` or equivalent protections.
-   - **No Authentication**: Lacks session or permission checks—should not be deployed on a public-facing endpoint without access control.
-   - **Debug Output**: Verbose `echoStep()` messages are visible—must be limited or removed in production.
-
-5. **Dependencies**  
-   - PHP with:
-     - `PDO` (via `config.php`)
-     - `file_uploads` enabled
-   - Shell tools:
-     - `exiftool`
-     - `convert` (ImageMagick)
-     - `identify` (ImageMagick)
-     - `sha256sum`
-     - `zip`
-   - Helper files:
-     - `process_helpers.php` (e.g., defines `echoStep()`)
-     - `functions.php` (e.g., `addWatermark()`)
-     - `metadata_extractor.php` (parses embedded metadata)
-     - `config.php` (DB setup)
-   - A writable directory defined in `$processedDir`.
-
-6. **Additional Notes**  
-   - Ideal for use in kiosk, admin, or local processing scenarios where trusted users interact with a protected frontend.
-   - Designed to provide live feedback using a styled HTML interface and `flush()` calls.
-   - Could be modularised further to separate responsibilities (e.g., extraction, packaging).
-   - Consider migrating long-running CLI calls to background workers for scalability.
-   - Requires `download_zip.php` to handle secure access to archived result files.
-
----
-### File Location
-`/`
-
-### File Name
-`store_data.php`
-
-1. **Purpose**  
-   This script ingests structured data—typically the result of a user-submitted image certification workflow—and maps it into a relational database (`infinite_image_tools`). It handles parsed metadata, signed image files, certificates, AI metadata, and submission details for a given `runId`, which corresponds to a specific processing session.
-
-2. **Agent Role**  
-   Acts as a **data ingestion and persistence agent**. It connects processed image-related metadata and assets to their normalized database schema across multiple tables, ensuring proper referential integrity and uniqueness via UUIDs.
-
-3. **Key Responsibilities**  
-   - Validate presence and existence of a `runId` directory.
-   - Load and parse `data.json`, `submission.json`, and related metadata/certificate files.
-   - Create or reuse normalized entries for keywords, genres, creators, bylines, and relational tables.
-   - Populate `Artworks`, `Images`, `Certificates`, `AIMetadata`, and `Submissions` tables.
-   - Compute SHA-256 hashes of image files for integrity checks.
-   - Wrap all inserts into a single transactional context for atomicity.
-   - Roll back on any failure to prevent partial writes.
-
-4. **Security Considerations**  
-   - **Input validation**: Currently trusts incoming `runId`; this should be sanitized more robustly to prevent directory traversal.
-   - **Filesystem operations**: Reads files from local storage based on user-supplied ID—ensure `processed/` is outside of public web root or has proper ACLs.
-   - **SQL injection**: Mitigated via PDO prepared statements throughout.
-   - **Rollback on failure**: Ensures no partial database writes or inconsistent state.
-   - **Debug mode**: Controlled by `DB_DEBUG` in `config.php`; must be disabled in production to avoid leaking error stack traces.
-
-5. **Dependencies**  
-   - Requires:
-     - `/config.php` for PDO connection
-     - `/process_helpers.php` for any externally defined helpers (assumed)
-     - `PDO` and `PDO_MYSQL` extensions in PHP
-     - A valid MariaDB schema supporting:
-       - `Artworks`, `Images`, `Certificates`, `AIMetadata`, `Keywords`, `Genres`, `Creators`, `Bylines`, `Submissions`, and mapping tables such as `ArtworkKeywords`, `ArtworkGenres`, etc.
-   - Filesystem access to:
-     - `${runId}/data.json`
-     - `${runId}/*.png`, `*_metadata.txt`, `*_certificate.md`, `*_ai_metadata.json`, `submission.json`
-
-6. **Additional Notes**  
-   - Assumes that `generateUUID()` uses the database's `UUID()` function for guaranteed format alignment.
-   - Requires strict schema adherence—column names and types must match what’s expected in this script.
-   - May be extended in the future to handle:
-     - Blockchain record logging
-     - Digital signatures
-     - Logging/analytics for ingestion history
-   - Can be modularized further for reuse and maintainability (e.g., separate out insert handlers).
+**File Path**: `/app/auth.php`
+
+**Purpose**:
+Handles session initialization, user authentication, and provides secure CSRF protection for the ImageProof project.
+
+**Agent Role**:
+This file acts as an authentication and session management utility, securely managing user sessions, verifying user logins, and protecting against CSRF attacks.
+
+**Behavior**:
+
+* **Session Initialization**:
+  Starts a secure session using PHP session management, enforcing strict cookie policies (`SameSite=Strict`, Secure, HttpOnly).
+
+* **CSRF Token Handling**:
+
+  * `generate_csrf_token()`: Generates and returns a secure token stored in the session for form submissions.
+  * `validate_csrf_token()`: Validates submitted tokens against session-stored tokens, rejecting requests with a mismatched or missing token.
+
+* **Authentication Helpers**:
+
+  * `login_user(string $user_id)`: Logs in a user by updating their `last_login` timestamp and storing their ID in the session.
+  * `require_login()`: Redirects unauthenticated users to the login page, preserving the requested URL for post-login redirection.
+  * `current_user()`: Retrieves and caches user details from the database based on the session user ID.
+
+**Security Notes**:
+
+* Implements robust CSRF protection with cryptographically secure tokens and proper hashing comparisons (`hash_equals`).
+* Secure session cookies configured with `Secure`, `HttpOnly`, and `SameSite=Strict` attributes to mitigate common web vulnerabilities (e.g., XSS, session hijacking).
+* Database interactions use prepared statements, minimizing SQL injection risks.
+
+**Dependencies**:
+
+* PHP's built-in session management and cryptography (`random_bytes`).
+* `PDO` instance from `config.php` for database interactions.
+
+**Recommended Improvements**:
+
+* **Explicit Session Configuration**:
+  Consider explicitly setting additional session security configurations like session timeout (`session.gc_maxlifetime`) to enhance control over session expiry.
+
+* **Session Regeneration**:
+  Implement session regeneration (`session_regenerate_id(true)`) during login to prevent session fixation attacks.
+
+* **Logging & Monitoring**:
+  Add logging for CSRF validation failures and unsuccessful login attempts to enhance security monitoring capabilities.
+
+* **Error Handling Consistency**:
+  Introduce consistent error handling (e.g., custom exceptions or dedicated error handler) for better maintainability and clarity during debugging.
+
+* **Environment Checks**:
+  Ensure `$_SERVER['HTTPS']` checks account for reverse proxies or load balancers to correctly determine cookie security contexts.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing (recommend extensive security and integration tests before marking as Stable)
+
+-----
+
+**File Path**: `/app/config.php`
+
+**Purpose**:
+Acts as the central configuration manager and database connection bootstrap for the ImageProof project. Pulls sensitive values from environment variables to avoid credential exposure.
+
+**Agent Role**:
+This file operates as a database connector and configuration handler, responsible for establishing a secure PDO database connection and setting essential runtime limits.
+
+**Behavior**:
+
+* **Environment Configuration**:
+
+  * Retrieves configuration details (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_DEBUG`, `MAX_UPLOAD_MB`) from environment variables.
+  * Supports optional `.env` file integration using `php-dotenv`.
+
+* **Runtime Upload Limits**:
+
+  * Enforces PHP’s upload limits (`upload_max_filesize`, `post_max_size`) dynamically based on the defined maximum upload size (`MAX_UPLOAD_MB`).
+
+* **PDO Connection Setup**:
+
+  * Establishes a secure PDO connection to MySQL/MariaDB.
+  * Sets PDO attributes for improved security and robust error handling (`ERRMODE_EXCEPTION`, `FETCH_ASSOC`, `EMULATE_PREPARES=false`).
+
+* **Error Handling**:
+
+  * Provides different error handling paths depending on debug mode (`DB_DEBUG`).
+  * Logs errors quietly in production, while offering verbose output during development.
+
+**Security Notes**:
+
+* Securely separates sensitive data from the codebase through environment variables.
+* Explicitly disables prepared statement emulation (`PDO::ATTR_EMULATE_PREPARES`) to reduce SQL injection risks.
+* Uses secure defaults for database credentials and explicitly recommends avoiding empty passwords in production.
+* Proper error management to avoid leaking database details in production environments.
+
+**Dependencies**:
+
+* PHP PDO extension for MySQL/MariaDB connectivity.
+* Optionally uses `vlucas/phpdotenv` package for loading environment variables from a `.env` file.
+
+**Recommended Improvements**:
+
+* **Mandatory Password Check**:
+
+  * Consider adding a warning or enforced halt if `DB_PASS` is empty in a production environment to avoid accidental credential misconfiguration.
+
+* **Environment Variable Validation**:
+
+  * Explicit validation for required environment variables to ensure they're properly set, providing early runtime warnings or exceptions for missing critical values.
+
+* **Logging Enhancements**:
+
+  * Use a structured logging framework or solution for improved monitoring and troubleshooting in production, rather than relying solely on PHP’s default error log.
+
+* **SSL Connection (Optional Enhancement)**:
+
+  * Consider supporting SSL options for database connections, especially for secure communication with remote database servers.
+
+* **Configuration Loading Checks**:
+
+  * Implement checks to ensure the `.env` file is present and correctly loaded when using Composer, providing helpful error messages if misconfigured.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Stable (Recommended extensive load and integration testing before final deployment)
+
+-----
+
+**File Path**: `/public/download_zip.php`
+
+**Purpose**:
+Securely serves the processed ZIP archive containing the finalized assets for the currently logged-in user, based on the provided `runId`.
+
+**Agent Role**:
+This file operates as a secure content delivery handler, verifying user authorization and safely streaming ZIP files generated by previous processing steps.
+
+**Behavior**:
+
+* **Query Validation**:
+
+  * Ensures `runId` is present and valid in the URL query string.
+  * Sanitizes `runId` input using regular expression filtering.
+
+* **File Path Resolution**:
+
+  * Constructs a secure and user-specific file path, combining user UUID and sanitized `runId`.
+
+* **File Delivery**:
+
+  * Checks for file existence and readability.
+  * Serves the file with appropriate HTTP headers (`Content-Type`, `Content-Disposition`, `Content-Length`) for secure download.
+
+**Security Notes**:
+
+* Input (`runId`) sanitization via `preg_replace` mitigates injection and directory traversal attacks.
+* Uses session-based authentication (`require_login()` and `current_user()`) to ensure file access is restricted to the owning user.
+* Explicit HTTP status responses (`400`, `404`) help with clear, secure error handling and debugging.
+
+**Dependencies**:
+
+* Authentication and session management (`auth.php`).
+* Database and configuration via PDO instance (`config.php`).
+
+**Recommended Improvements**:
+
+* **Enhanced File Security**:
+
+  * Consider additional verification steps (e.g., a database lookup) to ensure the requested `runId` explicitly belongs to the authenticated user, further preventing unauthorized access.
+
+* **Logging and Monitoring**:
+
+  * Implement access logging, especially for failed or suspicious download attempts, to support security auditing.
+
+* **Rate Limiting**:
+
+  * Introduce rate limiting or throttling mechanisms to prevent automated mass downloads or potential denial-of-service (DoS) attacks.
+
+* **Graceful Error Handling**:
+
+  * Consider serving consistent JSON responses for errors, improving integration with frontend applications or API clients.
+
+* **Dynamic Filenames**:
+
+  * Dynamically name the downloaded ZIP file (e.g., including the `runId` or date stamp) for better user experience and file management.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing (Recommended thorough integration and security testing before promoting to Stable)
+
+-----
+
+**File Path**: `/functions.php`
+
+**Purpose**:
+Defines configuration variables and utility functions to support image uploading, processing, watermarking, and system maintenance in the Infinite Muse Toolbox.
+
+**Agent Role**:
+Utility and configuration agent providing file management, watermarking operations, and real-time feedback to the user interface during image processing tasks.
+
+**Behavior**:
+
+* **Configuration Setup**:
+
+  * Sets global variables for maximum upload size, allowed file types, and directory paths for watermarks and processed files.
+
+* **Directory Initialization**:
+
+  * Ensures necessary directories (`/watermarks`, `/processed`) exist with correct permissions.
+
+* **User Interface Feedback** (`echoStep()`):
+
+  * Dynamically injects JavaScript into the client-side DOM for real-time progress updates during server-side processing.
+
+* **File Maintenance** (`clearProcessedFiles()`):
+
+  * Silently clears old files from the processed directory to manage disk usage.
+
+* **Watermarking Utility** (`addWatermark()`):
+
+  * Copies original image and applies user-provided watermark.
+  * Dynamically resizes and composites watermark image.
+  * Adds randomized textual watermark overlays for additional protection or branding.
+
+**Security Notes**:
+
+* Uses `escapeshellarg()` for shell command safety, mitigating risks of command injection.
+* Checks file existence and validity at each step, providing user feedback on errors.
+* Does not currently enforce strict upload size limits via environment configuration, relying instead on hard-coded settings.
+
+**Dependencies**:
+
+* Relies on external binaries (`convert` and `identify` from ImageMagick).
+* Depends on system-level PHP functions (`shell_exec`, `system`) to interact with ImageMagick.
+
+**Recommended Improvements**:
+
+* **Environment Variables**:
+
+  * Move `$maxFileSizeMb`, `$allowedExtensions`, and directory paths to `.env` file or central configuration (`config.php`) for better manageability.
+
+* **Error Handling & Logging**:
+
+  * Replace suppression (`@`) with explicit error checking and logging for easier debugging and system monitoring.
+  * Introduce a logging mechanism for watermark and file operation failures.
+
+* **Validation & Sanitization**:
+
+  * Explicitly validate all inputs (image paths, watermark files, dimensions) before processing to enhance robustness.
+
+* **Cron Management**:
+
+  * Separate cron-based cleanup (`clearProcessedFiles()`) into a dedicated, isolated script for clear operational boundaries.
+
+* **Code Refactoring**:
+
+  * Break down complex functions like `addWatermark()` into smaller, reusable methods to enhance readability and maintainability.
+
+* **Internationalization & Accessibility**:
+
+  * Avoid hardcoded inline styles/colors; use CSS classes for consistent visual styles and potential theme support.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing (recommended additional testing of watermarking process and cleanup functions before declaring Stable)
+
+-----
+
+**File Path**: `/index.php`
+
+**Purpose**:
+Serves as the unified landing page for both public visitors and logged-in members, displaying recent image thumbnails and providing user-specific upload forms and options.
+
+**Agent Role**:
+This file operates as the central presentation and interaction point for visitors and authenticated members. It manages user-specific content, image previews, watermark selections, license options, and facilitates secure image uploads.
+
+**Behavior**:
+
+* **Session and User Management**:
+
+  * Checks if a user is logged in via `current_user()` (from `auth.php`).
+  * Sets a boolean `$loggedIn` to manage view logic.
+
+* **Thumbnail Retrieval**:
+
+  * For authenticated users, retrieves the user's 10 most recent thumbnails.
+  * For public visitors, retrieves the site-wide 10 most recent thumbnails.
+
+* **User-Specific Options**:
+
+  * Fetches available watermarks and licenses for logged-in users from the database.
+  * Dynamically populates form dropdowns and provides file-upload capability.
+
+* **Client-Side Preview**:
+
+  * JavaScript enables live preview of selected watermark images and uploaded artwork prior to submission.
+
+**Security Notes**:
+
+* Employs `htmlspecialchars()` consistently to prevent Cross-Site Scripting (XSS) vulnerabilities when outputting user-controlled data.
+* Integrates secure CSRF protection by embedding a token generated via `generate_csrf_token()` from `auth.php` into form submissions.
+* Database interactions are safeguarded through the use of prepared statements.
+
+**Dependencies**:
+
+* Internal:
+
+  * `auth.php`: for session handling, authentication checks, and CSRF token management.
+  * `config.php`: database connectivity (`PDO`).
+  * `functions.php`: general utility functions.
+* External:
+
+  * Standard PHP PDO extension for database interactions.
+
+**Recommended Improvements**:
+
+* **Pagination**:
+  Consider implementing pagination or lazy-loading techniques for thumbnails to handle scalability as content grows.
+
+* **Error Handling and User Feedback**:
+  Add explicit error handling around database queries and inform users when a database retrieval fails.
+
+* **Accessibility**:
+  Improve accessibility by ensuring more descriptive `alt` attributes for thumbnails (currently generic "recent thumbnail").
+
+* **JavaScript Robustness**:
+
+  * Add error handling in JavaScript file preview functionality (e.g., unsupported file types).
+  * Validate file size and type client-side before uploads to enhance UX.
+
+* **Modularize CSS and JS**:
+  Move inline CSS and JavaScript to separate external files to improve maintainability and browser caching.
+
+* **Responsive Design Enhancements**:
+  Add media queries and responsive adjustments for optimal viewing on mobile and tablet devices.
+
+* **Logging and Analytics**:
+  Integrate user interaction logging or basic analytics for performance monitoring and UX improvements.
+
+**Version & Status**:
+
+* **Version**: v1.1
+* **Status**: Testing (recommended additional browser compatibility and integration tests before stable release)
+
+-----
+
+**File Path**: `/login.php`
+
+**Purpose**:
+Manages user authentication via email and password, providing a secure login form with CSRF protection for the ImageProof project.
+
+**Agent Role**:
+Acts as a login interface, verifying user credentials, handling authentication requests, initiating user sessions, and managing redirects upon successful login.
+
+**Behavior**:
+
+* **Form Submission Handling**:
+
+  * Validates submitted email and password against stored credentials.
+  * Verifies passwords securely using PHP’s built-in `password_verify` method.
+  * Initiates user login via `login_user()` upon successful credential verification.
+  * Redirects authenticated users to the originally requested resource.
+
+* **CSRF Protection**:
+
+  * Utilizes `validate_csrf_token()` to protect against cross-site request forgery.
+  * Generates tokens through `generate_csrf_token()` and embeds them in form submissions.
+
+* **Error Handling**:
+
+  * Accumulates and clearly displays user-friendly errors for invalid login attempts.
+
+**Security Notes**:
+
+* Passwords securely stored and verified using PHP’s native hashing functions (`password_hash`, `password_verify`).
+* Robust CSRF protection included for POST requests.
+* Uses parameterized queries (prepared statements) for database interactions, effectively preventing SQL injection.
+* Form inputs sanitized using `htmlspecialchars` to mitigate potential XSS vulnerabilities.
+
+**Dependencies**:
+
+* Requires `auth.php` for authentication/session helper functions.
+* Depends on a properly configured PDO instance for database access.
+
+**Recommended Improvements**:
+
+* **Rate Limiting & Brute-Force Protection**:
+
+  * Implement login attempt rate limiting to prevent brute-force attacks.
+
+* **Session Regeneration**:
+
+  * Explicitly regenerate session IDs upon successful login using `session_regenerate_id(true)` for additional session security.
+
+* **Logging & Monitoring**:
+
+  * Log failed login attempts for security audits and intrusion detection.
+  * Provide optional admin notifications for repeated authentication failures.
+
+* **Input Validation Enhancements**:
+
+  * Include explicit email-format validation using PHP’s built-in validation (`filter_var`).
+
+* **User Feedback**:
+
+  * Consider distinguishing between different error scenarios for clearer user guidance (though avoid revealing specific reasons to maintain security).
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing (Pending further security testing and validation)
+
+-----
+
+**File Path**: `/logout.php`
+
+**Purpose**:
+Logs out the currently authenticated user by securely terminating their session and session cookie, then redirects them to the login page.
+
+**Agent Role**:
+Serves as the session termination utility, ensuring complete logout and clean-up of user sessions.
+
+**Behavior**:
+
+* **Session Clean-Up**:
+
+  * `session_unset()`: Clears all active session variables.
+  * `session_destroy()`: Completely destroys the session server-side.
+
+* **Cookie Invalidation**:
+
+  * Explicitly expires the session cookie immediately by setting its expiration time to a past timestamp.
+
+* **User Redirection**:
+
+  * Redirects the user immediately to the login page (`login.php`) after session termination.
+
+**Security Notes**:
+
+* Securely invalidates sessions by both destroying server-side session data and expiring the client-side cookie.
+* Maintains security best practices by ensuring session cookies respect the `Secure` and `HttpOnly` flags, preventing potential misuse.
+
+**Dependencies**:
+
+* `auth.php` for consistent session handling and configuration.
+
+**Recommended Improvements**:
+
+* **Error Handling & Logging**:
+
+  * Introduce logging of logout events to support auditing and security monitoring, tracking successful and failed session terminations.
+
+* **Explicit HTTPS Check**:
+
+  * Confirm cookie security parameters (`secure` flag) by explicitly checking HTTPS context for robust handling in proxy/load-balanced environments.
+
+* **Session Regeneration** (Optional Improvement):
+
+  * Consider adding `session_regenerate_id(true)` prior to destroying the session for additional security against session fixation vulnerabilities.
+
+* **Customizable Redirection**:
+
+  * Allow optional URL parameters for flexible redirection after logout (e.g., via `$_GET['next']` parameter).
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Stable (recommend continued monitoring for unusual logout patterns)
+
+-----
+
+**File Path**: `/metadata_extractor.php`
+
+**Purpose**:
+Extracts, sanitizes, structures, and formats metadata from signed images into a polished Markdown document suitable for sharing, display, or archiving within the ImageProof project.
+
+**Agent Role**:
+This script serves as a standalone image metadata extraction and reporting utility, responsible for leveraging ExifTool to parse image metadata and transforming it into structured Markdown output.
+
+**Behavior**:
+
+* **Command-Line Argument Parsing**:
+  Requires explicit input (`--input`) and output (`--output`) file paths, validating their existence and accessibility.
+
+* **ExifTool Integration**:
+  Utilizes ExifTool via the command line, executing a shell command (`exiftool -j`) to fetch image metadata in JSON format.
+
+* **Security-Focused Filtering**:
+  Excludes a predefined set of sensitive metadata fields (e.g., file paths, inodes, timestamps, permissions) to protect user privacy and system integrity.
+
+* **Field Label Mapping**:
+  Transforms raw metadata keys into clear, user-friendly labels for readability and clarity in the Markdown report.
+
+* **Markdown Generation**:
+  Organizes metadata into logical sections (Basic Information, Technical Details, Metadata Identifiers, Additional Information) for easy consumption.
+
+**Security Notes**:
+
+* Sensitive metadata fields explicitly filtered out (`SourceFile`, filesystem details, rights details).
+* Sanitizes metadata values via `htmlspecialchars()` to prevent Markdown injection or formatting issues.
+* Shell commands executed via `escapeshellcmd()` and `escapeshellarg()` to mitigate command injection risks.
+
+**Dependencies**:
+
+* External dependency on [ExifTool](https://exiftool.org/) installed and accessible in the system PATH.
+* PHP built-in functions for JSON processing, command-line argument parsing, and file I/O.
+
+**Recommended Improvements**:
+
+* **Error Logging**:
+  Implement structured logging to a file or monitoring system for easier debugging and incident tracking.
+
+* **Input Validation**:
+  Add stricter input file validation, such as ensuring MIME type checks or limiting acceptable file extensions to avoid processing unintended files.
+
+* **Performance Optimization**:
+  Consider adding caching or file checksum verification to avoid redundant metadata extraction on unchanged files.
+
+* **JSON Parsing Robustness**:
+  Implement checks for ExifTool output completeness, ensuring that critical fields exist before assuming successful extraction.
+
+* **Exception Handling**:
+  Replace basic error handling with structured exception handling for better readability and maintainability.
+
+* **Unit Testing**:
+  Introduce automated tests for critical logic, especially filtering logic and Markdown generation, to maintain code correctness through future changes.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing (extensive edge case testing recommended before stable release)
+
+-----
+
+**File Path**: `/my_licenses.php`
+
+**Purpose**:
+Provides a user dashboard for managing license templates, enabling CRUD (Create, Read, Update, Delete) operations and setting a default license.
+
+**Agent Role**:
+Operates as a CRUD agent that manages user-specific license data, including secure database interactions, markdown rendering, and client-side form handling.
+
+**Behavior**:
+
+* **License Management Operations**:
+
+  * **Create/Update**: Handles saving or updating licenses in the database. Users can designate a license as the default, which resets the previous default.
+  * **Delete**: Allows users to delete existing licenses.
+  * **Read**: Retrieves and displays licenses from the database in a readable markdown format.
+
+* **Markdown Rendering**:
+
+  * Utilizes the `Parsedown` library in safe mode for secure markdown-to-HTML conversion, preventing XSS attacks.
+
+* **Form Handling & Client-side Interaction**:
+
+  * Provides an intuitive interface for editing licenses through JavaScript form pre-filling.
+
+**Security Notes**:
+
+* **CSRF Protection**:
+
+  * Employs the project's CSRF validation functions (`generate_csrf_token()` and `validate_csrf_token()`) to secure form submissions.
+
+* **Input Validation & Sanitization**:
+
+  * User inputs are trimmed and validated before database interactions.
+  * Output is sanitized using `htmlspecialchars()` to protect against XSS attacks.
+  * Markdown rendering is configured with `setSafeMode(true)` to strip dangerous HTML tags.
+
+* **Database Security**:
+
+  * Uses parameterized SQL queries (prepared statements) to prevent SQL injection.
+
+**Dependencies**:
+
+* Project Files:
+
+  * `auth.php` for user authentication and CSRF protection.
+  * `config.php` for database connection.
+* External Library:
+
+  * `Parsedown` (MIT-licensed Markdown parser)
+
+**Recommended Improvements**:
+
+* **Error Handling**:
+
+  * Implement more granular exception handling and provide clearer feedback to users about potential issues (e.g., database connection errors).
+
+* **Accessibility & UX**:
+
+  * Enhance the user interface for accessibility by adding clearer labels, ARIA attributes, and improving keyboard navigation.
+  * Provide visual feedback during loading states or after deletion.
+
+* **Database Transactions**:
+
+  * Consider wrapping updates to the default license in database transactions for atomicity and consistency.
+
+* **Code Structure**:
+
+  * Refactor HTML/CSS/JavaScript into separate files or templates for improved maintainability and readability.
+  * Introduce consistent client-side validation to enhance user experience and reduce server-side errors.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing (recommend thorough user interface and security audits before marking as Stable)
+
+-----
+
+**File Path**: `/my_watermarks.php`
+
+**Purpose**:
+Provides users with an interface for uploading, managing, and selecting their watermark images for use within the ImageProof project.
+
+**Agent Role**:
+Acts as a CRUD (Create, Read, Update, Delete) interface agent, enabling user-controlled management of watermark files, including uploading new files, setting defaults, and deletion of unwanted files.
+
+**Behavior**:
+
+* **File Upload**:
+  Handles user-uploaded watermark images (`PNG`, `JPEG`, `JPG`, `WEBP`). Verifies the file type, stores files securely in user-specific directories, and adds database records.
+
+* **Set Default Watermark**:
+  Updates database records to designate a chosen watermark as the default, ensuring only one watermark is marked as default at a time.
+
+* **Delete Watermark**:
+  Removes watermark entries from both the filesystem and database, preventing orphaned files or database entries.
+
+* **Display Watermarks**:
+  Retrieves user watermark records from the database for display, showing thumbnails, filenames, default status, and actionable controls (set default, delete).
+
+**Security Notes**:
+
+* Implements CSRF token validation (`validate_csrf_token()`) for all POST operations.
+* File uploads validate extensions explicitly and restrict allowed types to mitigate arbitrary file upload risks.
+* Uses `htmlspecialchars()` consistently in output to prevent Cross-Site Scripting (XSS).
+* Database queries utilize prepared statements to prevent SQL injection.
+* User-specific directories prevent file visibility across different users.
+
+**Dependencies**:
+
+* `auth.php`: For authentication, session management, and CSRF handling.
+* `config.php`: For PDO database connection.
+* PHP built-in filesystem functions (`move_uploaded_file`, `mkdir`, `unlink`).
+
+**Recommended Improvements**:
+
+* **Thumbnail Generation**:
+
+  * Consider automatically generating and storing standardized-sized thumbnails to improve performance and page loading speeds.
+
+* **Error Handling**:
+
+  * Replace the silent error suppression (`@unlink`) with explicit error checking and handling/logging to ensure issues do not silently fail.
+
+* **File Size & Dimension Validation**:
+
+  * Implement file size limits and dimension validation to further reduce potential abuse or performance impacts.
+
+* **Input Sanitization & Validation**:
+
+  * Consider adding checks for filenames to prevent filesystem traversal attacks or unintended overwriting of existing files.
+
+* **Directory Permissions**:
+
+  * Confirm correct permissions (`0700` or `0750`) on user-specific directories to strengthen isolation between user files.
+
+* **Deletion Safety**:
+
+  * Before deleting, verify file existence explicitly and provide meaningful error feedback if deletion fails.
+
+* **UI & UX Enhancements**:
+
+  * Improve usability by adding a confirmation modal/dialog with watermark previews before performing destructive operations like deletion.
+
+* **Logging & Auditing**:
+
+  * Log watermark actions (upload, delete, default selection) to enhance auditing and accountability.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing (recommend comprehensive functionality and security tests prior to marking as Stable)
+
+-----
+
+**File Path**: `/process.php`
+
+**Purpose**:
+Handles user-submitted image uploads, applies watermark and metadata, and generates signed outputs and certificates of authenticity. Outputs a downloadable ZIP archive containing processed assets.
+
+**Agent Role**:
+Serves as the **core image processing agent** of the ImageProof system. It validates uploads, enforces constraints, applies transformations (conversion, watermarking, metadata embedding), and persists image metadata to the database.
+
+**Behavior**:
+
+* **Authentication & Security**:
+
+  * Requires user to be logged in via `require_login()`.
+  * Verifies CSRF tokens immediately via `validate_csrf_token()`.
+
+* **Input Handling**:
+
+  * Accepts image uploads (`.png`, `.jpg`, `.jpeg`, `.webp`) up to 200MB each.
+  * Accepts watermark either from a saved DB record or one-off upload.
+  * Accepts a license record or falls back to a default phrase.
+  * Accepts descriptive metadata via form fields (title, keywords, SEO headline, etc.).
+
+* **Processing Pipeline**:
+
+  1. Creates a dedicated per-user processing directory.
+  2. Moves, validates, and sanitizes file names.
+  3. Converts all uploaded files to `.png` format.
+  4. Applies resized watermark (10% of image width, bottom-right placement).
+  5. Strips existing metadata, then embeds structured metadata using `exiftool`.
+  6. Generates thumbnails (400px) and previews (800px).
+  7. Persists image metadata to MariaDB.
+  8. Extracts metadata to `.md` using `metadata_extractor.php`.
+  9. Creates a **Markdown certificate of authenticity** with embedded image info.
+
+10. Zips all final assets and offers a download link.
+
+* **Frontend Output**:
+
+  * Outputs a live-processing HTML interface with color-coded status updates.
+  * Finalizes with a download link for the ZIP archive.
+
+**Security Notes**:
+
+* CSRF protection enforced early with `validate_csrf_token()`.
+* Uses `htmlspecialchars()` for sanitizing all user-submitted strings before embedding into HTML or metadata.
+* Enforces upload size limits using both PHP `ini_set()` and runtime checks.
+* Uses `escapeshellarg()` for all shell command parameters to prevent shell injection.
+* Uses per-user and per-run directory isolation for temporary storage.
+
+**Dependencies**:
+
+* PHP: `GD` or `ImageMagick` (via `convert`), `exiftool`, `zip` (via shell).
+* Internal:
+
+  * `auth.php` (auth/session/CSRF)
+  * `functions.php` (utility functions like `echoStep`)
+  * `metadata_extractor.php` (CLI tool for .md metadata dump)
+  * `process_helpers.php` (e.g. `addWatermark()`)
+
+**Recommended Improvements**:
+
+* **Security & Validation**:
+
+  * Good: CSRF validation, HTML sanitization, and command escaping are all handled correctly.
+  * *Suggestion*: Use stricter MIME-type verification (`mime_content_type()`) in addition to file extension checks for uploads.
+  * *Suggestion*: Check `$userId` more explicitly for validity before using it in paths or queries.
+
+* **Code Quality & Maintainability**:
+
+  * *Suggestion*: Split into smaller logical modules (e.g., `image_processing.php`, `metadata_handler.php`, `output_ui.php`) for testability and future maintainability.
+  * *Suggestion*: Replace `shell_exec()` with a more secure wrapper (`proc_open`) if server policy allows.
+  * *Suggestion*: Extract HTML output to a template or use output buffering more declaratively.
+
+* **Logging & Error Handling**:
+
+  * *Suggestion*: Use proper logging (`error_log()` or Monolog) for internal errors instead of echoing errors to the browser.
+  * *Suggestion*: Display user-friendly messages and optionally show a collapsible “debug info” panel for advanced users.
+
+* **UX/UI**:
+
+  * Good: Live step-by-step feedback gives great user clarity.
+  * *Suggestion*: Add progress indicator or animated spinner to improve responsiveness for long processing tasks.
+
+* **Performance**:
+
+  * *Suggestion*: Consider queueing uploads for async/batch processing at scale.
+  * *Suggestion*: Cache resized watermark to avoid repeated conversion per file.
+
+**Version & Status**:
+
+* **Version**: v1.2
+* **Status**: Stable – requires further testing for concurrency and upload edge cases.
+
+-----
+
+**File Path**: `/process_helpers.php`
+
+**Purpose**:
+Provides utility functions to support image processing workflows, including live feedback streaming for web UI and watermarking image files using ImageMagick CLI tools.
+
+**Agent Role**:
+Acts as a front-line processing utility agent. It enhances user experience via real-time progress updates and provides watermarking logic that integrates shell-based image manipulation into the web backend.
+
+**Behavior**:
+
+* **`echoStep(string $message, string $class = 'info')`**
+  Streams a message to the front-end `<div id="steps">` using JavaScript injection. Auto-scrolls the container to ensure latest messages are visible.
+
+* **`addWatermark(string $imagePath, string $watermarkPath, string $runDir)`**
+
+  * Uses ImageMagick to:
+
+    * Get image width.
+    * Resize the watermark to \~6% of the image’s width.
+    * Overlay the watermark in the bottom-right corner with margin.
+  * Cleans up temporary resized watermark after use.
+
+* **Global config values**:
+
+  * `$defaultWatermark`: Fallback watermark image path.
+  * `$allowedExtensions`: Permitted image file types.
+
+**Security Notes**:
+
+* **Shell Injection Protection**:
+
+  * Good use of `escapeshellarg()` to prevent command injection in user-supplied file paths.
+  * Still relies on shell execution (`shell_exec`, `convert`, etc.) which can be risky in shared hosting or improperly sandboxed environments.
+
+* **JS Injection Protection**:
+
+  * Uses `json_encode()` to escape messages in `echoStep()`—helps prevent DOM-based XSS injection.
+
+* **Cleanup**:
+
+  * Temporary files (`signature_small_...png`) are removed after use via `@unlink()`, preventing buildup.
+
+**Dependencies**:
+
+* **PHP Extensions**: None required beyond core.
+* **External Tools**: [ImageMagick](https://imagemagick.org/) (`identify`, `convert`) must be installed and accessible from the server's shell path.
+
+**Recommended Improvements**:
+
+* **Error Handling & Logging**:
+
+  * Check for command execution failures (e.g., validate `shell_exec` return value).
+  * Log errors instead of failing silently (e.g., `if (!$width) { log('identify failed'); return; }`).
+
+* **Security Hardenings**:
+
+  * Ensure no user-controlled inputs can modify `$imagePath`, `$watermarkPath`, or `$runDir` without validation.
+  * Consider restricting to a known safe directory to avoid arbitrary file access.
+
+* **Code Structure**:
+
+  * Move `$defaultWatermark` and `$allowedExtensions` to `config.php` or an environment file to avoid hardcoded paths in logic files.
+
+* **Functionality**:
+
+  * Add support for positioning the watermark (top-left, center, etc.) via optional parameters.
+  * Allow scaling percentage to be configurable per user/session.
+
+* **Testability**:
+
+  * Currently difficult to unit test due to reliance on shell commands and global echoing.
+  * Consider abstracting the shell layer for mocking during tests.
+
+**Version & Status**:
+
+* **Version**: v0.9
+* **Status**: Testing – usable in development, needs refinement for production robustness and flexibility.
+
+-----
+
+**File Path**: `/register.php`
+
+**Purpose**:
+Handles new user registration for the ImageProof platform, validating input, enforcing security policies, and storing user credentials securely.
+
+**Agent Role**:
+Acts as a registration handler and form processor. It validates user input, ensures unique email addresses, hashes passwords securely, and stores the new user in the database. It then logs the user in and redirects them to the main page.
+
+**Behavior**:
+
+* **Form Submission Handling** (POST):
+
+  * Validates the CSRF token using `validate_csrf_token()`.
+  * Sanitizes and trims input (`email`, `display_name`, `password`, `password_confirm`).
+  * Validates email format and password confirmation/length.
+  * Checks whether the email already exists in the database.
+  * If all checks pass:
+
+    * Hashes the password with `password_hash(...)`.
+    * Inserts the new user record into the database.
+    * Retrieves the `user_id` via `lastInsertId()` or fallback query.
+    * Calls `login_user()` and redirects to `index.php`.
+
+* **Form Display** (GET or after error):
+
+  * Displays any validation errors.
+  * Includes a CSRF token for protection.
+  * Provides minimal styling for visual clarity and accessibility.
+
+**Security Notes**:
+
+* **CSRF Protection**:
+  Uses a hidden token input with secure token validation (`validate_csrf_token()`).
+
+* **Password Handling**:
+  Passwords are hashed using `PASSWORD_DEFAULT`, ensuring use of the latest recommended hashing algorithm (usually bcrypt or Argon2).
+
+* **SQL Injection Protection**:
+  All database interactions use parameterized queries (prepared statements), mitigating injection risks.
+
+* **XSS Protection**:
+  Error messages are passed through `htmlspecialchars()` before output to prevent reflected XSS.
+
+* **Email Duplication Check**:
+  Prevents registration of duplicate accounts by checking the `users` table before insert.
+
+**Dependencies**:
+
+* Relies on `auth.php` for session and CSRF functions (`login_user()`, `validate_csrf_token()`, etc.).
+* Depends on `config.php` for the `$pdo` database connection.
+
+**Recommended Improvements**:
+
+* **ID Retrieval Consistency**:
+  Prefer using `lastInsertId()` with a UUID scheme or explicitly return the UUID in the insert query instead of falling back to a second `SELECT`.
+
+* **Stronger Password Requirements**:
+  Consider adding checks for common weaknesses: e.g., uppercase/lowercase, numbers, symbols.
+
+* **Username Sanitization & Length Limits**:
+  Add validation rules for `display_name` length, disallowed characters, or profanity filtering.
+
+* **Rate Limiting or CAPTCHA**:
+  Add basic rate-limiting or CAPTCHA to protect against automated signup attempts.
+
+* **Use of HTML5 Validation Attributes**:
+  While `required` is present, consider using `minlength`, `maxlength`, and pattern matching for early client-side validation.
+
+* **Accessibility Enhancements**:
+  Associate form inputs and labels with `for`/`id` attributes to improve screen reader support.
+
+**Version & Status**:
+
+* **Version**: v1.0
+* **Status**: Testing
+  (Functionally complete and secure, but should be hardened with validation improvements and accessibility polish for production deployment.)
+
+-----
+
+**File Path**: `/store_data.php`
+
+**Purpose**:
+Processes image metadata and form input stored during an upload session, inserting structured data into the `infinite_image_tools` relational database. This includes artworks, associated metadata, images, certificates, AI annotations, and optional submissions.
+
+**Agent Role**:
+Acts as a data ingestion and persistence agent. It ingests structured files from a temporary "run" directory (e.g., `processed/{runId}/`), parses them, and populates multiple related database tables within a transaction to maintain data consistency.
+
+**Behavior**:
+
+* Enforces session authentication and CSRF protection for POST requests.
+* Accepts a `runId` to locate a pre-processed directory containing:
+
+  * `data.json`: Core metadata
+  * `*_signed.png`, `*_metadata.txt`, `*_certificate.md`: Images and attached metadata
+  * Optionally: `*_ai_metadata.json`, `submission.json`
+* Maps and inserts values across multiple tables:
+
+  * `Artworks`, `Images`, `Certificates`, `AIMetadata`, `Submissions`
+  * `ArtworkKeywords`, `ArtworkGenres`, `ArtworkCreators`, `ArtworkBylines` (many-to-many)
+* Wraps operations in a database transaction to ensure atomicity.
+
+**Security Notes**:
+
+* Requires authenticated session (`require_login()`).
+* Validates CSRF tokens on `POST` requests.
+* Uses prepared statements exclusively (mitigates SQL injection).
+* Hashes images with SHA-256 (`hash_file()`).
+* Skips filesystem path sanitization—relies on directory structure trust. May benefit from hardening.
+
+**Dependencies**:
+
+* `auth.php`: for session and CSRF helpers
+* `config.php`: for `$pdo` connection
+* `process_helpers.php`: assumed to contain processing utilities
+* Filesystem: requires JSON, PNG, Markdown, TXT files structured per run
+
+**Recommended Improvements**:
+
+* **File path sanitation**: Validate or whitelist `runId` to prevent path traversal or injection (`basename($runId)` or regex enforcement).
+* **Error logging**: Replace `die()` with centralized error handling and logging (e.g., `error_log()`, Sentry, or app log).
+* **Validation layer**: Validate decoded JSON structure and expected keys (`isset`, data types) before DB insertion.
+* **Fail-safe insertions**: Replace `INSERT IGNORE` with conflict-aware logic where needed to avoid masking integrity issues.
+* **Refactor long method**: Break down the monolithic `try` block into reusable functions or per-table handlers for clarity and maintainability.
+* **AI metadata**: Validate `json_decode()` results strictly and include fallback behavior or schema conformance checking.
+* **Use file hashes as deduplication keys**: Useful for avoiding re-processing identical image uploads.
+* **Missing uploads**: Consider a check to ensure that *at least one* image, metadata, or certificate was processed, to prevent “silent success”.
+
+**Version & Status**:
+
+* **Version**: v0.9
+* **Status**: Testing
+  (Core pipeline complete; requires structured validation, filesystem hardening, and better error handling before production)
+
+-----

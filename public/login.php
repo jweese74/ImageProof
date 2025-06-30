@@ -1,5 +1,5 @@
 <?php
-require_once 'auth.php';
+require_once __DIR__ . '/../app/auth.php';
 
 $next   = $_GET['next'] ?? 'index.php';
 $errors = [];

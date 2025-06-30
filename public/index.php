@@ -2,9 +2,9 @@
 // index.php  — unified public / member landing page
 // --------------------------------------------------
 
-require_once 'auth.php';
-require_once 'config.php';
-require_once 'functions.php';
+require_once __DIR__ . '/../app/auth.php';
+require_once __DIR__ . '/../app/config.php';
+require_once __DIR__ . '/../app/functions.php';
 
 $user      = current_user();           // null when signed-out :contentReference[oaicite:0]{index=0}
 $loggedIn  = $user !== null;

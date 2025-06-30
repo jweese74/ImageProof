@@ -6,9 +6,9 @@
  * • Mark one licence as default
  * --------------------------------------------------------------
  */
-require_once 'auth.php';
+require_once __DIR__ . '/../app/auth.php';
 require_login();
-require_once 'config.php';
+require_once __DIR__ . '/../app/config.php';
 
 // ---------------------------------------------------------------
 // Markdown helper (Parsedown - tiny, MIT-licensed)

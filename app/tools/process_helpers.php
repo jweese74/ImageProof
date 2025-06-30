@@ -1,6 +1,6 @@
 <?php
 // process_helpers.php
-require_once 'config.php';
+require_once __DIR__ . '/../app/config.php';
 
 /**
  * Streams one progress line to the “Processing” page.
