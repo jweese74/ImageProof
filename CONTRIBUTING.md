@@ -11,7 +11,7 @@ This project is the product of passion, experimentation, and late-night coffee�
 - Add unit or integration tests.
 - Improve accessibility or error handling.
 
-Whether you're seasoned or still learning, your input could help transform ImageProof into something lasting and resilient.
+Whether you're seasoned or still learning, your input could help transform PixlKey into something lasting and resilient.
 
 > 🛠 “I’ve fumbled it this far—now I’m calling in the pros.”  
 > — _Jeff Weese, Project Maintainer_

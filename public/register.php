@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <meta charset="utf-8">
-    <title>Register | ImageProof</title>
+    <title>Register | PixlKey</title>
     <style>
         body {
             font-family: sans-serif;

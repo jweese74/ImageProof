@@ -1,10 +1,10 @@
-# 🖼️ ImageProof
+# 🖼️ PixlKey
 
-_ImageProof_ is a secure PHP-based platform for digital artists and content creators to upload, watermark, license, and register their digital artwork. The system ensures verifiable ownership, metadata preservation, and flexible licensing—tying these not just to the artwork file, but to its unique cryptographic fingerprint (SHA-256 hash).
+_PixlKey_ is a secure PHP-based platform for digital artists and content creators to upload, watermark, license, and register their digital artwork. The system ensures verifiable ownership, metadata preservation, and flexible licensing—tying these not just to the artwork file, but to its unique cryptographic fingerprint (SHA-256 hash).
 
 ## 🎯 Project Goals
 
-The core goal of ImageProof is to create a **searchable, decentralized registry of digital images, ownership rights, and licensing**, anchored by each image's **cryptographic fingerprint** rather than just file content or metadata. This enables:
+The core goal of PixlKey is to create a **searchable, decentralized registry of digital images, ownership rights, and licensing**, anchored by each image's **cryptographic fingerprint** rather than just file content or metadata. This enables:
 
 - Verifiable proof of authorship and modification history.
 - Immutable links between artwork, metadata, and license.
@@ -95,7 +95,7 @@ This project is the product of passion, experimentation, and late-night coffee�
 - Add unit or integration tests.
 - Improve accessibility or error handling.
 
-Whether you're seasoned or still learning, your input could help transform ImageProof into something lasting and resilient.
+Whether you're seasoned or still learning, your input could help transform PixlKey into something lasting and resilient.
 
 > 🛠 “I’ve fumbled it this far—now I’m calling in the pros.”  
 > — _Jeff Weese, Project Maintainer_

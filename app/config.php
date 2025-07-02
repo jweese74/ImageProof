@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ImageProof – central configuration & PDO bootstrap.
+ * PixlKey – central configuration & PDO bootstrap.
  *
  * Sensitive values are pulled from environment variables that can be supplied
  * either by a `.env` file (loaded via php-dotenv) or by Apache SetEnv
@@ -58,7 +58,7 @@ try {
     if (DB_DEBUG) {
         die('Database connection failed: ' . $e->getMessage());
     }
-    error_log('ImageProof DB connection error: ' . $e->getMessage());
+    error_log('PixlKey DB connection error: ' . $e->getMessage());
     http_response_code(500);
     die('Internal Server Error');
 }

@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <meta charset="utf-8">
-    <title>Log in | ImageProof</title>
+    <title>Log in | PixlKey</title>
     <style>
         body {
             font-family: sans-serif;

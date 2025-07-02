@@ -1,7 +1,7 @@
 **File Path**: `/app/auth.php`
 
 **Purpose**:
-Handles session initialization, user authentication, and provides secure CSRF protection for the ImageProof project.
+Handles session initialization, user authentication, and provides secure CSRF protection for the PixlKey project.
 
 **Agent Role**:
 This file acts as an authentication and session management utility, securely managing user sessions, verifying user logins, and protecting against CSRF attacks.
@@ -60,7 +60,7 @@ This file acts as an authentication and session management utility, securely man
 **File Path**: `/app/config.php`
 
 **Purpose**:
-Acts as the central configuration manager and database connection bootstrap for the ImageProof project. Pulls sensitive values from environment variables to avoid credential exposure.
+Acts as the central configuration manager and database connection bootstrap for the PixlKey project. Pulls sensitive values from environment variables to avoid credential exposure.
 
 **Agent Role**:
 This file operates as a database connector and configuration handler, responsible for establishing a secure PDO database connection and setting essential runtime limits.
@@ -349,7 +349,7 @@ This file operates as the central presentation and interaction point for visitor
 **File Path**: `/public/login.php`
 
 **Purpose**:
-Manages user authentication via email and password, providing a secure login form with CSRF protection for the ImageProof project.
+Manages user authentication via email and password, providing a secure login form with CSRF protection for the PixlKey project.
 
 **Agent Role**:
 Acts as a login interface, verifying user credentials, handling authentication requests, initiating user sessions, and managing redirects upon successful login.
@@ -474,7 +474,7 @@ Serves as the session termination utility, ensuring complete logout and clean-up
 **File Path**: `/app/tools/metadata_extractor.php`
 
 **Purpose**:
-Extracts, sanitizes, structures, and formats metadata from signed images into a polished Markdown document suitable for sharing, display, or archiving within the ImageProof project.
+Extracts, sanitizes, structures, and formats metadata from signed images into a polished Markdown document suitable for sharing, display, or archiving within the PixlKey project.
 
 **Agent Role**:
 This script serves as a standalone image metadata extraction and reporting utility, responsible for leveraging ExifTool to parse image metadata and transforming it into structured Markdown output.
@@ -614,7 +614,7 @@ Operates as a CRUD agent that manages user-specific license data, including secu
 **File Path**: `/public/my_watermarks.php`
 
 **Purpose**:
-Provides users with an interface for uploading, managing, and selecting their watermark images for use within the ImageProof project.
+Provides users with an interface for uploading, managing, and selecting their watermark images for use within the PixlKey project.
 
 **Agent Role**:
 Acts as a CRUD (Create, Read, Update, Delete) interface agent, enabling user-controlled management of watermark files, including uploading new files, setting defaults, and deletion of unwanted files.
@@ -694,7 +694,7 @@ Acts as a CRUD (Create, Read, Update, Delete) interface agent, enabling user-con
 Handles user-submitted image uploads, applies watermark and metadata, and generates signed outputs and certificates of authenticity. Outputs a downloadable ZIP archive containing processed assets.
 
 **Agent Role**:
-Serves as the **core image processing agent** of the ImageProof system. It validates uploads, enforces constraints, applies transformations (conversion, watermarking, metadata embedding), and persists image metadata to the database.
+Serves as the **core image processing agent** of the PixlKey system. It validates uploads, enforces constraints, applies transformations (conversion, watermarking, metadata embedding), and persists image metadata to the database.
 
 **Behavior**:
 
@@ -866,7 +866,7 @@ Acts as a front-line processing utility agent. It enhances user experience via r
 **File Path**: `/public/register.php`
 
 **Purpose**:
-Handles new user registration for the ImageProof platform, validating input, enforcing security policies, and storing user credentials securely.
+Handles new user registration for the PixlKey platform, validating input, enforcing security policies, and storing user credentials securely.
 
 **Agent Role**:
 Acts as a registration handler and form processor. It validates user input, ensures unique email addresses, hashes passwords securely, and stores the new user in the database. It then logs the user in and redirects them to the main page.

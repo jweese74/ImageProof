@@ -1,5 +1,5 @@
 -- ================================================================
---  ImageProof Database Schema (Unified)
+--  PixlKey Database Schema (Unified)
 --  Version: 2025-06-30
 --  Description: Clean merged schema from schema.sql and schema_update.sql
 -- ================================================================
