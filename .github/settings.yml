@@ -1,0 +1,95 @@
+# These settings are synced to GitHub by https://probot.github.io/apps/settings/
+
+# ─────────────────────────────────────────────────────────────
+#  Repository basics
+# ─────────────────────────────────────────────────────────────
+repository:
+  name: PixlKey
+  description: >
+    Secure PHP toolkit for watermarking, licensing, and registering digital images
+    using cryptographic fingerprints and structured metadata. Designed for artists
+    and creators to prove ownership and generate certificates of authenticity.
+  homepage: https://pixlkey.com
+  topics: mysql, licensing, php, metadata, imagemagick, uuid, image-processing,
+          digital-art, webapp, sha256, exiftool, watermark, certificate-of-authenticity
+  private: false
+
+  has_issues:   true
+  has_projects: true
+  has_wiki:     true        # public-read; collaborator-edit is set in the UI
+  has_downloads: true
+
+  default_branch: main
+
+  # Merge strategy toggles
+  allow_squash_merge:  true
+  allow_merge_commit:  false   # Disable merge commits
+  allow_rebase_merge:  true
+
+  delete_branch_on_merge: true
+
+  enable_automated_security_fixes: true
+  enable_vulnerability_alerts:     true
+
+# ─────────────────────────────────────────────────────────────
+#  Labels
+# ─────────────────────────────────────────────────────────────
+labels:
+  - name: bug
+    color: CC0000
+    description: An issue with the system
+  - name: feature
+    color: '336699'
+    description: New functionality
+  - name: help wanted
+    color: '0E8A16'
+    description: Good starting point for new contributors
+
+# ─────────────────────────────────────────────────────────────
+#  Milestones
+# ─────────────────────────────────────────────────────────────
+milestones:
+  - title: 0.3.0-alpha
+    description: First public Alpha release
+    state: open
+
+# ─────────────────────────────────────────────────────────────
+#  Collaborators (personal repo)
+# ─────────────────────────────────────────────────────────────
+collaborators:
+  - username: jweese74
+    permission: admin        # You keep the keys
+
+# No org teams needed for a personal repository
+teams: []
+
+# ─────────────────────────────────────────────────────────────
+#  Branch protection – main
+# ─────────────────────────────────────────────────────────────
+branches:
+  - name: main
+    protection:
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        dismissal_restrictions:
+          users: []
+          teams: []
+
+      required_status_checks:
+        strict: true
+        contexts:
+          - quality            # Job name from .github/workflows/ci.yml
+
+      enforce_admins: true
+      required_linear_history: true
+
+      restrictions:
+        users:
+          - jweese74           # Only you can push directly
+        teams: []
+        apps:
+          - github-actions     # Allows the Actions bot (e.g., for version bumps)
+
+# End of file

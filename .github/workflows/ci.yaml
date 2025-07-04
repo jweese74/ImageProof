@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️  Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘  Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: 💾  Cache composer deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: 📦  Install dependencies
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+      - name: ✅  Validate composer.json
+        run: composer validate --strict --no-check-publish
+
+      - name: 🔍  PHP syntax lint
+        run: |
+          find . -type f -name "*.php" -print0 | \
+          xargs -0 -n1 -P4 php -d short_open_tag=0 -l
+
+      - name: 🧹  PSR-12 + doc-blocks (PHP_CodeSniffer)
+        run: vendor/bin/phpcs --standard=PSR12 --ignore=vendor .
+
+      - name: 🧐  Static analysis (PHPStan, level 5)
+        run: vendor/bin/phpstan analyse --no-progress --level=max
