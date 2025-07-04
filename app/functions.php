@@ -1,26 +1,27 @@
 <?php
 
-/***************************************************************
+/*
  * Infinite Muse Toolbox - Configuration & Helper Functions
  *
  * - This file defines global configuration variables
  *   and utility functions used by index.php and process.php.
- ***************************************************************/
+ */
 
 // ---------------------------
 // Configuration
 // ---------------------------
 require_once __DIR__ . '/config.php';
 
-$maxFileSizeMb     = 250;  // 250 MB
+$maxFileSizeMb = 250;  // 250 MB
 $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif'];
 
-$watermarkDir      = __DIR__ . '/../watermarks';       // Storage for watermark images
-$processedDir      = __DIR__ . '/../processed';        // Where processed results go
-$defaultWatermark = ''; // So no default watermark is used
+$watermarkDir = __DIR__ . '/../watermarks';  // Storage for watermark images
+$processedDir = __DIR__ . '/../processed';  // Where processed results go
+$defaultWatermark = '';  // So no default watermark is used
 
 // Ensure directories exist
-function ensureRuntimeDirectories(): void {
+function ensureRuntimeDirectories(): void
+{
     global $watermarkDir, $processedDir;
     if (!file_exists($watermarkDir)) {
         mkdir($watermarkDir, 0775, true);
@@ -30,14 +31,13 @@ function ensureRuntimeDirectories(): void {
     }
 }
 
-ensureRuntimeDirectories();
+if (php_sapi_name() !== 'cli') {
+    // Only ensure directories during web execution, not when loaded as a utility
+    ensureRuntimeDirectories();
+}
 
-/**
- * Minimal on-screen step messages
- */
-/**
- * Enhanced echoStep function for real-time processing feedback
- */
+/** Minimal on-screen step messages */
+/** Enhanced echoStep function for real-time processing feedback */
 if (!function_exists('echoStep')) {
     function echoStep($message, $type = 'info')
     {
@@ -78,7 +78,8 @@ if (!function_exists('echoStep')) {
 function clearProcessedFiles()
 {
     global $processedDir;
-    if (!is_dir($processedDir)) return;
+    if (!is_dir($processedDir))
+        return;
     $files = scandir($processedDir);
     foreach ($files as $f) {
         if ($f === '.' || $f === '..') {
@@ -93,9 +94,7 @@ function clearProcessedFiles()
     }
 }
 
-/**
- * Watermark function for additional random text overlay
- */
+/** Watermark function for additional random text overlay */
 if (!function_exists('addWatermark')) {
     function addWatermark($imagePath, $mainWatermark, $runDir)
     {
@@ -104,9 +103,9 @@ if (!function_exists('addWatermark')) {
             return;
         }
 
-        $dir      = dirname($imagePath);
+        $dir = dirname($imagePath);
         $filename = basename($imagePath);
-        $tmpOut   = $dir . '/wm_' . $filename;
+        $tmpOut = $dir . '/wm_' . $filename;
 
         if (!copy($imagePath, $tmpOut)) {
             echoStep("<span style='color:red;'>Error: Unable to copy for watermarking.</span>");
@@ -115,7 +114,7 @@ if (!function_exists('addWatermark')) {
 
         // Identify dimensions
         $identify = "identify -format '%w %h' " . escapeshellarg($tmpOut);
-        $dims     = trim(shell_exec($identify));
+        $dims = trim(shell_exec($identify));
         if (!$dims) {
             echoStep("<span style='color:red;'>Error: Unable to get image dimensions.</span>");
             return false;
@@ -123,28 +122,28 @@ if (!function_exists('addWatermark')) {
         list($w, $h) = explode(' ', $dims);
 
         // Resize main watermark to 1/8 of the image height
-        $wmHeight    = floor($h / 8);
-        $resizedWm   = $runDir . '/resized_watermark.png';
-        $cmdResizeWm = "convert " . escapeshellarg($mainWatermark) . " -resize x{$wmHeight} " . escapeshellarg($resizedWm);
-        shell_exec($cmdResizeWm . " 2>&1");
+        $wmHeight = floor($h / 8);
+        $resizedWm = $runDir . '/resized_watermark.png';
+        $cmdResizeWm = 'convert ' . escapeshellarg($mainWatermark) . " -resize x{$wmHeight} " . escapeshellarg($resizedWm);
+        shell_exec($cmdResizeWm . ' 2>&1');
         if (!file_exists($resizedWm)) {
             echoStep("<span style='color:red;'>Error: Unable to resize watermark.</span>");
             return false;
         }
 
         // Composite main watermark near bottom
-        $wmW         = trim(shell_exec("identify -format '%w' " . escapeshellarg($resizedWm)));
+        $wmW = trim(shell_exec("identify -format '%w' " . escapeshellarg($resizedWm)));
         if (!is_numeric($wmW)) {
             echoStep("<span style='color:red;'>Error: Unable to get watermark width.</span>");
             @unlink($resizedWm);
             return false;
         }
-        $offsetX     = floor($w / 2 - $wmW / 2);
-        $offsetY     = $h - $wmHeight - 10;
-        $cmdComposite = "convert " . escapeshellarg($tmpOut) . " " . escapeshellarg($resizedWm)
+        $offsetX = floor($w / 2 - $wmW / 2);
+        $offsetY = $h - $wmHeight - 10;
+        $cmdComposite = 'convert ' . escapeshellarg($tmpOut) . ' ' . escapeshellarg($resizedWm)
             . " -geometry +{$offsetX}+{$offsetY} -composite "
             . escapeshellarg($tmpOut);
-        shell_exec($cmdComposite . " 2>&1");
+        shell_exec($cmdComposite . ' 2>&1');
         @unlink($resizedWm);
 
         if (!file_exists($tmpOut)) {
@@ -154,25 +153,25 @@ if (!function_exists('addWatermark')) {
 
         // Add random text watermarks (3 times)
         for ($i = 1; $i <= 5; $i++) {
-            $angle     = rand(-45, 45);
-            $x         = rand(0, $w);
-            $y         = rand(0, $h);
+            $angle = rand(-45, 45);
+            $x = rand(0, $w);
+            $y = rand(0, $h);
             $pointSize = rand(6, 15);
-            $r         = rand(0, 255);
-            $g         = rand(0, 255);
-            $b         = rand(0, 255);
-            $a         = rand(1, 9) / 10.0;
+            $r = rand(0, 255);
+            $g = rand(0, 255);
+            $b = rand(0, 255);
+            $a = rand(1, 9) / 10.0;
 
-            global $overlayText; // Ensure the variable is accessible if declared globally
-            $overlayText = $overlayText ?? ''; // Default to empty if not set
+            global $overlayText;  // Ensure the variable is accessible if declared globally
+            $overlayText = $overlayText ?? '';  // Default to empty if not set
 
-            $cmdDraw = "convert " . escapeshellarg($tmpOut)
+            $cmdDraw = 'convert ' . escapeshellarg($tmpOut)
                 . " -font 'DejaVu-Sans'"
                 . " -pointsize $pointSize"
                 . " -fill 'rgba($r,$g,$b,$a)'"
-                . " -draw \"translate $x,$y rotate $angle text 0,0 '" . addslashes($overlayText) . "'\""
+                . " -draw \"translate $x,$y rotate $angle text 0,0 '" . addslashes($overlayText) . '\'"'
                 . escapeshellarg($tmpOut);
-            shell_exec($cmdDraw . " 2>&1");
+            shell_exec($cmdDraw . ' 2>&1');
         }
 
         // Move final watermarked image back
