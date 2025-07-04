@@ -53,11 +53,8 @@ jobs:
           xargs -0 -n1 -P4 php -d short_open_tag=0 -l
 
       # ───── 7. PSR-12 + doc-blocks (PHP_CodeSniffer) ────────────────
-      - name: 🧹  PSR-12 + doc-blocks (PHP_CodeSniffer)
-        run: vendor/bin/phpcs \
-             --standard=PSR12 \
-             --ignore=vendor,app/python \
-             src app public
+      - name: PSR-12 + doc-blocks (PHP_CodeSniffer)
+        run: vendor/bin/phpcs --standard=PSR12 --ignore=vendor,app/python src app public
 
       # ───── 8. Static analysis (PHPStan) ────────────────────────────
       - name: 🧐  Static analysis (PHPStan, level max)
