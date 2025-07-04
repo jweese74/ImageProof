@@ -56,7 +56,9 @@ function login_user(string $user_id): void
     global $pdo;
 
     // 🛡️ Regenerate session ID to prevent fixation attacks
-    session_regenerate_id(true);
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
 
     $_SESSION['user_id'] = $user_id;
     $pdo
