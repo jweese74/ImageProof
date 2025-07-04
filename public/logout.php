@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../app/auth.php';
 
+// 🔐 Regenerate session ID to invalidate any fixation attempts
+session_regenerate_id(true);
+
 // Clear all session variables
 session_unset();
 

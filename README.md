@@ -25,7 +25,7 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 ## Roadmap (Top Priorities)
 
 ### Security & Session Hardening
-1. **Regenerate session ID on login** to mitigate fixation attacks.
+1. ✅ **Regenerate session ID on login** to mitigate fixation attacks. *(Implemented in `auth.php` and `logout.php`)*
 2. **Strict `runId` sanitization and ownership checks** in download & store logic.
 3. **Rate limiting and brute-force protection** on login/registration endpoints.
 4. **CSRF failure, login, and download event logging** for audit and security.
@@ -49,6 +49,13 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 - **Security**: Session hardening, CSRF protection, XSS filtering, SQL injection prevention
 - **Persistence**: UUID-based relational schema with SHA-256 image fingerprinting
 - **Optional**: `.env` configuration via `php-dotenv`
+
+## 🔐 Security Enhancements (Implemented)
+
+- ✅ Session ID regeneration on login and logout to prevent fixation.
+- ✅ Secure cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`.
+- ✅ CSRF token protection on all forms.
+- ✅ Passwords hashed with `password_hash()` and verified with `password_verify()`.
 
 ## Status
 
