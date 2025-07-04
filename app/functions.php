@@ -76,7 +76,9 @@ function clearProcessedFiles()
     if (!is_dir($processedDir)) return;
     $files = scandir($processedDir);
     foreach ($files as $f) {
-        if ($f === '.' || $f === '..') continue;
+        if ($f === '.' || $f === '..') {
+            continue;
+        }
         $path = $processedDir . '/' . $f;
         if (is_dir($path)) {
             @system('rm -rf ' . escapeshellarg($path));
