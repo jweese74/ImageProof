@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <form method="post" novalidate>
         <h1>Sign in</h1>
-        <?php if ($errors): ?>
+        <?php if ($errors) : ?>
             <div class="error"><?= implode('<br>', array_map('htmlspecialchars', $errors)); ?></div>
         <?php endif; ?>
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
