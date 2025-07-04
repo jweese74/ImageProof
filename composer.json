@@ -1,0 +1,20 @@
+{
+  "name": "pixlkey/pixlkey",
+  "description": "Secure PHP toolkit for watermarking, licensing, and registering digital images.",
+  "type": "project",
+  "license": "MIT",
+  "require": {
+    "php": "^8.3",
+    "erusev/parsedown": "^1.7",
+    "ext-imagick": "*"
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "^3.8",
+    "phpstan/phpstan": "^1.12"
+  },
+  "autoload": {
+    "psr-4": {
+      "PixlKey\\": "src/"
+    }
+  }
+}
