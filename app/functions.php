@@ -20,12 +20,17 @@ $processedDir      = __DIR__ . '/../processed';        // Where processed result
 $defaultWatermark = ''; // So no default watermark is used
 
 // Ensure directories exist
-if (!file_exists($watermarkDir)) {
-    mkdir($watermarkDir, 0775, true);
+function ensureRuntimeDirectories(): void {
+    global $watermarkDir, $processedDir;
+    if (!file_exists($watermarkDir)) {
+        mkdir($watermarkDir, 0775, true);
+    }
+    if (!file_exists($processedDir)) {
+        mkdir($processedDir, 0775, true);
+    }
 }
-if (!file_exists($processedDir)) {
-    mkdir($processedDir, 0775, true);
-}
+
+ensureRuntimeDirectories();
 
 /**
  * Minimal on-screen step messages
@@ -165,7 +170,7 @@ if (!function_exists('addWatermark')) {
                 . " -font 'DejaVu-Sans'"
                 . " -pointsize $pointSize"
                 . " -fill 'rgba($r,$g,$b,$a)'"
-                . " -draw \"translate $x,$y rotate $angle text 0,0 '" . addslashes($overlayText) . "'\" "
+                . " -draw \"translate $x,$y rotate $angle text 0,0 '" . addslashes($overlayText) . "'\""
                 . escapeshellarg($tmpOut);
             shell_exec($cmdDraw . " 2>&1");
         }
