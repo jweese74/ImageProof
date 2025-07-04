@@ -180,14 +180,18 @@ $watermarks->execute([$userId]);
                             <form method="post" style="display:inline">
                                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
                                 <input type="hidden" name="action" value="set_default">
-                                <input type="hidden" name="wm_id" value="<?php echo htmlspecialchars($wm['watermark_id']) ?>">
+                            <input type="hidden" name="wm_id"
+                                value="<?php echo htmlspecialchars($wm['watermark_id']) ?>">
                                 <button type="submit">Make default</button>
                             </form>
                         <?php endif; ?>
-                        <form method="post" style="display:inline" onsubmit="return confirm('Delete this watermark?');">
-                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
+                        <form method="post" style="display:inline"
+                            onsubmit="return confirm('Delete this watermark?');">
+                            <input type="hidden" name="csrf_token"
+                                value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
                             <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="wm_id" value="<?php echo htmlspecialchars($wm['watermark_id']) ?>">
+                            <input type="hidden" name="wm_id"
+                                value="<?php echo htmlspecialchars($wm['watermark_id']) ?>">
                             <button type="submit">Delete</button>
                         </form>
                     </td>

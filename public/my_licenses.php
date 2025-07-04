@@ -6,7 +6,8 @@
  * • Mark one licence as default
  * --------------------------------------------------------------
  */
-require_once __DIR__ . '/../app/auth.php';
+
+ require_once __DIR__ . '/../app/auth.php';
 require_login();
 require_once __DIR__ . '/../app/config.php';
 
@@ -178,7 +179,7 @@ $licenses->execute([$userId]);
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($licenses as $lic): ?>
+            <?php foreach ($licenses as $lic) : ?>
                 <tr>
                     <td><?php echo htmlspecialchars($lic['name']) ?></td>
                     <td><?php echo $lic['is_default'] ? '✔' : '' ?></td>
@@ -186,13 +187,14 @@ $licenses->execute([$userId]);
                         <?php echo $md->text($lic['text_blob']) ?>
                     </td>
                     <td>
-                        <button onclick="editLicence(
-          '<?php echo htmlspecialchars($lic['license_id']) ?>',
-          '<?php echo htmlspecialchars(addslashes($lic['name'])) ?>',
-                <?php echo json_encode($lic['text_blob']) ?>,
-                <?php echo $lic['is_default'] ? 'true' : 'false' ?>
-      );">Edit</button>
-                        <form method="post" style="display:inline" onsubmit="return confirm('Delete this licence?');">
+                        <button
+                            onclick="editLicence(
+                                '<?php echo htmlspecialchars($lic['license_id']) ?>',
+                                '<?php echo htmlspecialchars(addslashes($lic['name'])) ?>',
+                                <?php echo json_encode($lic['text_blob']) ?>,
+                                <?php echo $lic['is_default'] ? 'true' : 'false' ?>
+                            );"
+                        >Edit</button>                        <form method="post" style="display:inline" onsubmit="return confirm('Delete this licence?');">
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="lic_id" value="<?php echo htmlspecialchars($lic['license_id']) ?>">
