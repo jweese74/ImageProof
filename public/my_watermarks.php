@@ -151,7 +151,7 @@ $watermarks->execute([$userId]);
 
     <!-- upload form -->
     <form method="post" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
         <input type="hidden" name="action" value="upload">
         <label>Select PNG/JPEG/WEBP file:
             <input type="file" name="wm_file" required>
@@ -172,22 +172,22 @@ $watermarks->execute([$userId]);
         <tbody>
             <?php foreach ($watermarks as $wm): ?>
                 <tr>
-                    <td><img src="<?= htmlspecialchars($wm['path']) ?>" class="thumb" alt=""></td>
-                    <td><?= htmlspecialchars($wm['filename']) ?></td>
-                    <td><?= $wm['is_default'] ? '✔' : '' ?></td>
+                    <td><img src="<?php echo htmlspecialchars($wm['path']) ?>" class="thumb" alt=""></td>
+                    <td><?php echo htmlspecialchars($wm['filename']) ?></td>
+                    <td><?php echo $wm['is_default'] ? '✔' : '' ?></td>
                     <td>
-                        <?php if (!$wm['is_default']): ?>
+                        <?php if (!$wm['is_default']) : ?>
                             <form method="post" style="display:inline">
-                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
                                 <input type="hidden" name="action" value="set_default">
-                                <input type="hidden" name="wm_id" value="<?= htmlspecialchars($wm['watermark_id']) ?>">
+                                <input type="hidden" name="wm_id" value="<?php echo htmlspecialchars($wm['watermark_id']) ?>">
                                 <button type="submit">Make default</button>
                             </form>
                         <?php endif; ?>
                         <form method="post" style="display:inline" onsubmit="return confirm('Delete this watermark?');">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
                             <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="wm_id" value="<?= htmlspecialchars($wm['watermark_id']) ?>">
+                            <input type="hidden" name="wm_id" value="<?php echo htmlspecialchars($wm['watermark_id']) ?>">
                             <button type="submit">Delete</button>
                         </form>
                     </td>

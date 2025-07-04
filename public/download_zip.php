@@ -20,7 +20,9 @@ if (!isset($_GET['runId'])) {
     exit;
 }
 
-/** strip anything except safe URL chars (letters, numbers, _ -) */
+/**
+ * strip anything except safe URL chars (letters, numbers, _ -) 
+*/
 $runId = preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['runId']);
 if ($runId === '') {
     header('HTTP/1.1 400 Bad Request');

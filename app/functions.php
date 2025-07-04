@@ -36,8 +36,12 @@ if (php_sapi_name() !== 'cli') {
     ensureRuntimeDirectories();
 }
 
-/** Minimal on-screen step messages */
-/** Enhanced echoStep function for real-time processing feedback */
+/**
+ * Minimal on-screen step messages 
+*/
+/**
+ * Enhanced echoStep function for real-time processing feedback 
+*/
 if (!function_exists('echoStep')) {
     function echoStep($message, $type = 'info')
     {
@@ -78,8 +82,9 @@ if (!function_exists('echoStep')) {
 function clearProcessedFiles()
 {
     global $processedDir;
-    if (!is_dir($processedDir))
+    if (!is_dir($processedDir)) {
         return;
+    }
     $files = scandir($processedDir);
     foreach ($files as $f) {
         if ($f === '.' || $f === '..') {
@@ -94,7 +99,9 @@ function clearProcessedFiles()
     }
 }
 
-/** Watermark function for additional random text overlay */
+/**
+ * Watermark function for additional random text overlay 
+*/
 if (!function_exists('addWatermark')) {
     function addWatermark($imagePath, $mainWatermark, $runDir)
     {

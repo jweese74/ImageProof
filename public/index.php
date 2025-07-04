@@ -277,19 +277,19 @@ if ($loggedIn) {
 
     <h1>Infinite Muse Toolkit</h1>
 
-    <?php if ($loggedIn): ?>
+    <?php if ($loggedIn) : ?>
         <!-- ===== MEMBER VIEW ===== -->
         <nav>
-            <span>Welcome, <?= htmlspecialchars($user['display_name'] ?: $user['email']) ?></span>
+            <span>Welcome, <?php echo htmlspecialchars($user['display_name'] ?: $user['email']) ?></span>
             | <a href="my_watermarks.php">My Watermarks</a>
             | <a href="my_licenses.php">My Licences</a>
             | <a href="logout.php">Logout</a>
         </nav>
 
         <section class="thumb-grid">
-            <?php if ($thumbs): foreach ($thumbs as $t): ?>
-                    <img src="<?= htmlspecialchars($t) ?>" alt="recent thumbnail">
-                <?php endforeach;
+            <?php if ($thumbs) : foreach ($thumbs as $t): ?>
+                    <img src="<?php echo htmlspecialchars($t) ?>" alt="recent thumbnail">
+            <?php endforeach;
             else: ?>
                 <p style="grid-column:1 / -1;text-align:center">No images yet – upload one below!</p>
             <?php endif; ?>
@@ -301,18 +301,18 @@ if ($loggedIn) {
 
         <!-- ===== UPLOAD FORM (unchanged except CSRF token) ===== -->
         <form action="process.php" method="post" enctype="multipart/form-data" id="uploadForm">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
 
             <!-- watermark select -->
             <label>Apply watermark:
                 <select name="watermark_id">
                     <option value="">— none —</option>
                     <?php foreach ($watermarkOptions as $opt): ?>
-                        <option value="<?= htmlspecialchars($opt['watermark_id']) ?>"
-                            data-path="<?= htmlspecialchars($opt['path']) ?>"
-                            <?= $opt['is_default'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($opt['filename']) ?>
-                            <?= $opt['is_default'] ? ' (default)' : '' ?>
+                        <option value="<?php echo htmlspecialchars($opt['watermark_id']) ?>"
+                            data-path="<?php echo htmlspecialchars($opt['path']) ?>"
+                            <?php echo $opt['is_default'] ? 'selected' : '' ?>>
+                            <?php echo htmlspecialchars($opt['filename']) ?>
+                            <?php echo $opt['is_default'] ? ' (default)' : '' ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -337,10 +337,10 @@ if ($loggedIn) {
                 <select name="license_id">
                     <option value="">— none —</option>
                     <?php foreach ($licenseOptions as $opt): ?>
-                        <option value="<?= htmlspecialchars($opt['license_id']) ?>"
-                            <?= $opt['is_default'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($opt['name']) ?>
-                            <?= $opt['is_default'] ? ' (default)' : '' ?>
+                        <option value="<?php echo htmlspecialchars($opt['license_id']) ?>"
+                            <?php echo $opt['is_default'] ? 'selected' : '' ?>>
+                            <?php echo htmlspecialchars($opt['name']) ?>
+                            <?php echo $opt['is_default'] ? ' (default)' : '' ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -406,9 +406,9 @@ if ($loggedIn) {
     <?php else: ?>
         <!-- ===== PUBLIC VIEW ===== -->
         <section class="thumb-grid">
-            <?php if ($thumbs): foreach ($thumbs as $t): ?>
-                    <img src="<?= htmlspecialchars($t) ?>" alt="latest thumbnail">
-                <?php endforeach;
+            <?php if ($thumbs) : foreach ($thumbs as $t): ?>
+                    <img src="<?php echo htmlspecialchars($t) ?>" alt="latest thumbnail">
+            <?php endforeach;
             else: ?>
                 <p style="grid-column:1 / -1;text-align:center">No images have been processed yet.</p>
             <?php endif; ?>

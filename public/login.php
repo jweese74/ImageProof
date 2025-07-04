@@ -64,10 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="post" novalidate>
         <h1>Sign in</h1>
         <?php if ($errors) : ?>
-            <div class="error"><?= implode('<br>', array_map('htmlspecialchars', $errors)); ?></div>
+            <div class="error"><?php echo implode('<br>', array_map('htmlspecialchars', $errors)); ?></div>
         <?php endif; ?>
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
-        <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
+        <input type="hidden" name="next" value="<?php echo htmlspecialchars($next) ?>">
         <label>E-mail <input type="email" name="email" required></label>
         <label>Password <input type="password" name="password" required></label>
         <button type="submit">Log in</button>

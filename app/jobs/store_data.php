@@ -83,7 +83,8 @@ try {
     // 6. Insert into Artworks table
     $artworkId = generateUUID($pdo, 'Artworks');
 
-    $insertArtwork = $pdo->prepare("
+    $insertArtwork = $pdo->prepare(
+        "
         INSERT INTO Artworks (
             artwork_id, title, description, seo_headline, creation_date, keywords, genre,
             byline_name, copyright_notice, creator, position, webstatement,
@@ -95,14 +96,16 @@ try {
             :overlay_text, UUID(), UUID(), :hash_signed_image, NOW(),
             :certified_by, 'Processed', :blockchain_record, :ai_metadata
         )
-    ");
+    "
+    );
 
     // Placeholder values for some fields; adjust as needed
     $hashSignedImage = ''; // To be updated after image processing
     $blockchainRecord = ''; // To be updated based on blockchain integration
     $aiMetadata = json_encode([]); // Populate with actual AI metadata if available
 
-    $insertArtwork->execute([
+    $insertArtwork->execute(
+        [
         'artwork_id'         => $artworkId,
         'title'              => $title,
         'description'        => $description,
@@ -120,74 +123,95 @@ try {
         'certified_by'       => $bylineName, // Assuming certification by bylineName
         'blockchain_record'  => $blockchainRecord,
         'ai_metadata'        => $aiMetadata
-    ]);
+        ]
+    );
 
     // 7. Handle Keywords (Many-to-Many)
     $keywordList = array_map('trim', explode(',', $keywords));
     foreach ($keywordList as $keyword) {
-        if (empty($keyword)) continue;
+        if (empty($keyword)) { continue;
+        }
         // Get or create keyword ID
         $keywordId = getOrCreateId($pdo, 'Keywords', 'keyword', $keyword);
         // Insert into ArtworkKeywords
-        $insertArtworkKeyword = $pdo->prepare("
+        $insertArtworkKeyword = $pdo->prepare(
+            "
             INSERT IGNORE INTO ArtworkKeywords (artwork_id, keyword_id)
             VALUES (:artwork_id, :keyword_id)
-        ");
-        $insertArtworkKeyword->execute([
+        "
+        );
+        $insertArtworkKeyword->execute(
+            [
             'artwork_id' => $artworkId,
             'keyword_id' => $keywordId
-        ]);
+            ]
+        );
     }
 
     // 8. Handle Genres (Many-to-Many)
     $genreList = array_map('trim', explode(',', $genre));
     foreach ($genreList as $gen) {
-        if (empty($gen)) continue;
+        if (empty($gen)) { continue;
+        }
         // Get or create genre ID
         $genreId = getOrCreateId($pdo, 'Genres', 'genre', $gen);
         // Insert into ArtworkGenres
-        $insertArtworkGenre = $pdo->prepare("
+        $insertArtworkGenre = $pdo->prepare(
+            "
             INSERT IGNORE INTO ArtworkGenres (artwork_id, genre_id)
             VALUES (:artwork_id, :genre_id)
-        ");
-        $insertArtworkGenre->execute([
+        "
+        );
+        $insertArtworkGenre->execute(
+            [
             'artwork_id' => $artworkId,
             'genre_id'   => $genreId
-        ]);
+            ]
+        );
     }
 
     // 9. Handle Creators (Many-to-Many)
     $creatorList = array_map('trim', explode(',', $creator));
     foreach ($creatorList as $cre) {
-        if (empty($cre)) continue;
+        if (empty($cre)) { continue;
+        }
         // Get or create creator ID
         $creatorId = getOrCreateId($pdo, 'Creators', 'name', $cre);
         // Insert into ArtworkCreators
-        $insertArtworkCreator = $pdo->prepare("
+        $insertArtworkCreator = $pdo->prepare(
+            "
             INSERT IGNORE INTO ArtworkCreators (artwork_id, creator_id)
             VALUES (:artwork_id, :creator_id)
-        ");
-        $insertArtworkCreator->execute([
+        "
+        );
+        $insertArtworkCreator->execute(
+            [
             'artwork_id' => $artworkId,
             'creator_id' => $creatorId
-        ]);
+            ]
+        );
     }
 
     // 10. Handle Bylines (Many-to-Many)
     $bylineList = array_map('trim', explode(',', $bylineName));
     foreach ($bylineList as $byl) {
-        if (empty($byl)) continue;
+        if (empty($byl)) { continue;
+        }
         // Get or create byline ID
         $bylineId = getOrCreateId($pdo, 'Bylines', 'name', $byl);
         // Insert into ArtworkBylines
-        $insertArtworkByline = $pdo->prepare("
+        $insertArtworkByline = $pdo->prepare(
+            "
             INSERT IGNORE INTO ArtworkBylines (artwork_id, byline_id)
             VALUES (:artwork_id, :byline_id)
-        ");
-        $insertArtworkByline->execute([
+        "
+        );
+        $insertArtworkByline->execute(
+            [
             'artwork_id' => $artworkId,
             'byline_id'  => $bylineId
-        ]);
+            ]
+        );
     }
 
     // 11. Handle Images
@@ -236,7 +260,8 @@ try {
 
         $imageId = generateUUID($pdo, 'Images');
 
-        $insertImage = $pdo->prepare("
+        $insertImage = $pdo->prepare(
+            "
             INSERT INTO Images (
                 image_id, artwork_id, image_type, file_path, file_size, mime_type,
                 width, height, bit_depth, color_type, compression, interlace,
@@ -246,9 +271,11 @@ try {
                 :width, :height, :bit_depth, :color_type, :compression, :interlace,
                 :background_color, :hash_value
             )
-        ");
+        "
+        );
 
-        $insertImage->execute([
+        $insertImage->execute(
+            [
             'image_id'         => $imageId,
             'artwork_id'       => $artworkId,
             'image_type'       => $imageType,
@@ -263,25 +290,30 @@ try {
             'interlace'        => $interlace,
             'background_color' => $backgroundColor,
             'hash_value'       => $hashValue
-        ]);
+            ]
+        );
 
         // 12. Insert into Certificates table
         $certificateId = generateUUID($pdo, 'Certificates');
 
-        $insertCertificate = $pdo->prepare("
+        $insertCertificate = $pdo->prepare(
+            "
             INSERT INTO Certificates (
                 certificate_id, artwork_id, certificate_content, file_path, generated_at
             ) VALUES (
                 :certificate_id, :artwork_id, :certificate_content, :file_path, NOW()
             )
-        ");
+        "
+        );
 
-        $insertCertificate->execute([
+        $insertCertificate->execute(
+            [
             'certificate_id'      => $certificateId,
             'artwork_id'          => $artworkId,
             'certificate_content' => $certificateContent,
             'file_path'           => $certFile
-        ]);
+            ]
+        );
 
         // 13. Insert into AIMetadata table (if applicable)
         // Assuming AI metadata is stored in a JSON file, e.g., _ai_metadata.json
@@ -292,19 +324,23 @@ try {
 
             $aiMetadataId = generateUUID($pdo, 'AIMetadata');
 
-            $insertAIMetadata = $pdo->prepare("
+            $insertAIMetadata = $pdo->prepare(
+                "
                 INSERT INTO AIMetadata (
                     ai_metadata_id, artwork_id, metadata, generated_at
                 ) VALUES (
                     :ai_metadata_id, :artwork_id, :metadata, NOW()
                 )
-            ");
+            "
+            );
 
-            $insertAIMetadata->execute([
+            $insertAIMetadata->execute(
+                [
                 'ai_metadata_id' => $aiMetadataId,
                 'artwork_id'     => $artworkId,
                 'metadata'       => json_encode($aiMetadataJson)
-            ]);
+                ]
+            );
         }
 
         // 14. Optionally, handle BlockchainRecords, Logs, Analytics, etc.
@@ -321,7 +357,8 @@ try {
         if ($submissionData) {
             $submissionId = generateUUID($pdo, 'Submissions');
 
-            $insertSubmission = $pdo->prepare("
+            $insertSubmission = $pdo->prepare(
+                "
                 INSERT INTO Submissions (
                     submission_id, artwork_id, ip_address, user_agent, submission_time,
                     additional_data, referral_source
@@ -329,9 +366,11 @@ try {
                     :submission_id, :artwork_id, :ip_address, :user_agent, :submission_time,
                     :additional_data, :referral_source
                 )
-            ");
+            "
+            );
 
-            $insertSubmission->execute([
+            $insertSubmission->execute(
+                [
                 'submission_id'   => $submissionId,
                 'artwork_id'      => $artworkId,
                 'ip_address'      => $submissionData['ip_address'] ?? '',
@@ -339,7 +378,8 @@ try {
                 'submission_time' => $submissionData['submission_time'] ?? date('Y-m-d H:i:s'),
                 'additional_data' => json_encode($submissionData['additional_data'] ?? []),
                 'referral_source' => $submissionData['referral_source'] ?? ''
-            ]);
+                ]
+            );
         }
     }
 
@@ -362,8 +402,8 @@ try {
  * Assumes the database uses UUID() as the default value.
  * This function generates a UUID in PHP.
  * 
- * @param PDO $pdo
- * @param string $table
+ * @param  PDO    $pdo
+ * @param  string $table
  * @return string
  */
 function generateUUID(PDO $pdo, $table)

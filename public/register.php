@@ -82,10 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <form method="post" novalidate>
         <h1>Create account</h1>
-        <?php if ($errors): ?>
-            <div class="error"><?= implode('<br>', array_map('htmlspecialchars', $errors)); ?></div>
+        <?php if ($errors) : ?>
+            <div class="error"><?php echo implode('<br>', array_map('htmlspecialchars', $errors)); ?></div>
         <?php endif; ?>
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
         <label>E-mail <input type="email" name="email" required></label>
         <label>Display name <input type="text" name="display_name"></label>
         <label>Password <input type="password" name="password" required></label>

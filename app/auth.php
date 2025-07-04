@@ -12,11 +12,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start([
+    session_start(
+        [
         'cookie_samesite' => 'Strict',
         'cookie_secure'   => isset($_SERVER['HTTPS']),
         'cookie_httponly' => true,
-    ]);
+        ]
+    );
 }
 
 /* ---------------------------------------------------------------

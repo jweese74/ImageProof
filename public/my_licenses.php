@@ -158,7 +158,7 @@ $licenses->execute([$userId]);
 
     <!-- form -->
     <form method="post">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
         <input type="hidden" name="action" value="save">
         <input type="hidden" name="lic_id" id="lic_id">
         <label>Name<br><input name="name" id="name" required></label><br>
@@ -180,22 +180,22 @@ $licenses->execute([$userId]);
         <tbody>
             <?php foreach ($licenses as $lic): ?>
                 <tr>
-                    <td><?= htmlspecialchars($lic['name']) ?></td>
-                    <td><?= $lic['is_default'] ? '✔' : '' ?></td>
+                    <td><?php echo htmlspecialchars($lic['name']) ?></td>
+                    <td><?php echo $lic['is_default'] ? '✔' : '' ?></td>
                     <td class="lic-text">
-                        <?= $md->text($lic['text_blob']) ?>
+                        <?php echo $md->text($lic['text_blob']) ?>
                     </td>
                     <td>
                         <button onclick="editLicence(
-          '<?= htmlspecialchars($lic['license_id']) ?>',
-          '<?= htmlspecialchars(addslashes($lic['name'])) ?>',
-          <?= json_encode($lic['text_blob']) ?>,
-          <?= $lic['is_default'] ? 'true' : 'false' ?>
+          '<?php echo htmlspecialchars($lic['license_id']) ?>',
+          '<?php echo htmlspecialchars(addslashes($lic['name'])) ?>',
+                <?php echo json_encode($lic['text_blob']) ?>,
+                <?php echo $lic['is_default'] ? 'true' : 'false' ?>
       );">Edit</button>
                         <form method="post" style="display:inline" onsubmit="return confirm('Delete this licence?');">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()) ?>">
                             <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="lic_id" value="<?= htmlspecialchars($lic['license_id']) ?>">
+                            <input type="hidden" name="lic_id" value="<?php echo htmlspecialchars($lic['license_id']) ?>">
                             <button type="submit">Delete</button>
                         </form>
                     </td>

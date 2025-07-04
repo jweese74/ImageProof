@@ -30,8 +30,7 @@ if (!empty($_POST['watermark_id'])) {
 }
 
 // (b) one-off upload overrides the select
-if (
-    !empty($_FILES['watermark_upload']['tmp_name'])
+if (!empty($_FILES['watermark_upload']['tmp_name'])
     && $_FILES['watermark_upload']['error'] === UPLOAD_ERR_OK
 ) {
 
@@ -465,7 +464,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $relOrig  = ltrim(str_replace($webBase, '', $signedImage), '/');
         $relThumb = ltrim(str_replace($webBase, '', $thumbnail), '/');
 
-        $stmt = $pdo->prepare("
+        $stmt = $pdo->prepare(
+            "
             INSERT INTO images (
                 image_id,  user_id,
                 original_path, thumbnail_path,
@@ -477,9 +477,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 :size,     :w, :h, :mime,
                 :sha,      NOW()
             )
-        ");
+        "
+        );
 
-        $stmt->execute([
+        $stmt->execute(
+            [
             ':uid'   => $userId,
             ':orig'  => $relOrig,
             ':thumb' => $relThumb,
@@ -488,7 +490,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':h'     => $imgInfo[1]  ?? null,
             ':mime'  => $imgInfo['mime'] ?? null,
             ':sha'   => hash_file('sha256', $signedImage),
-        ]);
+            ]
+        );
         echoStep("Thumbnail and preview generated successfully.", 'success');
 
         // Watermark thumbnail & preview with random text (or keep it simple)
