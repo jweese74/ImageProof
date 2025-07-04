@@ -53,12 +53,29 @@ jobs:
           xargs -0 -n1 -P4 php -d short_open_tag=0 -l
 
       # ───── 7. PSR-12 + doc-blocks (PHP_CodeSniffer) ────────────────
-      - name: PSR-12 + doc-blocks (PHP_CodeSniffer)
-        run: vendor/bin/phpcs --standard=PSR12 --ignore=vendor,app/python src app public
+      - name: 🧹  PSR-12 + doc-blocks (PHP_CodeSniffer)
+        run: |
+          # Build a list of real source dirs
+          SRC_DIRS=""
+          for d in app public src; do
+            [ -d "$d" ] && SRC_DIRS="$SRC_DIRS $d"
+          done
+          if [ -z "$SRC_DIRS" ]; then
+            echo "::error::No PHP source directories found"; exit 1
+          fi
+
+          echo "Running phpcs on:$SRC_DIRS"
+          vendor/bin/phpcs --standard=PSR12 \
+                           --ignore=vendor,app/python \
+                           $SRC_DIRS
 
       # ───── 8. Static analysis (PHPStan) ────────────────────────────
       - name: 🧐  Static analysis (PHPStan, level max)
-        run: vendor/bin/phpstan analyse \
-             src app public \
+        run: |
+          SRC_DIRS=""
+          for d in app public src; do
+            [ -d "$d" ] && SRC_DIRS="$SRC_DIRS $d"
+          done
+          vendor/bin/phpstan analyse $SRC_DIRS \
              --no-progress --level=max \
              --exclude-path app/python
