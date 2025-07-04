@@ -9,14 +9,15 @@
  */
 
 declare(strict_types=1);
+
 require_once __DIR__ . '/config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start(
         [
-        'cookie_samesite' => 'Strict',
-        'cookie_secure'   => isset($_SERVER['HTTPS']),
-        'cookie_httponly' => true,
+            'cookie_samesite' => 'Strict',
+            'cookie_secure' => isset($_SERVER['HTTPS']),
+            'cookie_httponly' => true,
         ]
     );
 }
@@ -35,7 +36,7 @@ function generate_csrf_token(): string
 function validate_csrf_token(): void
 {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        return;                             // nothing to check
+        return;  // nothing to check
     }
     $good = $_SESSION['csrf_token'] ?? '';
     $sent = $_POST['csrf_token']
@@ -53,8 +54,13 @@ function validate_csrf_token(): void
 function login_user(string $user_id): void
 {
     global $pdo;
+
+    // 🛡️ Regenerate session ID to prevent fixation attacks
+    session_regenerate_id(true);
+
     $_SESSION['user_id'] = $user_id;
-    $pdo->prepare('UPDATE users SET last_login = NOW() WHERE user_id = ?')
+    $pdo
+        ->prepare('UPDATE users SET last_login = NOW() WHERE user_id = ?')
         ->execute([$user_id]);
 }
 
@@ -77,7 +83,7 @@ function current_user(): ?array
     if ($cache !== null) {
         return $cache;
     }
-    $stmt  = $pdo->prepare(
+    $stmt = $pdo->prepare(
         'SELECT user_id,email,display_name,is_admin FROM users WHERE user_id = ?'
     );
     $stmt->execute([$_SESSION['user_id']]);

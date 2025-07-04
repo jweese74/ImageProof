@@ -18,7 +18,7 @@ This file acts as an authentication and session management utility, securely man
 
 * **Authentication Helpers**:
 
-  * `login_user(string $user_id)`: Logs in a user by updating their `last_login` timestamp and storing their ID in the session.
++ * `login_user(string $user_id)`: Logs in a user by updating their `last_login` timestamp, regenerating the session ID, and storing their ID in the session. This mitigates session fixation attacks by invalidating any pre-existing session.
   * `require_login()`: Redirects unauthenticated users to the login page, preserving the requested URL for post-login redirection.
   * `current_user()`: Retrieves and caches user details from the database based on the session user ID.
 
@@ -27,6 +27,8 @@ This file acts as an authentication and session management utility, securely man
 * Implements robust CSRF protection with cryptographically secure tokens and proper hashing comparisons (`hash_equals`).
 * Secure session cookies configured with `Secure`, `HttpOnly`, and `SameSite=Strict` attributes to mitigate common web vulnerabilities (e.g., XSS, session hijacking).
 * Database interactions use prepared statements, minimizing SQL injection risks.
+* Implements session regeneration (`session_regenerate_id(true)`) on login to prevent session fixation attacks.
+
 
 **Dependencies**:
 
@@ -426,8 +428,9 @@ Serves as the session termination utility, ensuring complete logout and clean-up
 
 * **Session Clean-Up**:
 
-  * `session_unset()`: Clears all active session variables.
-  * `session_destroy()`: Completely destroys the session server-side.
+   * Regenerates session ID before logout (`session_regenerate_id(true)`).
+   * Clears all active session variables (`session_unset()`).
+   * Destroys the session (`session_destroy()`).
 
 * **Cookie Invalidation**:
 
@@ -439,7 +442,7 @@ Serves as the session termination utility, ensuring complete logout and clean-up
 
 **Security Notes**:
 
-* Securely invalidates sessions by both destroying server-side session data and expiring the client-side cookie.
+* Securely invalidates sessions by regenerating the session ID first, destroying server-side session data, and expiring the client-side cookie.
 * Maintains security best practices by ensuring session cookies respect the `Secure` and `HttpOnly` flags, preventing potential misuse.
 
 **Dependencies**:
