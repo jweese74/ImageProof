@@ -12,34 +12,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ───── 1. Checkout code ─────────────────────────────────────────
       - name: ⬇️  Checkout code
         uses: actions/checkout@v4
 
+      # ───── 2. PHP runtime ──────────────────────────────────────────
       - name: 🐘  Set up PHP 8.3
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           coverage: none
 
-      - name: 💾  Cache composer deps
+      # ───── 3. Composer download cache ──────────────────────────────
+      - name: 💾  Cache composer downloads
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache/files
-          key: composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-8.3-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.3-composer-
 
+      # ───── 4. Install dependencies ─────────────────────────────────
       - name: 📦  Install dependencies
         run: |
+          if [ ! -f composer.json ]; then
+            echo "::error::composer.json not found"; exit 1;
+          fi
           composer install --no-interaction --no-progress --prefer-dist
+
+      # ───── 5. Validate composer.json ───────────────────────────────
       - name: ✅  Validate composer.json
         run: composer validate --strict --no-check-publish
 
+      # ───── 6. PHP syntax lint (skip vendor/node_modules/app/python) ─
       - name: 🔍  PHP syntax lint
         run: |
-          find . -type f -name "*.php" -print0 | \
+          find src app public \
+            -path 'app/python' -prune -o \
+            -name '*.php' -print0 | \
           xargs -0 -n1 -P4 php -d short_open_tag=0 -l
 
+      # ───── 7. PSR-12 + doc-blocks (PHP_CodeSniffer) ────────────────
       - name: 🧹  PSR-12 + doc-blocks (PHP_CodeSniffer)
-        run: vendor/bin/phpcs --standard=PSR12 --ignore=vendor .
+        run: vendor/bin/phpcs \
+             --standard=PSR12 \
+             --ignore=vendor,app/python \
+             src app public
 
-      - name: 🧐  Static analysis (PHPStan, level 5)
-        run: vendor/bin/phpstan analyse --no-progress --level=max
+      # ───── 8. Static analysis (PHPStan) ────────────────────────────
+      - name: 🧐  Static analysis (PHPStan, level max)
+        run: vendor/bin/phpstan analyse \
+             src app public \
+             --no-progress --level=max \
+             --exclude-path app/python
