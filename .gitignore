@@ -1,0 +1,19 @@
+# -------- core --------
+/.git
+/vendor/
+/composer.phar
+.env
+*.log
+
+# -------- runtime / uploads --------
+/processing/
+/processed/
+/watermarks/*       # ← keep only if you intend to track watermarks
+!/watermarks/.gitkeep
+
+# -------- OS / editor junk --------
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequently Asked Questions - Infinite Muse Toolbox</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+        h1 {
+            color: #ffcc00; /* Bright Gold */
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #ffffff;
+            margin-top: 30px;
+            border-bottom: 2px solid #ffcc00;
+            padding-bottom: 5px;
+        }
+        p, li {
+            line-height: 1.6;
+            font-size: 1em;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        ul li, ol li {
+            margin-bottom: 15px;
+        }
+        .faq-section {
+            margin-bottom: 40px;
+        }
+        .header-image {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 200px;
+            height: auto;
+        }
+        .fine-print {
+            font-size: 0.8em;
+            text-align: center;
+            color: #b0b0b0;
+            margin-top: 40px;
+        }
+        a {
+            color: #ffcc00;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                max-width: 95%;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+    <link href="/unauthenticated/js/ckeditor/ckeditor-custom.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <p style="text-align: center;">
+            <img alt="Muse Signature" src="./watermarks/muse_signature_black.png" class="header-image" />
+        </p>
+
+        <h1>Frequently Asked Questions</h1>
+
+        <!-- General Information Section -->
+        <div class="faq-section">
+            <h2>What is the Infinite Muse Toolbox?</h2>
+            <p>The Infinite Muse Toolkit is an advanced tool designed to secure, certify, and prepare digital artworks for sharing and distribution. It embeds detailed metadata into images, generates watermarked preview and thumbnail versions for social media, creates digitally signed images with unique identifiers, and produces a markdown-formatted Digital Certificate of Authenticity. The toolkit packages all outputs, including certificates and metadata, into a downloadable archive, ensuring convenience and security. Temporary data is cleared daily, and no information is sold or publicly shared, making it a trusted solution for artists and collectors alike.</p>
+        </div>
+
+        <div class="faq-section">
+            <h2>Why Would I Use This Toolkit as a Digital Artist?</h2>
+            <p>The Infinite Muse Toolkit is an essential resource for digital artists who want to secure, protect, and present their artwork professionally. Here&rsquo;s why you should consider using it:</p>
+            <ol>
+                <li><strong>Protect Your Work</strong>: The toolkit embeds detailed metadata into your images, ensuring your authorship and rights are clearly documented and difficult to dispute. It also creates digitally signed versions of your artwork with unique identifiers.</li>
+                <li><strong>Streamline Presentation</strong>: Generate high-quality previews and thumbnails with watermarks for sharing on social media, promoting your art while safeguarding the originals.</li>
+                <li><strong>Add Professional Credibility</strong>: Each processed image comes with a markdown-formatted Digital Certificate of Authenticity, giving your buyers and collectors confidence in the authenticity of your work.</li>
+                <li><strong>Simplify Packaging</strong>: All components&mdash;metadata, preview, thumbnail, signed image, and certificate&mdash;are bundled into a single downloadable archive for convenience and professional presentation.</li>
+                <li><strong>Ensure Privacy</strong>: No images are stored long-term, and all temporary directories are cleared daily. Your personal and artistic data are kept secure and never sold or shared publicly.</li>
+                <li><strong>Future-Proof Your Art</strong>: The toolkit logs unique identifiers and timestamps, creating a traceable record of your artwork&rsquo;s lifecycle, which can be invaluable for authentication, resale, or legal purposes.</li>
+                <li><strong>Save Time and Effort</strong>: Automate tasks like metadata embedding, certificate generation, and image resizing, allowing you to focus on your creative process rather than administrative tasks.</li>
+            </ol>
+        </div>
+
+        <!-- Technical Details Section -->
+        <div class="faq-section">
+            <h2>How Does the Toolkit Embed Unique Identifiers in the Image?</h2>
+            <p>The Infinite Muse Toolkit embeds "Unique Identifiers" by adding specific metadata fields to the image. These identifiers ensure the image can be authenticated, tracked, and securely linked to its certificate of authenticity and the artist's records:</p>
+            <ol>
+                <li><strong>Document ID</strong>: A globally unique identifier (UUID) embedded in the image metadata acts as a fingerprint for the specific artwork.</li>
+                <li><strong>Instance ID</strong>: Another UUID distinguishes each instance of the file, such as resized or watermarked copies, tied to the original Document ID.</li>
+                <li><strong>Traceable Metadata</strong>: Includes the artist's name, artwork title, creation date, rights, and a hash of the image, enabling verification of authenticity.</li>
+                <li><strong>Verification</strong>: These identifiers can be referenced against the Digital Certificate of Authenticity or a secure database to confirm the image's genuineness.</li>
+            </ol>
+            <p>By embedding unique identifiers, the toolkit adds an extra layer of security and trust, preserving the integrity of your artwork in the digital realm.</p>
+        </div>
+
+        <div class="faq-section">
+            <h2>Do I Have to Complete All the Form Fields?</h2>
+            <p>No, you don&rsquo;t have to complete all the form fields. However, the more fields you complete, the richer and more accurate your metadata will be. This ensures your artwork is better documented, authenticated, and optimized for its intended uses.</p>
+        </div>
+
+        <div class="faq-section">
+            <h2>Is My Data Secure?</h2>
+            <p>Yes, your data is secure with the Infinite Muse Toolkit. All submitted information, including IP addresses and timestamps, is stored in a secure database and used only for system integrity and future expansion possibilities. Images themselves are not saved long-term, and temporary directories are cleared daily at midnight (EST) to maintain privacy. We guarantee that no information is sold or made publicly available, ensuring your data remains safe and private throughout the process.</p>
+        </div>
+        
+        <!-- Usage and Fees Section -->
+        <div class="faq-section">
+            <h2>Is There a Fee? Will There Ever Be a Fee?</h2>
+            <p>No, never. I believe in digital freedom. While donations are accepted to help support the project and its ongoing development, there will never be a fee.</p>
+        </div>
+
+        <div class="faq-section">
+            <h2>Can I Use This Tool for Commercial Purposes?</h2>
+            <p>The Infinite Muse Toolkit is designed to certify, protect, and prepare artworks for distribution, whether for personal or commercial use. While the tool itself imposes no restrictions on how the processed files are used, ensure that any commercial use aligns with applicable copyright laws and the rights associated with the artwork. If you&#39;re unsure, consult the rights section in the metadata or Digital Certificate of Authenticity for clarity.</p>
+        </div>
+
+        <!-- Support and Contribution Section -->
+        <div class="faq-section">
+            <h2>How Can I Help?</h2>
+            <ul>
+                <li><strong>Provide Constructive Feedback</strong>: Share your thoughts and suggestions to improve the Infinite Muse Toolkit by reaching out to us at <a href="mailto:infinitemusearts@gmail.com">infinitemusearts@gmail.com</a>. Your feedback is invaluable!</li>
+                <li><strong>Contribute Programming Expertise</strong>: <em>I’m not a programmer!</em> This toolkit is a personal project that I cobbled together for my own use, and I’ve discovered others who also find it useful. If you’re a programmer, your skills and contributions would be more than welcome to refine and expand its capabilities.</li>
+                <li><strong>Support the Git Project</strong>: I’m working on setting up a Git repository for the toolkit, but even this process is a bit outside my expertise. Any assistance with this endeavor&mdash;be it setting up, managing, or contributing to the Git&mdash;would be greatly appreciated!</li>
+            </ul>
+            <p style="margin-top: 20px;">Your support helps this toolkit evolve and become a better resource for everyone. Thank you!</p>
+        </div>
+
+        <!-- Future Plans Section -->
+        <div class="faq-section">
+            <h2>What Does the Future Look Like for the Infinite Muse Toolkit?</h2>
+            <p>The Infinite Muse Toolkit is designed with scalability and innovation in mind. Here&rsquo;s what the future holds:</p>
+            <ol>
+                <li><strong>Enhanced Security Features</strong>:
+                    <ul>
+                        <li>Implementation of blockchain technology for immutable record-keeping and verification of artwork provenance.</li>
+                        <li>Advanced encryption methods to further protect data and digital certificates.</li>
+                    </ul>
+                </li>
+                <li><strong>AI-Driven Functionality</strong>:
+                    <ul>
+                        <li>Automated description generation using AI to provide tailored, professional-grade summaries for artwork.</li>
+                        <li>Intelligent metadata tagging to improve searchability and categorization.</li>
+                    </ul>
+                </li>
+                <li><strong>Customizable Output Options</strong>:
+                    <ul>
+                        <li>More flexibility for users to tailor certificates, watermarks, and archive contents.</li>
+                        <li>Support for multiple file formats and resolution presets.</li>
+                    </ul>
+                </li>
+                <li><strong>Expanded Integration</strong>:
+                    <ul>
+                        <li>Compatibility with popular creative platforms and marketplaces (e.g., Adobe Creative Cloud, Shopify, and Etsy).</li>
+                        <li>API development for seamless integration with third-party applications.</li>
+                    </ul>
+                </li>
+                <li><strong>Advanced Analytics and Reporting</strong>:
+                    <ul>
+                        <li>Dashboard insights on the usage of the toolkit, including processed files, download metrics, and user behavior trends.</li>
+                    </ul>
+                </li>
+                <li><strong>Sustainability Features</strong>:
+                    <ul>
+                        <li>Cloud-based processing options to minimize local resource use.</li>
+                        <li>Automated cleanup enhancements for an even lighter environmental footprint.</li>
+                    </ul>
+                </li>
+                <li><strong>Community and Collaboration Tools</strong>:
+                    <ul>
+                        <li>Built-in collaboration features to allow teams to work together on image processing and certificate customization.</li>
+                        <li>A shared database of best practices and templates for artists.</li>
+                    </ul>
+                </li>
+                <li><strong>User-Centric Upgrades</strong>:
+                    <ul>
+                        <li>Mobile-friendly interface for on-the-go use.</li>
+                        <li>Intuitive design improvements based on user feedback to simplify the workflow.</li>
+                    </ul>
+                </li>
+            </ol>
+            <p>The Infinite Muse Toolkit is evolving to not only meet the current needs of creators but also anticipate future demands, ensuring it remains a cutting-edge resource for artists, collectors, and digital art enthusiasts.</p>
+        </div>
+
+        <!-- Contact Support Section -->
+        <div class="faq-section">
+            <h2>How Do I Contact Support?</h2>
+            <p>For assistance, please email us at <a href="mailto:infinitemusearts@gmail.com">infinitemusearts@gmail.com</a>.</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="fine-print">
+            &copy; 2025 Infinite Muse Arts<br />
+            <img alt="Infinite Muse Logo" src="./watermarks/muse_signature_black.png" style="height:26px;" />
+        </div>
+    </div>
+</body>
+</html>
