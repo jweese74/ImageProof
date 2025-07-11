@@ -176,7 +176,7 @@ Each entry follows the same heading order for clarity:
 `index.php`
 
 1. **Purpose**  
-   Acts as the primary entry point and front-end interface for the Infinite Muse Toolkit. This file presents users with a styled HTML form to submit artwork-related metadata and images for processing. It ties together backend processing and frontend interaction.
+Acts as the primary entry point and front-end interface for the Infinite Muse Toolkit. This file presents users with a styled HTML form to submit artwork-related metadata and images for processing. It ties together backend processing and frontend interaction. As of `0.4.2-beta`, layout and visual usability enhancements improve the onboarding experience.
 
 2. **Agent Role**  
    Serves as a **user-facing interaction agent**, rendering the HTML form UI and triggering the backend processing logic (`process.php`) on form submission. It acts as the central hub for collecting user input, displaying tooltips, previews, and instructions.
@@ -192,6 +192,9 @@ Each entry follows the same heading order for clarity:
      - Field validation and tooltips for user guidance.
    - Include JavaScript for image preview functionality.
    - Render form-styling with embedded CSS for a dark, elegant visual design.
+   - Display preview placeholders (dashed outlines) to suppress broken image icons until files are selected.
+   - Render thumbnail galleries in uniform 5-column grids for both public and member views.
+   - Introduce header polish (logo shadow, custom font) for improved brand readability.
    - Provide important notices regarding file retention and privacy policy.
 
 4. **Security Considerations**  
@@ -210,11 +213,11 @@ Each entry follows the same heading order for clarity:
      - Images (e.g., `/watermarks/muse_signature_black.png`)
 
 6. **Additional Notes**  
-   - Embedded tooltips enhance UX significantly—ideal for artist onboarding.
-   - Design is responsive but may benefit from mobile-specific media queries for better scaling.
-   - The use of inline styles makes customization easy but may benefit from external CSS for scalability.
-   - Consider using a frontend JS framework or form validation library in future iterations.
-   - Clear daily file deletion policy should be tied to a secure and verifiable cron job or backend cleanup task.
+  - Embedded tooltips and placeholder previews enhance UX—ideal for artist onboarding.
+  - Layout changes in `0.4.2-beta` improved thumbnail consistency and form clarity.
+  - Design remains responsive but may benefit from further mobile-specific tweaks.
+  - Consider moving from inline styles to external CSS for long-term scalability.
+  - Clear daily file deletion policy should be tied to a secure and verifiable cron job or backend cleanup task.
 
 ---
 ### File Location

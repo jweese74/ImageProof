@@ -13,9 +13,16 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
-### [0.3.0-alpha] – 2024-06-29
-- Initial alpha release and proof-of-concept build completed.
-- Functional upload → watermark → package flow working with database integration.
+### [0.4.2-beta] – 2025-07-11
+### Fixed
+- Thumbnail grid width now respects layout limits and renders properly in both public and member views.
+- Broken image icon no longer shown in preview boxes when no file is selected.
+
+### Added
+- Placeholder preview frames for watermark/image preview.
+- Header text restyled with Orbitron font and drop-shadowed PixlKey logo.
+
+No changes to database, API, or core logic—this is a visual/UI refinement patch.
 
 ### [0.4.1-beta] – 2025-07-11
 - Security patch: `download_zip.php` now enforces user ownership of ZIP downloads.
@@ -29,9 +36,13 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 - All other branches (beta or experimental) were removed to simplify development and refocus on a stable base.
 - This commit represents the official project baseline going forward.
 
+### [0.3.0-alpha] – 2024-06-29
+- Initial alpha release and proof-of-concept build completed.
+- Functional upload → watermark → package flow working with database integration.
+
 ## What It Does
 
-- Upload high-resolution artwork (PNG, JPG, WebP up to 200MB).
+- Upload high-resolution artwork (PNG, JPG, WebP up to 10MB).
 - Apply dynamic or default watermarking via user controls.
 - Embed metadata and author statements using ExifTool.
 - Generate markdown certificates of authenticity.
@@ -39,6 +50,11 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 - Persist image fingerprint, metadata, license ID, and ownership to a relational database.
 - Allow users to manage watermark and license templates.
 - Extract and publish signed metadata reports from processed files.
+
+Visual/UX enhancements (from 0.4.2-beta):
+- Centered thumbnail grid (5-across) in public and member views.
+- Preview frames for watermark and image uploads.
+- Branding polish with new header font and clearer logo visibility.
 
 ## Roadmap (Top Priorities)
 

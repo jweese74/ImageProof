@@ -7,6 +7,20 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.2-beta] – 2025-07-11
+### Added
+- 👁️ Placeholder frames for **Watermark preview** and **Image preview** to avoid broken image icons before file selection.
+- 🎨 Drop-shadow on logo and new Orbitron-styled `h1` title for improved branding visibility.
+
+### Fixed
+- 🖼️ Public gallery thumbnails now render in a 5×2 grid layout, matching member view.
+- 📐 Thumbnail gallery width capped at 75% viewport for cleaner layout.
+- 🧹 Removed stray `else:` token that disrupted thumbnail rendering logic.
+
+> Patch release includes UI cleanup and visual bug fixes; no changes to backend or database logic.
+
+---
+
 ## [0.4.1-beta] – 2025-07-11
 ### Changed
 - 🔒 Enforced ownership verification in `download_zip.php`:
