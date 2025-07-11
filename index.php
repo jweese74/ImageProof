@@ -62,36 +62,43 @@ if ($loggedIn) {
 <head>
     <meta charset="utf-8">
     <title>PixlKey 0.4.1-beta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
     <style>
         /* ---------- core ---------- */
         html,
         body {
             margin: 0;
             padding: 0;
-            font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #111;
             color: #eee
         }
 
         h1 {
-            margin: 30px 0;
-            text-align: center
+            margin: 20px 0 30px;
+            text-align: center;
+            font-family: 'Orbitron', Roboto, sans-serif;
+            color: #f5f5f5;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2), 0 0 10px rgba(210, 182, 72, 0.4);
+            font-size: 2em;
         }
 
         img.header {
             display: block;
             margin: 20px auto 10px;
-            max-width: 260px
+            max-width: 260px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
         }
 
         /* ---------- thumb grid ---------- */
         .thumb-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            display: flex;
+            flex-wrap: wrap;
             gap: 8px;
+            justify-content: center;
             width: 90%;
             max-width: 900px;
-            margin: 10px auto
+            margin: 10px auto;
         }
 
         .thumb-grid img {
@@ -99,6 +106,21 @@ if ($loggedIn) {
             height: auto;
             border-radius: 4px;
             border: 1px solid #444
+        }
+
+        .thumb-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .thumb-row.top-row img {
+            align-self: flex-end;
+        }
+
+        .thumb-row.bottom-row img {
+            align-self: flex-start;
         }
 
         /* ---------- buttons ---------- */
@@ -287,10 +309,18 @@ if ($loggedIn) {
         </nav>
 
         <section class="thumb-grid">
-            <?php if ($thumbs): foreach ($thumbs as $t): ?>
-                    <img src="<?= htmlspecialchars($t) ?>" alt="recent thumbnail">
-                <?php endforeach;
-            else: ?>
+            <?php if ($thumbs): ?>
+                <div class="thumb-row top-row">
+                    <?php foreach (array_slice($thumbs, 0, 5) as $t): ?>
+                        <img src="<?= htmlspecialchars($t) ?>" alt="recent thumbnail">
+                    <?php endforeach; ?>
+                </div>
+                <div class="thumb-row bottom-row">
+                    <?php foreach (array_slice($thumbs, 5, 5) as $t): ?>
+                        <img src="<?= htmlspecialchars($t) ?>" alt="recent thumbnail">
+                    <?php endforeach; ?>
+                </div>
+                else: ?>
                 <p style="grid-column:1 / -1;text-align:center">No images yet – upload one below!</p>
             <?php endif; ?>
         </section>
