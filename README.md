@@ -11,6 +11,17 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 - A decentralized-friendly, off-chain registry system for provenance.
 - Rights management that is resilient across formats, platforms, and duplicates.
 
+## 📜 Changelog
+
+### [0.3.0-alpha] – 2024-06-29
+- Initial alpha release and proof-of-concept build completed.
+- Functional upload → watermark → package flow working with database integration.
+
+### [main reset] – 2025-07-10
+- Repository was reverted to `0.3.0-alpha` as the new `main` branch.
+- All other branches (beta or experimental) were removed to simplify development and refocus on a stable base.
+- This commit represents the official project baseline going forward.
+
 ## What It Does
 
 - Upload high-resolution artwork (PNG, JPG, WebP up to 200MB).
