@@ -96,16 +96,25 @@ if ($loggedIn) {
             flex-wrap: wrap;
             gap: 8px;
             justify-content: center;
-            width: 90%;
+            width: 75%;
+            /* keep total block narrower */
             max-width: 900px;
             margin: 10px auto;
         }
 
-        .thumb-grid img {
-            width: 100%;
+        /* A unified thumbnail rule used by BOTH public grid images
+           and those inside our .thumb-row wrappers  */
+        .thumb-grid img,
+        .thumb-row img {
+            flex: 0 0 calc(20% - 8px);
+            /* 5 items per line incl. gap */
+            width: calc(20% - 8px);
+            max-width: 160px;
+            /* stops growing on huge screens */
             height: auto;
             border-radius: 4px;
-            border: 1px solid #444
+            border: 1px solid #444;
+            object-fit: cover;
         }
 
         .thumb-row {
@@ -209,12 +218,48 @@ if ($loggedIn) {
             margin: 1rem 0;
         }
 
-        .preview img {
-            max-width: 140px;
-            max-height: 140px;
-            border: 1px solid #555;
+        /* unified figure box */
+        .preview figure {
+            /* same footprint as the old img */
+            width: 140px;
+            height: 140px;
+            margin: 0;
+            /* let flex gap handle spacing */
+
+            /* dashed placeholder frame */
+            border: 1px dashed #555;
             border-radius: 4px;
             background: #000;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* keep the caption snug above the frame */
+        .preview figure figcaption {
+            position: absolute;
+            top: -1.4em;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: .8em;
+            color: #aaa;
+        }
+
+        /* when there’s no src, hide the img so browser icon never appears */
+        .preview img:not([src]) {
+            display: none;
+        }
+
+        .preview img {
+            max-width: 100%;
+            max-height: 100%;
+            border: none;
+            /* frame now lives on figure */
+            border-radius: 0;
+            object-fit: contain;
         }
 
         button {
@@ -320,8 +365,8 @@ if ($loggedIn) {
                         <img src="<?= htmlspecialchars($t) ?>" alt="recent thumbnail">
                     <?php endforeach; ?>
                 </div>
-                else: ?>
-                <p style="grid-column:1 / -1;text-align:center">No images yet – upload one below!</p>
+            <?php else: ?>
+                <p style="text-align:center">No images yet – upload one below!</p>
             <?php endif; ?>
         </section>
 
