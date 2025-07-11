@@ -61,7 +61,7 @@ if ($loggedIn) {
 
 <head>
     <meta charset="utf-8">
-    <title>Infinite Muse Toolkit</title>
+    <title>PixlKey 0.4.1-beta</title>
     <style>
         /* ---------- core ---------- */
         html,
@@ -272,10 +272,10 @@ if ($loggedIn) {
 <body>
 
     <header>
-        <img src="./watermarks/muse_signature_black.png" alt="Muse signature" class="header">
+        <img src="./watermarks/pixlkey2.png" alt="PixlKey Logo" class="header">
     </header>
 
-    <h1>Infinite Muse Toolkit</h1>
+    <h1>PixlKey 0.4.1-beta</h1>
 
     <?php if ($loggedIn): ?>
         <!-- ===== MEMBER VIEW ===== -->
@@ -347,7 +347,7 @@ if ($loggedIn) {
             </label>
 
             <!-- image chooser -->
-            <label>Select images (max 200 MB each):
+            <label>Select images (max 20 MB each):
                 <input type="file" name="images[]" multiple required>
             </label>
 
@@ -420,8 +420,8 @@ if ($loggedIn) {
         </div>
     <?php endif; ?>
 
-    <p class="notice">Original uploads are capped at 200 MB. Thumbnails shown above refresh automatically.</p>
-    <p class="fine-print">&copy; 2025 Infinite Muse Arts</p>
+    <p class="notice">Original uploads are capped at 10 MB. Thumbnails shown above refresh automatically.</p>
+    <p class="fine-print">&copy; 2025 PixlKey by Infinite Muse Arts</p>
 </body>
 
 </html>
