@@ -230,7 +230,7 @@ Acts as the primary entry point and front-end interface for the Infinite Muse To
    This script extracts metadata from an image file using ExifTool and formats selected, non-sensitive information into a well-structured Markdown file. It is intended for post-processing signed or watermarked images for documentation or audit purposes.
 
 2. **Agent Role**  
-   Acts as a **metadata extraction agent** that transforms raw Exif data into human-readable Markdown, facilitating provenance tracking, author verification, and image audit trails in the ImageProof ecosystem.
+   Acts as a **metadata extraction agent** that transforms raw Exif data into human-readable Markdown, facilitating provenance tracking, author verification, and image audit trails in the PixlKey ecosystem.
 
 3. **Key Responsibilities**  
    - Parse command-line arguments (`--input`, `--output`).

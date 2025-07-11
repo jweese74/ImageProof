@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"><title>Log in | ImageProof</title>
+<meta charset="utf-8"><title>Log in | PixlKey</title>
 <style>
  body{font-family:sans-serif;background:#111;color:#eee}
  form{max-width:420px;margin:4em auto;padding:2em;background:#222;border-radius:8px}
