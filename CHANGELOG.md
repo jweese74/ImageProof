@@ -7,6 +7,31 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.1-beta] – 2025-07-11
+### Changed
+- 🔒 Enforced ownership verification in `download_zip.php`:
+  - Added SQL-based check to confirm the `runId` belongs to the authenticated user.
+  - Prevents unauthorized users from accessing ZIP archives they don’t own.
+  - Returns `403 Forbidden` on failed access attempt.
+  - Processing step now inserts each `runId` into `processing_runs` with `user_id`, enabling secure lookup.
+- 🔒 Enforced ownership verification in `store_data.php`:
+  - Validates that the provided `runId` belongs to the authenticated user before ingesting data.
+  - Returns `403 Forbidden` if ownership check fails.
+  - Protects against unauthorized database writes and metadata exposure.
+- 🎯 Input validation hardened:
+  - `runId` is sanitized and empty values are explicitly rejected.
+
+ ---
+ 
+ ## [0.4.0-beta] – 2025-07-10
+ ### Added
+ - Roadmap reset and preparation for 0.4.x beta stream.
+ - Reinforced `auth.php` to regenerate session ID on login/logout.
+ - Centralized CSRF helpers.
+ - Core file audit and agent refactoring begun.
+
+---
+
 ## [0.3.0-alpha] – 2024-06-29
 ### Added
 - Initial working **Alpha release** of PixlKey.

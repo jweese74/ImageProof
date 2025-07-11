@@ -66,17 +66,20 @@ Each entry follows the same heading order for clarity:
    Functions as a **delivery agent** responsible for serving ZIP bundles that were generated and stored during earlier image-processing or packaging stages. It finalizes the pipeline by enabling end-users to retrieve their packaged results.
 
 3. **Key Responsibilities**  
-   - Include the database configuration (`config.php`)—likely for shared session or logging context (though not used directly here).
+   - Validate ownership of the `runId` via `processing_runs` table before serving file.
+   - If found and authorized, serve the file with correct headers to prompt a ZIP download.
+   - Include the database configuration (`config.php`)—for session, PDO, and ownership lookup.
    - Verify the presence and validity of the `runId` parameter from the query string.
    - Sanitize the `runId` to prevent directory traversal exploits.
-   - Check for the existence of `final_assets.zip` inside the `processed/{runId}/` directory.
-   - If found, serve the file with correct headers to prompt a ZIP download.
+   - Query the `processing_runs` table to confirm the `runId` belongs to the current session user.
+   - Check for the existence of `final_assets.zip` inside the `processed/{user_id}/{runId}/` directory.
+   - If ownership confirmed and file exists, serve the file with secure headers.
    - Return appropriate HTTP error codes if validation or file lookup fails.
 
 4. **Security Considerations**  
    - **Input sanitization**: Uses a regex to strip dangerous characters from `runId`—good practice for avoiding directory traversal attacks.
    - **Direct file serving**: Only serves if file exists and path is resolved safely.
-   - **Lack of authentication**: The script does not verify whether the requester is authorized to access the ZIP file. In a multi-user system, this could lead to data leakage.
+   - **Ownership enforcement**: As of 0.4.1-beta, the script verifies that the `runId` belongs to the logged-in user by querying the `processing_runs` table.
    - **Fixed filename in header**: Always serves as `final_assets.zip` regardless of actual file naming—consider including `runId` in filename for clarity/user feedback.
 
 5. **Dependencies**  
@@ -333,6 +336,7 @@ Each entry follows the same heading order for clarity:
      - Extract metadata using a separate PHP extractor.
      - Generate Markdown certificate.
    - Zip final outputs and offer download link via `download_zip.php`.
+   - Register each `runId` to the `processing_runs` table so `download_zip.php` and `store_data.php` can verify ownership before proceeding.
 
 4. **Security Considerations**  
    - **Input Sanitization**: Uses `htmlspecialchars()` on metadata fields to avoid XSS.
@@ -388,9 +392,10 @@ Each entry follows the same heading order for clarity:
    - Compute SHA-256 hashes of image files for integrity checks.
    - Wrap all inserts into a single transactional context for atomicity.
    - Roll back on any failure to prevent partial writes.
+   - Validate `runId` ownership using `processing_runs` before loading or persisting any data.
 
 4. **Security Considerations**  
-   - **Input validation**: Currently trusts incoming `runId`; this should be sanitized more robustly to prevent directory traversal.
+   - **Ownership check**: As of `0.4.1-beta`, enforces that the `runId` belongs to the logged-in user before loading filesystem or writing to the database.
    - **Filesystem operations**: Reads files from local storage based on user-supplied ID—ensure `processed/` is outside of public web root or has proper ACLs.
    - **SQL injection**: Mitigated via PDO prepared statements throughout.
    - **Rollback on failure**: Ensures no partial database writes or inconsistent state.

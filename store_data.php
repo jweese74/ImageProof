@@ -18,7 +18,8 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/process_helpers.php';
 
 // 2. Function to retrieve UUIDs for existing entries or create new ones
-function getOrCreateId(PDO $pdo, $table, $column, $value) {
+function getOrCreateId(PDO $pdo, $table, $column, $value)
+{
     // Prepare SELECT statement
     $selectStmt = $pdo->prepare("SELECT {$column}_id FROM {$table} WHERE {$column} = :value");
     $selectStmt->execute(['value' => $value]);
@@ -40,6 +41,16 @@ if (!isset($_GET['runId']) && !isset($_POST['runId'])) {
 }
 
 $runId = $_GET['runId'] ?? $_POST['runId'];
+
+// Check that runId belongs to current user
+$userId = current_user()['user_id'];
+$stmt = $pdo->prepare('SELECT 1 FROM processing_runs WHERE run_id = ? AND user_id = ?');
+$stmt->execute([$runId, $userId]);
+if (!$stmt->fetchColumn()) {
+    http_response_code(403);
+    die("Error: You do not have permission to access this runId.");
+}
+
 $runDir = __DIR__ . "/processed/{$runId}";
 
 if (!is_dir($runDir)) {
@@ -346,7 +357,6 @@ try {
     $pdo->commit();
 
     echo "Data has been successfully stored in the database.";
-
 } catch (Exception $e) {
     // Rollback Transaction on Error
     $pdo->rollBack();
@@ -366,10 +376,10 @@ try {
  * @param string $table
  * @return string
  */
-function generateUUID(PDO $pdo, $table) {
+function generateUUID(PDO $pdo, $table)
+{
     // Use MySQL's UUID function via a query
     $stmt = $pdo->query("SELECT UUID() AS uuid");
     $result = $stmt->fetch();
     return $result['uuid'];
 }
-?>

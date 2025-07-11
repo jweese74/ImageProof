@@ -297,6 +297,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $runId        = date('Ymd_His') . '_' . uniqid();
     $userProcBase = $processedDir . '/' . $userId;          // user-scoped
 
+    // Register runId in processing_runs table
+    $stmt = $pdo->prepare('INSERT INTO processing_runs (run_id, user_id, zip_path) VALUES (?, ?, ?)');
+    $stmt->execute([$runId, $userId, '']);
 
     if (!is_dir($userProcBase) && !mkdir($userProcBase, 0775, true)) {
         echoStep("Error: unable to create user processing folder.", 'error');

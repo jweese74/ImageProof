@@ -17,6 +17,13 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 - Initial alpha release and proof-of-concept build completed.
 - Functional upload → watermark → package flow working with database integration.
 
+### [0.4.1-beta] – 2025-07-11
+- Security patch: `download_zip.php` now enforces user ownership of ZIP downloads.
+- `process.php` now inserts `runId` entries into `processing_runs` to support ownership checks.
+- `store_data.php` now verifies that the given `runId` belongs to the logged-in user.
+- Sanitized and validated `runId` input with clear failure responses.
+- Returns `403 Forbidden` for unauthorized access attempts in both download and store logic.
+
 ### [main reset] – 2025-07-10
 - Repository was reverted to `0.3.0-alpha` as the new `main` branch.
 - All other branches (beta or experimental) were removed to simplify development and refocus on a stable base.
@@ -37,7 +44,7 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ### Security & Session Hardening
 1. **Regenerate session ID on login** to mitigate fixation attacks. *(Implemented in `auth.php` and `logout.php`)*
-2. **Strict `runId` sanitization and ownership checks** in download & store logic.
+2. **Strict `runId` sanitization and ownership checks** in download & store logic. ✅ *(Enforced in 0.4.1-beta)*
 3. **Rate limiting and brute-force protection** on login/registration endpoints.
 4. **CSRF failure, login, and download event logging** for audit and security.
 
