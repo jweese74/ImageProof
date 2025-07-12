@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once 'rate_limiter.php';
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -10,6 +11,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pwd      = $_POST['password'] ?? '';
     $confirm  = $_POST['password_confirm'] ?? '';
 
+    // 🔒 Rate limit by IP (5 attempts in 30 minutes)
+    $rateKey = 'register:' . $_SERVER['REMOTE_ADDR'];
+    if (too_many_attempts($rateKey, 5, 1800)) {
+        $errors[] = 'Too many registration attempts. Please wait and try again.';
+    } else {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Please enter a valid e-mail address.';
     }
@@ -35,9 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userId = $pdo->lastInsertId() ?: $pdo->query(
             'SELECT user_id FROM users WHERE email = ' . $pdo->quote($email)
         )->fetchColumn();
+        clear_failed_attempts($rateKey);
         login_user($userId);
         header('Location: index.php');
         exit;
+    } else {
+        record_failed_attempt($rateKey);
+    }
     }
 }
 ?>

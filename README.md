@@ -13,6 +13,14 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
+### [0.4.3-beta] – 2025-07-11
+### Security
+- 🛡️ Rate limiting added to login and registration forms:
+  - `/login.php`: blocks IP after 5 failed attempts within 15 minutes.
+  - `/register.php`: throttles new user signups to 5 attempts per 30 minutes.
+  - Prevents brute-force login and automated account creation attacks.
+- Introduced new helper: `rate_limiter.php` using session-based attempt tracking.
+
 ### [0.4.2-beta] – 2025-07-11
 ### Fixed
 - Thumbnail grid width now respects layout limits and renders properly in both public and member views.
@@ -61,7 +69,7 @@ Visual/UX enhancements (from 0.4.2-beta):
 ### Security & Session Hardening
 1. **Regenerate session ID on login** to mitigate fixation attacks. *(Implemented in `auth.php` and `logout.php`)*
 2. **Strict `runId` sanitization and ownership checks** in download & store logic. ✅ *(Enforced in 0.4.1-beta)*
-3. **Rate limiting and brute-force protection** on login/registration endpoints.
+3. **Rate limiting and brute-force protection** on login/registration endpoints. ✅ *(Implemented in 0.4.3-beta via `rate_limiter.php`)*
 4. **CSRF failure, login, and download event logging** for audit and security.
 
 ### Configuration & Validation
@@ -90,6 +98,9 @@ Visual/UX enhancements (from 0.4.2-beta):
 - Secure cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`.
 - CSRF token protection on all forms.
 - Passwords hashed with `password_hash()` and verified with `password_verify()`.
+- Rate limiting enforced on `/login.php` and `/register.php` using `rate_limiter.php`.
+  - Protects against brute-force and scripted abuse.
+  - Session-based tracking; configurable attempt and decay thresholds.
 
 ## Status
 

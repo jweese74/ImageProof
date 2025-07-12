@@ -7,6 +7,18 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.3-beta] – 2025-07-11
+### 🔒 Security Enhancements
+- Implemented **rate limiting** on login and registration endpoints:
+  - `/login.php`: Limits to 5 failed attempts per 15 minutes per IP.
+  - `/register.php`: Limits to 5 attempts per 30 minutes per IP.
+  - Helps mitigate brute-force login attacks and account creation abuse.
+- Introduced `rate_limiter.php` utility:
+  - Session-based tracking of attempt timestamps.
+  - Includes `too_many_attempts()`, `record_failed_attempt()`, and `clear_failed_attempts()` functions.
+
+---
+
 ## [0.4.2-beta] – 2025-07-11
 ### Added
 - 👁️ Placeholder frames for **Watermark preview** and **Image preview** to avoid broken image icons before file selection.

@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once 'rate_limiter.php';
 
 $next   = $_GET['next'] ?? 'index.php';
 $errors = [];
@@ -10,17 +11,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = strtolower(trim($_POST['email'] ?? ''));
     $pwd   = $_POST['password'] ?? '';
 
+    // Check rate limit before processing
+    $rateKey = 'login:' . $_SERVER['REMOTE_ADDR'];
+    if (too_many_attempts($rateKey, 5, 900)) {  // 5 tries, 15-minute lock
+        $errors[] = 'Too many failed attempts. Try again later.';
+    } else {
     $stmt = $pdo->prepare('SELECT user_id,password_hash FROM users WHERE email = ?');
     $stmt->execute([$email]);
     $u = $stmt->fetch();
 
     if (!$u || !password_verify($pwd, $u['password_hash'])) {
         $errors[] = 'Invalid e-mail or password.';
+        record_failed_attempt($rateKey);
     } else {
+        clear_failed_attempts($rateKey);
         login_user($u['user_id']);
         header('Location: ' . $next);
         exit;
     }
+    } // end rate limit check
 }
 ?>
 <!DOCTYPE html><html lang="en"><head>

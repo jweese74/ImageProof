@@ -61,7 +61,7 @@ if ($loggedIn) {
 
 <head>
     <meta charset="utf-8">
-    <title>PixlKey 0.4.2-beta</title>
+    <title>PixlKey 0.4.3-beta</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
     <style>
         /* ---------- core ---------- */
@@ -342,7 +342,7 @@ if ($loggedIn) {
         <img src="./watermarks/pixlkey2.png" alt="PixlKey Logo" class="header">
     </header>
 
-    <h1>PixlKey 0.4.2-beta</h1>
+    <h1>PixlKey 0.4.3-beta</h1>
 
     <?php if ($loggedIn): ?>
         <!-- ===== MEMBER VIEW ===== -->
