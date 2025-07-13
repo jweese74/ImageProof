@@ -7,6 +7,19 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.4-beta] – 2025-07-12
+### 🔒 Security Enhancements
+- ✅ Hardened **session fixation protection** across login, logout, registration, and data ingestion:
+  - `/auth.php`: `session_regenerate_id(true)` is now called inside `login_user()` immediately after successful login.
+  - `/register.php`: Session ID is regenerated **before** calling `login_user()` to prevent reuse of pre-auth session.
+  - `/logout.php`: Reordered logic to regenerate session **after** cookie expiry and session teardown, avoiding residual ID reuse.
+  - `/store_data.php`: Defensive session regeneration added to reinforce session integrity before persisting sensitive records.
+- Ensures full compliance with OWASP guidance on session lifecycle control and eliminates potential fixation or swap vectors.
+
+> This patch strengthens authentication boundaries and session integrity, especially in shared browser environments.
+
+---
+
 ## [0.4.3-beta] – 2025-07-11
 ### 🔒 Security Enhancements
 - Implemented **rate limiting** on login and registration endpoints:

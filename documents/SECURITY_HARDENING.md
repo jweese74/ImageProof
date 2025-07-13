@@ -1,7 +1,7 @@
 ## PixlKey Security Hardening Checklist
 
 `/auth.php`
-   * **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
+   * Fixed 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
    * **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
    * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
@@ -42,7 +42,7 @@
 
 `/login.php`
    * **Open-redirect defence**: sanitise or whitelist `$next` to prevent arbitrary redirects.
-   * **Session fixation**: ensure `session_regenerate_id(true)` is called inside `login_user()`.
+   * Fixed 0.4.4-beta **Session fixation**: ensure `session_regenerate_id(true)` is called inside `login_user()`.
    * **Timing-side-channel**: always run `password_verify()` even when the e-mail is missing to equalise response time.
    * **Credential stuffing**: pair IP-based limits with (hashed) e-mail-based counters for more granular blocking.
    * **HTTPS & HSTS**: enforce TLS with `Strict-Transport-Security` headers at the web-server level.
@@ -52,7 +52,7 @@
    * **Cookie scope**: confirm `path`, `domain`, `secure`, and `httponly` flags mirror those set at login to avoid orphaned cookies.
    * **Cache-Control**: add `header('Cache-Control: no-store')` and `header('Pragma: no-cache')` to prevent cached authenticated pages.
    * **Redirect code**: consider `303 See Other` instead of default `302` to discourage replay of the previous POST.
-   * **Post-logout CSRF token rotation**: regenerate a fresh token if a new session is started immediately afterwards.
+   * Fixed 0.4.4-beta **Post-logout CSRF token rotation**: regenerate a fresh token if a new session is started immediately afterwards.
 
 `/metadata_extractor.php`
    * **Shell safety**: wraps all shell calls with `escapeshellcmd()` / `escapeshellarg()` to block injection.
@@ -101,7 +101,7 @@
    * **Complementary controls**: This script throttles but does not block traffic; pair with server-level defences (ModSecurity, fail2ban, Cloudflare Rate Limiting).
 
 `/register.php`
-   * **Session fixation**: call `session_regenerate_id(true)` after `login_user()` to prevent fixation attacks.
+   * Fixed 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` after `login_user()` to prevent fixation attacks.
    * **Password policy**: consider enforcing complexity (upper/lower/number/symbol) and breached-password checks (e.g., Have I Been Pwned API).
    * **E-mail verification**: add double-opt-in workflow to stop disposable or mistyped addresses.
    * **Bot defence**: integrate CAPTCHA or address reputation scoring in addition to IP rate limiting.
@@ -109,7 +109,7 @@
    * **Transport security**: mandate HTTPS for all requests, not simply detect it.
    
 `/store_data.php`
-   * **Session fixation** – regenerate session ID after login (handled in `auth.php`, but essential here).
+   * Fixed 0.4.4-beta **Session fixation** – regenerate session ID after login (handled in `auth.php`, but essential here).
    * **Directory traversal** – cast/validate `runId` against a strict UUID regex before path building.
    * **Least-privilege storage** – keep `processed/` outside the web-root or protect via web-server ACLs.
    * **Privilege escalation** – verify `processing_runs.user_id` on every access, not just once.

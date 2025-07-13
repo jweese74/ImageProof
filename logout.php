@@ -17,6 +17,14 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
+// 🔐 Start fresh session to prevent fixation reuse
+session_start([
+    'cookie_samesite' => 'Strict',
+    'cookie_secure'   => isset($_SERVER['HTTPS']),
+    'cookie_httponly' => true,
+]);
+session_regenerate_id(true);
+
 // Redirect to login
 header('Location: login.php');
 exit;

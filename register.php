@@ -42,6 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'SELECT user_id FROM users WHERE email = ' . $pdo->quote($email)
         )->fetchColumn();
         clear_failed_attempts($rateKey);
+
+        // Prevent session fixation on registration
+        session_regenerate_id(true);
         login_user($userId);
         header('Location: index.php');
         exit;

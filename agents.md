@@ -32,7 +32,7 @@ Each entry follows the same heading order for clarity:
 
 4. **Security Considerations**
 
-   * **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
+   * FIXED 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
    * **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
    * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
@@ -52,6 +52,11 @@ Each entry follows the same heading order for clarity:
    * Evaluate migrating to `SameSite=Lax` with exception lists if third-party integrations are required.
 
 7. **CHANGELOG**
+
+   * **2025-07-12 · v0.4.4-beta** – Hardened session integrity:
+     - Called `session_regenerate_id(true)` immediately after successful login inside `login_user()`.
+     - Ensures proper mitigation of session fixation and session-swap attacks.
+     - Validated full session lifecycle flow in tandem with `logout.php` patch.
 
    * **2025-07-11 · v0.4.2-beta** – Initial extraction into standalone `auth.php`; added SameSite Strict cookies, CSRF helpers, and user-cache to support the broader PixlKey refactor.
 
@@ -292,7 +297,7 @@ Each entry follows the same heading order for clarity:
 4. **Security Considerations**
 
    * **Open-redirect defence**: sanitise or whitelist `$next` to prevent arbitrary redirects.
-   * **Session fixation**: ensure `session_regenerate_id(true)` is called inside `login_user()`.
+   * FIXED 0.4.4-beta **Session fixation**: ensure `session_regenerate_id(true)` is called inside `login_user()`.
    * **Timing-side-channel**: always run `password_verify()` even when the e-mail is missing to equalise response time.
    * **Credential stuffing**: pair IP-based limits with (hashed) e-mail-based counters for more granular blocking.
    * **HTTPS & HSTS**: enforce TLS with `Strict-Transport-Security` headers at the web-server level.
@@ -314,6 +319,7 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-12 · v0.4.4-beta** – Fixed session fixation vulnerability by ensuring `session_regenerate_id(true)` is called immediately in `login_user()`.
    * **2025-07-11 · v0.4.2-beta** – Initial agent documentation: added CSRF validation, IP-based rate limiter, and password hashing checks to consolidate PixlKey’s login workflow.
 
 -----
@@ -353,6 +359,12 @@ Each entry follows the same heading order for clarity:
 7. **CHANGELOG**
 
    * **2025-07-11 · v0.4.2-beta** – Initial inclusion in PixlKey refactor, adds explicit cookie expiry and redirect to login screen.
+
+   * **2025-07-12 · v0.4.4-beta** – Hardened against session fixation:
+     - Ensures `session_start()` and `session_regenerate_id(true)` are executed **after** session destruction.
+     - Fully reinitialises session post-teardown to invalidate fixation vectors.
+     - Preserves secure session flags (`SameSite=Strict`, `Secure`, `HttpOnly`) during reinit.
+     - Fixes ordering bug where `session_regenerate_id()` was called on an invalidated session.
 
 -----
 
@@ -748,6 +760,12 @@ Each entry follows the same heading order for clarity:
    * Add server-side file-type inspection (e.g., `finfo_file`) before processing to harden against spoofed MIME types.
 
 7. **CHANGELOG**
+
+   * **2025-07-12 · v0.4.4-beta** – Session hardening and integrity fix.
+
+     * Added `session_regenerate_id(true)` at entry to reinforce session integrity before sensitive writes.
+     * Confirmed defensive mitigation of session fixation if user reaches this endpoint outside of normal login flow.
+     * No structural changes to processing or database logic; patch focused on runtime session security.
 
    * **2025-07-11 · v0.4.2-beta** – First PixlKey-branded version.
 

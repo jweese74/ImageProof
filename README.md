@@ -13,6 +13,15 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
+### [0.4.4-beta] – 2025-07-12
+### Session Security Patch
+- Regenerated session ID immediately after **successful login**, **registration**, and **logout**:
+  - `auth.php`: added `session_regenerate_id(true)` inside `login_user()`.
+  - `register.php`: explicitly regenerates session ID before `login_user()` to mitigate fixation from pre-auth context.
+  - `logout.php`: new session is now properly started and ID regenerated **after** teardown.
+  - `store_data.php`: added redundant session regeneration as a defense-in-depth checkpoint before ingesting data tied to user identity.
+- These changes harden against **session fixation** and **session swap** attacks across all authentication boundaries.
+
 ### [0.4.3-beta] – 2025-07-11
 ### Security
 - 🛡️ Rate limiting added to login and registration forms:
@@ -95,6 +104,8 @@ Visual/UX enhancements (from 0.4.2-beta):
 ## 🔐 Security Enhancements
 
 - Session ID regeneration on login and logout to prevent fixation.
+- Registration flow now also regenerates session ID post-account creation.
+- `store_data.php` enforces redundant session ID regeneration before processing.
 - Secure cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`.
 - CSRF token protection on all forms.
 - Passwords hashed with `password_hash()` and verified with `password_verify()`.

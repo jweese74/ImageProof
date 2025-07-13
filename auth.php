@@ -50,6 +50,7 @@ function validate_csrf_token(): void
 function login_user(string $user_id): void
 {
     global $pdo;
+    session_regenerate_id(true);
     $_SESSION['user_id'] = $user_id;
     $pdo->prepare('UPDATE users SET last_login = NOW() WHERE user_id = ?')
         ->execute([$user_id]);

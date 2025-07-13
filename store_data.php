@@ -8,10 +8,11 @@
 
 // 1. Include necessary files
 require_once 'auth.php';
-require_login();                        // 🔒 session-based auth
+require_login();
 
+session_regenerate_id(true);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    validate_csrf_token();              // 🛡️ optional: CSRF guard for consistency
+    validate_csrf_token();
 }
 
 require_once __DIR__ . '/config.php';
