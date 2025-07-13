@@ -105,6 +105,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-12 · v0.4.5-beta** – Added dynamic `APP_VERSION`, `APP_NAME`, and randomized `APP_TITLE`/`APP_HEADER` string rotation for branding consistency across pages.
+
    * **2025-07-11 · v0.4.2-beta** – Migrated credential loading to environment variables, introduced optional *php-dotenv* support, added dynamic upload size limits, and consolidated PDO hardening flags for PixlKey.
 
 -----
@@ -271,6 +273,7 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **0.4.5-beta (2025-07-12)** – Replaced hard-coded page title and header with randomized `APP_TITLE` / `APP_HEADER` values from `config.php`, supporting dynamic tagline branding per load.
    * **0.4.3-beta (2025-07-11)** – Added CSRF token injection, optional `require_login()` gating, and updated branding from Infinite Muse Arts to PixlKey.
    * **0.4.2-beta (2025-07-10)** – Overhauled dark-theme styling, 5-column responsive thumbnail grid, and UI polish (logo drop-shadow, Orbitron font, dashed preview frames).
 

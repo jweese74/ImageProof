@@ -9,6 +9,27 @@
 
 declare(strict_types=1);
 
+// ---- App Metadata ---------------------------------------------------
+define('APP_VERSION', '0.4.5-beta');
+define('APP_NAME', 'PixlKey');
+
+// Rotating tagline pool
+$taglines = [
+    'Proof of Vision',
+    'Own Your Image',
+    'Signature by Light',
+    'Trust the Pixel',
+    'The Artist`s Ledger',
+    'Verify. License. Protect.',
+    'Chain of Creation',
+    'Image. Identity. Immutable.'
+];
+
+$chosenTagline = $taglines[array_rand($taglines)];
+define('APP_TITLE', APP_NAME . ' - ' . $chosenTagline);
+define('APP_HEADER', APP_TITLE);
+
+
 // ---------------------------------------------------------------------
 // Optional: load a .env file if one exists and you’re using Composer.
 // Comment these three lines out if you’re not using php-dotenv yet.

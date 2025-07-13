@@ -13,6 +13,14 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
+### [0.4.5-beta] – 2025-07-12
+### UI Branding & Version Centralization
+- Introduced dynamic branding via random tagline selection:
+  - `config.php` now defines `APP_TITLE` and `APP_HEADER` with rotating suffixes (e.g., "Proof of Vision", "Own Your Image").
+  - All HTML templates referencing titles or headers now pull from `APP_TITLE` / `APP_HEADER`.
+- Version string (`APP_VERSION`) is now defined once in `config.php` (`0.4.5-beta`) and reflected site-wide.
+- Updated `index.php` to use the new constants in the `<title>` tag and `<h1>` header dynamically.
+
 ### [0.4.4-beta] – 2025-07-12
 ### Session Security Patch
 - Regenerated session ID immediately after **successful login**, **registration**, and **logout**:

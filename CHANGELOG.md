@@ -7,6 +7,21 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.5-beta] – 2025-07-12
+### 🔧 Internal Improvements
+- 🎲 Introduced dynamic branding support in `config.php`:
+  - Added `APP_TITLE` and `APP_HEADER` as randomized constants chosen per page load from a curated tagline pool.
+  - Example variants include:
+    - “PixlKey – Own Your Image”
+    - “PixlKey – Signature by Light”
+    - “PixlKey – Image. Identity. Immutable.”
+  - Enables flexible UX tone and clearer identity without manually updating each file.
+- 🧼 Updated `index.php` to consume `APP_TITLE` and `APP_HEADER` in HTML `<title>` and `<h1>`, replacing hardcoded version and text.
+
+> This non-functional patch improves maintainability and user-facing polish without affecting any business logic or security flow.
+
+---
+
 ## [0.4.4-beta] – 2025-07-12
 ### 🔒 Security Enhancements
 - ✅ Hardened **session fixation protection** across login, logout, registration, and data ingestion:
