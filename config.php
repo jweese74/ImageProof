@@ -26,7 +26,7 @@ $taglines = [
 ];
 
 $chosenTagline = $taglines[array_rand($taglines)];
-define('APP_TITLE', APP_NAME . ' - ' . $chosenTagline);
+define('APP_TITLE', APP_NAME . ' ' . APP_VERSION . ' – ' . $chosenTagline);
 define('APP_HEADER', APP_TITLE);
 
 
