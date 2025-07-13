@@ -15,15 +15,46 @@ define('APP_NAME', 'PixlKey');
 
 // Rotating tagline pool
 $taglines = [
+    // 🔐 Serious / Professional
     'Proof of Vision',
     'Own Your Image',
     'Signature by Light',
     'Trust the Pixel',
-    'The Artist`s Ledger',
+    'The Artist\'s Ledger',
     'Verify. License. Protect.',
     'Chain of Creation',
-    'Image. Identity. Immutable.'
+    'Image. Identity. Immutable.',
+    'Every Image. Accounted For.',
+    'Your Signature, Embedded',
+    'Secure. Signed. Stored.',
+    'Art That Knows Its Owner',
+    'Cryptographic Confidence',
+    'Provenance Made Portable',
+    'Proof-of-Creation for the Visual Web',
+    'Own What You Create',
+
+    // 🧠 Poetic / Mythic
+    'Each Pixel Remembers',
+    'Where Vision Becomes Record',
+    'From Light to Ledger',
+    'Imagination, Authenticated',
+    'A Key for Every Vision',
+    'What Was Seen, Now Sealed',
+    'Proof of Muse',
+
+    // 😂 Funny / Irreverent
+    'Don\'t NFT Me, Bro',
+    'Art So Secure, Even You Can’t Delete It',
+    'Putting the “Pro” in Provenance',
+    'Pixels with a Paper Trail',
+    'Because Metadata Is Sexy',
+    'Sign It Like You Meme It',
+    'Crypto-ish, Without the Collapse',
+    'Less Blockchain, More Brain Cells',
+    'Your Art Called—It Wants Rights',
+    'The Only Fingerprint Artists Actually Want'
 ];
+
 
 $chosenTagline = $taglines[array_rand($taglines)];
 define('APP_TITLE', APP_NAME . ' ' . APP_VERSION . ' – ' . $chosenTagline);
