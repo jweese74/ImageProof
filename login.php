@@ -1,6 +1,7 @@
 <?php
 require_once 'auth.php';
 require_once 'rate_limiter.php';
+require_once __DIR__ . '/config.php';
 
 $next   = $_GET['next'] ?? 'index.php';
 $errors = [];

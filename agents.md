@@ -19,6 +19,8 @@ Each entry follows the same heading order for clarity:
 1. **Purpose**
    Provides foundational session management, CSRF protection, and helper functions for authenticating users within **PixlKey**.
 
+   As of `v0.4.7-beta`, also globally enforces secure session cookie parameters (`Secure`, `HttpOnly`, `SameSite=Strict`) via `ini_set()` before any session is started.
+
 2. **Agent Role**
    Acts as the **Security & Session Agent**, enforcing safe request flows (login, form-submission) and exposing a unified API (`login_user()`, `require_login()`, `current_user()`) to the remainder of the application.
 
@@ -29,6 +31,9 @@ Each entry follows the same heading order for clarity:
    * Log users in, updating their `last_login` timestamp.
    * Gatekeep protected routes via `require_login()`, redirecting unauthenticated users.
    * Provide a cached `current_user()` lookup for downstream business logic.
+   * Configure global session cookie flags before session startup (`ini_set()`).
+   * Enforce CSRF rotation at all privilege transitions.
+   * Include `config.php` early to ensure TLS enforcement and HSTS headers are set.
 
 4. **Security Considerations**
 
@@ -36,7 +41,8 @@ Each entry follows the same heading order for clarity:
    * FIXED 0.4.6-beta **Token rotation**: rotate CSRF token post-login (`login_user()`), logout (`logout.php`), and after session regeneration (`store_data.php`) to prevent token reuse across privilege transitions.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
    * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
-   * **Strict transport**: enforce HTTPS globally, not merely detect it.
+   * Fixed 0.4.7-beta **Strict transport**: enforced HTTPS via `config.php`, which now aborts plain HTTP requests before session or DB logic is reached.
+   * Fixed 0.4.7-beta **Secure cookies**: set `session.cookie_secure=1`, `cookie_httponly=1`, and `cookie_samesite=Strict` via `ini_set()` to ensure client-side session hardening.
    * **Same Origin Policy**: consider adding `header('X-Frame-Options: DENY')` in a central bootstrap.
 
 5. **Dependencies**
@@ -52,6 +58,11 @@ Each entry follows the same heading order for clarity:
    * Evaluate migrating to `SameSite=Lax` with exception lists if third-party integrations are required.
 
 7. **CHANGELOG**
+
+   * **2025-07-14 · v0.4.7-beta** – Enforced secure cookie flags and transport:
+     - Set `session.cookie_secure`, `cookie_httponly`, and `cookie_samesite` globally before `session_start()`.
+     - Ensures cookie security attributes are honored even in non-explicit calls.
+     - TLS enforcement now occurs upstream in `config.php` for global control.
 
    * **2025-07-14 · v0.4.6-beta** – CSRF Token Rotation Patch:
      - Added `$_SESSION['csrf_token'] = bin2hex(random_bytes(32))` to `login_user()` immediately after session ID regeneration.
@@ -71,6 +82,8 @@ Each entry follows the same heading order for clarity:
 1. **Purpose**
    Establishes a PDO connection to the PixlKey MariaDB / MySQL database, pulling credentials from environment variables (with sensible fallbacks) and enforcing upload-size limits at runtime.
 
+   Also enforces HTTPS-only access for all web-based routes and emits standard security headers (`HSTS`, `nosniff`, etc.) on every request.
+
 2. **Agent Role**
    Functions as the **Database & Configuration Agent**, supplying all other PHP modules with a ready-to-use `$pdo` handle and centralising environment-driven settings (e.g., maximum upload size).
 
@@ -84,6 +97,8 @@ Each entry follows the same heading order for clarity:
      * `ERRMODE_EXCEPTION` for predictable error handling.
      * `FETCH_ASSOC` for associative-array results.
      * Native prepared statements (`EMULATE_PREPARES = false`).
+   * Enforce HTTPS-only transport on all web requests (403 on plain HTTP or misconfigured proxy).
+   * Emit security headers: `Strict-Transport-Security`, `X-Content-Type-Options`.
    * Log and gracefully terminate on connection failure.
 
 4. **Security Considerations**
@@ -93,6 +108,9 @@ Each entry follows the same heading order for clarity:
    * **Credential scope**: ensure file permissions (`chmod 600`) prevent unauthorised reads.
    * **Transport security**: if DB is remote, use TLS-encrypted client connections.
    * **Secrets rotation**: consider runtime reload or container secret mounts to avoid redeploys purely for key rotation.
+   * Fixed 0.4.7-beta **TLS-only application access**:
+     - Web requests over plain HTTP are blocked at config bootstrap unless explicitly proxied.
+     - Adds global security headers for stricter browser behavior.
 
 5. **Dependencies**
 
@@ -109,6 +127,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Enforced HTTPS-only access with transport check and global security headers (`HSTS`, `nosniff`); early exit for insecure requests.
+
    * **2025-07-12 · v0.4.5-beta** – Added dynamic `APP_VERSION`, `APP_NAME`, and randomized `APP_TITLE`/`APP_HEADER` string rotation for branding consistency across pages.
 
    * **2025-07-11 · v0.4.2-beta** – Migrated credential loading to environment variables, introduced optional *php-dotenv* support, added dynamic upload size limits, and consolidated PDO hardening flags for PixlKey.
@@ -119,6 +139,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Delivers a previously-generated archive (`final_assets.zip`) associated with a specific `runId`, allowing the logged-in PixlKey user to download the finished asset bundle.
+
+   Now includes early invocation of `config.php` to enforce HTTPS and emit global security headers.
 
 2. **Agent Role**
    Operates as the **Download & Delivery Agent** at the terminus of the processing pipeline, ensuring that only the rightful owner of a processing run can retrieve its packaged results.
@@ -138,7 +160,8 @@ Each entry follows the same heading order for clarity:
    * **Path traversal**: current whitelist regex mitigates most attacks; additionally consider using `realpath()` and confirming the resolved path begins with the expected base directory.
    * **Timing attacks**: fetch ownership with a constant-time comparison (`hash_equals()` on IDs) to avoid user-enumeration via response timing.
    * **Download abuse**: add rate-limiting or signed, expiring URLs to curb hot-linking and scraping.
-   * **MIME sniffing**: send `X-Content-Type-Options: nosniff`.
+   * **MIME sniffing**: `X-Content-Type-Options: nosniff` now automatically emitted via `config.php`.
+   * Fixed 0.4.7-beta: added `require_once 'config.php'` to enforce HTTPS transport and inject secure headers globally.
    * **Audit logging**: log successful downloads (user, IP, timestamp) for traceability.
 
 5. **Dependencies**
@@ -156,6 +179,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Enforced HTTPS by requiring `config.php` early; ensures transport checks and standard security headers are injected on ZIP downloads.
+
    * **2025-07-11 · v0.4.2-beta** — Initial documentation entry; ownership verification (added in v0.4.1-beta) now mandatory, stricter input sanitisation, and explicit 400/403/404 responses formalised.
 
 -----
@@ -164,6 +189,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Houses PixlKey’s shared configuration and helper routines—directory bootstrap, progress streaming, housekeeping, and ImageMagick-driven watermarking—so front-end controllers stay lean.
+
+   Also now loads `/config.php` directly to ensure security headers and HTTPS enforcement are active when this script is used in isolation.
 
 2. **Agent Role**
    Functions as the **Utility & Media-Processing Agent**, abstracting repetitive low-level chores for higher-level scripts such as `index.php`, `process.php`, and cron tasks.
@@ -175,6 +202,7 @@ Each entry follows the same heading order for clarity:
    * Provide `echoStep()` for real-time browser feedback during long operations.
    * Offer `clearProcessedFiles()` for scheduled cleanup of obsolete artefacts.
    * Execute `addWatermark()` to apply user-supplied and randomised textual watermarks via ImageMagick.
+   * Implicitly applies security headers and HTTPS checks from `config.php`.
 
 4. **Security Considerations**
 
@@ -191,6 +219,7 @@ Each entry follows the same heading order for clarity:
    * PHP ≥ 7.4, with `shell_exec`, `random_bytes` available
    * ImageMagick CLI tools: `convert`, `identify`
    * Writable filesystem under `$watermarkDir` and `$processedDir`
+   * `/config.php` – now required to apply central security enforcement and header policies across all CLI or direct-access entry points.
 
 6. **Additional Notes**
 
@@ -201,6 +230,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Required `config.php` early to inherit HTTPS enforcement and header guards across any function-invoking endpoint (e.g., CLI or background task).
+   
    * **2025-07-11 · v0.4.2-beta** – File renamed and refactored for PixlKey: updated namespace comments, improved `echoStep()` JS injection, added multiple randomised text overlays, strengthened error handling.
    
 -----
@@ -209,6 +240,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Serves as the public and member‐facing landing page for **PixlKey**. It renders the artwork-upload form, recent‐thumbnail galleries, and navigation, acting as the visual gateway between artists and the platform’s backend processing pipeline.
+
+   As of v0.4.7-beta, it also enforces HTTPS transport at bootstrap via `config.php`, ensuring all visitors are securely connected.
 
 2. **Agent Role**
    Functions as the **UI & Intake Agent**. It gathers user-supplied metadata and image files, injects CSRF tokens, and dispatches the payload to `process.php`. It also surfaces user-specific resources (watermarks, licences, thumbnails) when an authenticated session is present, or a read-only gallery when not.
@@ -249,6 +282,7 @@ Each entry follows the same heading order for clarity:
    * **XSS**: All echoed values are wrapped in `htmlspecialchars()`, but review `<textarea>` and error messages for edge cases.
    * **Content Security Policy (CSP)**: Recommend adding a strict CSP header to mitigate inline-script risks (currently uses inline JS).
    * **Server-side Storage**: Ensure `watermarks/` and `processed/` paths are not web-browseable without proper ACLs or `.htaccess` rules.
+   * **Transport Security**: Web access now blocked via `config.php` if not over HTTPS; emits `Strict-Transport-Security` and `nosniff` headers for all users.
 
 5. **Dependencies**
 
@@ -277,8 +311,12 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **0.4.7-beta (2025-07-14)** – HTTPS-only enforcement now activated through `config.php`, blocking all non-secure access. Page now inherits HSTS and `X-Content-Type-Options` headers globally.
+   
    * **0.4.5-beta (2025-07-12)** – Replaced hard-coded page title and header with randomized `APP_TITLE` / `APP_HEADER` values from `config.php`, supporting dynamic tagline branding per load.
+
    * **0.4.3-beta (2025-07-11)** – Added CSRF token injection, optional `require_login()` gating, and updated branding from Infinite Muse Arts to PixlKey.
+
    * **0.4.2-beta (2025-07-10)** – Overhauled dark-theme styling, 5-column responsive thumbnail grid, and UI polish (logo drop-shadow, Orbitron font, dashed preview frames).
 
 -----
@@ -287,6 +325,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Presents PixlKey’s sign-in form and performs credential verification, CSRF validation, and brute-force rate-limiting before establishing a user session.
+
+   Also ensures that login requests are served **only over HTTPS**, blocking any plain HTTP access before page logic proceeds.
 
 2. **Agent Role**
    Functions as the **Authentication Gateway**, handing off secure, token-protected user sessions to the wider PixlKey application after successful login.
@@ -308,6 +348,8 @@ Each entry follows the same heading order for clarity:
    * **Timing-side-channel**: always run `password_verify()` even when the e-mail is missing to equalise response time.
    * **Credential stuffing**: pair IP-based limits with (hashed) e-mail-based counters for more granular blocking.
    * **HTTPS & HSTS**: enforce TLS with `Strict-Transport-Security` headers at the web-server level.
+   * Fixed 0.4.7-beta **Application-layer HTTPS enforcement**: now explicitly includes `config.php`, which halts any insecure web requests via global check.
+   * Sends HSTS, nosniff, and other security headers as part of standard bootstrap.
    * **2FA readiness**: leave hooks to bolt on TOTP or WebAuthn flows.
 
 5. **Dependencies**
@@ -326,7 +368,10 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Enforced transport security by adding `require_once 'config.php'`; now blocks all HTTP logins and injects browser-hardening headers.
+
    * **2025-07-12 · v0.4.4-beta** – Fixed session fixation vulnerability by ensuring `session_regenerate_id(true)` is called immediately in `login_user()`.
+
    * **2025-07-11 · v0.4.2-beta** – Initial agent documentation: added CSRF validation, IP-based rate limiter, and password hashing checks to consolidate PixlKey’s login workflow.
 
 -----
@@ -335,6 +380,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Terminates the current user session and returns the visitor to the login screen, ensuring all session data and cookies are purged.
+
+   Also emits global security headers (`HSTS`, `nosniff`) to reinforce browser-side constraints after logout.
 
 2. **Agent Role**
    Functions as the **Session-Teardown Agent**, guaranteeing a clean logout that prevents residual authentication artefacts from persisting across requests.
@@ -357,6 +404,7 @@ Each entry follows the same heading order for clarity:
 
    * `auth.php` – provides the active session context and helper configuration.
    * PHP session extension and standard cookie mechanisms.
+   * `config.php` – invoked at top to enforce HTTPS-only transport and emit global security headers.
 
 6. **Additional Notes**
 
@@ -364,6 +412,10 @@ Each entry follows the same heading order for clarity:
    * Future versions could log logout events for audit trails (`user_id`, `timestamp`, `ip_address`).
 
 7. **CHANGELOG**
+
+   * **2025-07-14 · v0.4.7-beta** – Added global `config.php` import:
+     - Ensures consistent transport-layer protections and security headers post-logout.
+     - Blocks insecure logout routes and adds `Strict-Transport-Security` and `X-Content-Type-Options` headers on redirect.
 
    * **2025-07-14 · v0.4.6-beta** – CSRF hardening:
      - After destroying the current session, a new CSRF token is generated alongside the new session (`session_start()` + `regenerate_id()`).
@@ -377,6 +429,7 @@ Each entry follows the same heading order for clarity:
      - Fixes ordering bug where `session_regenerate_id()` was called on an invalidated session.
    
    * **2025-07-11 · v0.4.2-beta** – Initial inclusion in PixlKey refactor, adds explicit cookie expiry and redirect to login screen.
+
 -----
 
 `/metadata_extractor.php`
@@ -410,7 +463,7 @@ Each entry follows the same heading order for clarity:
 
    * PHP ≥ 7.x (CLI)
    * ExifTool (CLI) available in system `$PATH`
-   * `config.php` **not** required—script is self-contained.
+   * `config.php` now loaded to emit global transport/security headers when invoked via web (0.4.7-beta).
    * Local filesystem write access for the Markdown target.
 
 6. **Additional Notes**
@@ -421,6 +474,9 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Added `require_once 'config.php'` to enable consistent TLS enforcement and security headers if accessed via web.
+     - CLI behavior unaffected; config import is a no-op outside web mode.
+
    * **2025-07-11 · v0.4.2-beta** – Initial import into PixlKey: added `Rights` and `SourceFile` to exclusion list, reorganised section headings, and tightened shell-argument escaping.
 
 -----
@@ -429,6 +485,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Presents a secure, in-browser dashboard where each PixlKey user can create, preview (Markdown → HTML), update, delete, and set a *default* licence text that will be attached to future uploads.
+
+   Also benefits from global HTTPS enforcement and security header injection via shared configuration.
 
 2. **Agent Role**
    Functions as the **Licence-Manager Agent**, bridging the database and the UI so artists always have a single source of truth for their reusable licensing terms.
@@ -450,6 +508,9 @@ Each entry follows the same heading order for clarity:
    * **Clickjacking**: add `X-Frame-Options: DENY` or a Content-Security-Policy header.
    * **Race condition**: wrapping the “clear defaults + set new default” logic in a DB transaction (or enforcing with an `ON UPDATE` trigger) prevents dual defaults under heavy concurrency.
    * **Rate limiting**: throttle repeated POSTs to discourage brute-force or automated spam.
+   * Fixed 0.4.7-beta **Transport security hardening**:
+     - HTTPS-only access enforced via `config.php`.
+     - Automatically sends `Strict-Transport-Security`, `X-Frame-Options`, and `X-Content-Type-Options`.
 
 5. **Dependencies**
 
@@ -468,6 +529,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Enforced TLS-only transport and added global browser security headers via `config.php` inclusion.
+
    * **2025-07-11 · v0.4.2-beta** – Initial integration into PixlKey: built CSRF-protected CRUD flow, Markdown preview with Parsedown Safe Mode, and single-default enforcement.
    
 -----
@@ -476,6 +539,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Provides a self-service dashboard where logged-in artists can upload, list, designate a default, and delete personal watermark images (PNG, JPG/JPEG, or WEBP) for use throughout **PixlKey**.
+
+   Also now bootstraps full TLS and header security via `config.php` before any HTML or session output.
 
 2. **Agent Role**
    Functions as the **Watermark-CRUD Agent**, interfacing between the user, the filesystem, and the database to maintain each creator’s private watermark library.
@@ -500,6 +565,7 @@ Each entry follows the same heading order for clarity:
    * **Quota / size limits**: enforce per-upload and per-user disk quotas to mitigate DoS-style abuse.
    * **Per-user isolation**: store watermarks outside the public web root or serve them via a controller that checks ownership.
    * **CSRF double submit**: tokens are present, but rotate them post-action to reduce token replay risk.
+   * **Transport enforcement**: inherits HTTPS-only logic and security headers via global `config.php` bootstrap (`v0.4.7-beta`).
 
 5. **Dependencies**
 
@@ -517,6 +583,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Enforced HTTPS-only access by requiring `config.php` early; inherits TLS enforcement and headers (`HSTS`, `nosniff`) from global bootstrap.
+
    * **2025-07-11 · v0.4.2-beta** – Initial implementation of dedicated watermark dashboard; introduces per-user upload directories, default-selection logic, and CRUD actions via a single controller page.
 
 -----
@@ -525,6 +593,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Supplies reusable helper functions for server-side image preparation in **PixlKey**—most notably real-time progress messaging (`echoStep()`) and automated, proportionally-scaled watermark application (`addWatermark()`).
+
+   Now also inherits global TLS enforcement and header policies by importing `config.php` at bootstrap.
 
 2. **Agent Role**
    Operates as the **Image Processing Utility Agent**, bridging user-facing workflows and low-level ImageMagick commands to ensure every uploaded artwork is uniformly watermarked and that users (or CLI operators) receive live feedback during lengthy batch runs.
@@ -551,6 +621,7 @@ Each entry follows the same heading order for clarity:
    * **Path traversal / symlinks**: guard `$runDir` and `$imagePath` against traversal; resolve realpath and ensure inside an expected directory.
    * **Resource usage**: ImageMagick can consume extensive RAM/CPU on crafted files—apply policy limits (`policy.xml`) or delegate to a sandbox.
    * **Output flushing**: `flush()` is safe but could leak timing information; consider buffering when multi-tenant scaling.
+   * Fixed 0.4.7-beta **Transport headers**: `config.php` is now imported, applying HTTPS enforcement and standard headers to any directly invoked scripts (e.g., CLI test runners or custom endpoints).
 
 5. **Dependencies**
 
@@ -558,6 +629,7 @@ Each entry follows the same heading order for clarity:
    * ImageMagick CLI utilities (`identify`, `convert`).
    * PHP ≥ 7.4 (typed functions, `declare(strict_types=1)`).
    * Directory structure containing `/watermarks/pixlkey_signature_black.png` (or an alternative configured watermark).
+   * `config.php` – now explicitly required at top of file to inherit runtime transport rules and header guards.
 
 6. **Additional Notes**
 
@@ -570,6 +642,8 @@ Each entry follows the same heading order for clarity:
      * Introduce a pluggable image backend (e.g., GD, Intervention Image) for environments lacking ImageMagick.
 
 7. **CHANGELOG**
+
+   * **2025-07-14 · v0.4.7-beta** – Imported `config.php` globally to apply transport enforcement and header policy; ensures all helper invocations inherit hardened runtime context.
 
    * **2025-07-11 · v0.4.2-beta** – Renamed default watermark to `pixlkey_signature_black.png`; updated inline documentation; added stricter `$allowedExtensions` defaults and fortified `echoStep()` against XSS via `json_encode()`.
 
@@ -639,6 +713,8 @@ Each entry follows the same heading order for clarity:
 1. **Purpose**
    Implements a lightweight, session-scoped rate-limiting utility to curb brute-force or abuse attempts (e.g., login, registration) within **PixlKey**.
 
+   Automatically pulls in `/config.php` to enforce HTTPS-only execution and emit transport-level headers.
+
 2. **Agent Role**
    Serves as a **Security Utility Agent**, supplying plug-and-play functions that any controller can call to detect and throttle rapid-fire requests tied to the same identifier (IP, username, or other token).
 
@@ -660,6 +736,7 @@ Each entry follows the same heading order for clarity:
    * PHP sessions (`$_SESSION`) must be initialised (`session_start()`) **before** any function call.
    * No database requirement, but designed to coexist with the PDO instance loaded by `config.php`.
    * Typically included in `login.php`, `register.php`, or any endpoint vulnerable to spamming.
+   * Requires `config.php` as of v0.4.7-beta to inherit global transport and header enforcement.
 
 6. **Additional Notes**
 
@@ -672,6 +749,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Added `require_once 'config.php'` to inherit TLS transport checks and global security headers.
+
    * **2025-07-11 · v0.4.2-beta** — Initial introduction of `rate_limiter.php` to PixlKey codebase with three core helpers (`too_many_attempts`, `record_failed_attempt`, `clear_failed_attempts`).
 
 -----
@@ -683,6 +762,8 @@ Each entry follows the same heading order for clarity:
 
 2. **Agent Role**
    Functions as the **Registration Agent**, bridging the public-facing interface and the authentication subsystem: it validates credentials, enforces rate limits, writes the new record to the `users` table, then seamlessly authenticates the newcomer.
+
+   Also enforces HTTPS-only access via `/config.php`, aborting insecure requests prior to form rendering or submission handling.
 
 3. **Key Responsibilities**
 
@@ -704,7 +785,9 @@ Each entry follows the same heading order for clarity:
    * **E-mail verification**: add double-opt-in workflow to stop disposable or mistyped addresses.
    * **Bot defence**: integrate CAPTCHA or address reputation scoring in addition to IP rate limiting.
    * **HTML escaping**: error output already uses `htmlspecialchars`, but ensure any future templating remains XSS-safe.
-   * **Transport security**: mandate HTTPS for all requests, not simply detect it.
+   * Fixed 0.4.7-beta **Transport security enforcement**:
+     - Insecure (HTTP) access is explicitly rejected during config bootstrap.
+     - Browser security headers (`HSTS`, `X-Frame-Options`, `nosniff`) are sent with all registration responses.
 
 5. **Dependencies**
 
@@ -722,6 +805,10 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-14 · v0.4.7-beta** – Enforced secure transport:
+     - Registration page now inherits global TLS-only policy from `config.php`.
+     - Security headers are automatically sent on page load and submission.
+
    * **2025-07-14 · v0.4.6-beta** – Hardened CSRF boundary:
      - Added CSRF token rotation after session ID regeneration, before calling `login_user()`.
      - Prevents token reuse or carryover from anonymous to authenticated context during registration.
@@ -734,6 +821,8 @@ Each entry follows the same heading order for clarity:
 
 1. **Purpose**
    Ingests the results of a processed-image workflow (identified by `runId`) and persists all related artefacts—metadata, signed images, certificates, AI data—into the **PixlKey** relational database.
+
+   Also now enforces secure HTTPS transport by requiring `config.php` as the first bootstrap, which blocks plain HTTP requests.
 
 2. **Agent Role**
    Functions as the **Data-Ingestion & Persistence Agent**, translating a temporary, per-run directory on disk into normalised, referentially-sound records across the project’s core tables.
@@ -762,6 +851,7 @@ Each entry follows the same heading order for clarity:
    * **SQL injection** – currently mitigated with PDO prepared statements; maintain strict parameter binding.
    * **Oversized uploads** – add file-size caps and MIME-type whitelists before hashing or DB insert.
    * **Race conditions** – lock the row in `processing_runs` during import to prevent concurrent re-runs.
+   * Fixed 0.4.7-beta **Transport enforcement** – pulls in `/config.php` before all logic, aborting any insecure web requests and ensuring headers like `Strict-Transport-Security` are emitted globally.
 
 5. **Dependencies**
 
@@ -778,6 +868,10 @@ Each entry follows the same heading order for clarity:
    * Add server-side file-type inspection (e.g., `finfo_file`) before processing to harden against spoofed MIME types.
 
 7. **CHANGELOG**
+
+   * **2025-07-14 · v0.4.7-beta** – HTTPS enforcement:
+     - `require_once config.php` is now explicitly loaded at the top of the script.
+     - Plain HTTP access is denied automatically; no additional checks needed in local logic.
 
    * **2025-07-14 · v0.4.6-beta** – CSRF hardening:
      - Added `$_SESSION['csrf_token'] = bin2hex(random_bytes(32))` after session regeneration.

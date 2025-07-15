@@ -13,6 +13,15 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
+### [0.4.7-beta] – 2025-07-14
+### Transport Security Enforcement
+- `/config.php`: Enforces TLS-only access for all web traffic (403 if accessed via plain HTTP or misconfigured proxy).
+- `/auth.php`: Forces `session.cookie_secure`, `HttpOnly`, and `SameSite=Strict` via `ini_set()` before `session_start()`.
+- Global security headers emitted:
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+
 ### [0.4.6-beta] – 2025-07-14
 ### CSRF Token Rotation (Privilege Boundary Hardening)
 - `/auth.php`: Now regenerates CSRF token immediately after successful login via `login_user()`.
@@ -126,29 +135,20 @@ Visual/UX enhancements (from 0.4.2-beta):
 - Secure cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`.
 - CSRF token protection on all forms.
 - Passwords hashed with `password_hash()` and verified with `password_verify()`.
+
 - Rate limiting enforced on `/login.php` and `/register.php` using `rate_limiter.php`.
   - Protects against brute-force and scripted abuse.
   - Session-based tracking; configurable attempt and decay thresholds.
+
+- HTTPS is now **strictly required** for all web access:
+  - Non-TLS requests are rejected with `403 Forbidden`.
+  - Application emits browser-hardening headers globally via `config.php`.
 
 ## Status
 
 - Core upload, watermark, and metadata functions complete.
 - Testing phase: security, concurrency, and error handling enhancements in progress.
 - Stable builds pending rollout after roadmap completion.
-
----
-
-## Key Directories
-
-| Path                | Description                                      |
-|---------------------|--------------------------------------------------|
-| `/app/auth.php`         | Session, login, and CSRF helpers                |
-| `/app/jobs/store_data.php`   | Database ingestion from processed image package |
-| `/app/tools/metadata_extractor.php` | CLI markdown metadata export               |
-| `/app/functions.php`    | Watermarking, cleanup, and UI helpers           |
-| `/public/my_licenses.php`  | License management interface                    |
-| `/public/my_watermarks.php`| Watermark upload and default selection          |
-| `/public/process.php`      | Core upload → watermark → ZIP pipeline          |
 
 ---
 
@@ -160,7 +160,7 @@ MIT License — see `LICENSE.md` for details.
 
 ## Contact
 
-For issues, contributions, or inquiries, contact [jweese74@gmail.com](https://infinitemusearts.com/toolkit) or open an issue in this repository.
+For issues, contributions, or inquiries, contact [jweese74@gmail.com](https://pixlkey.net) or open an issue in this repository.
 
 ## 🤝 Contributing
 

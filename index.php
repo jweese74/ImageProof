@@ -3,7 +3,7 @@
 // --------------------------------------------------
 
 require_once 'auth.php';
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 require_once 'functions.php';
 
 $user      = current_user();           // null when signed-out :contentReference[oaicite:0]{index=0}

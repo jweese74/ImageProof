@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once __DIR__ . '/config.php';
 
 // Clear all session variables
 session_unset();

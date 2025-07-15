@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Session / Auth / CSRF helpers
  * ---------------------------------------------------------------
@@ -10,12 +11,18 @@
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 
+// Enforce secure cookie flags globally (before session_start)
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Strict');
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start([
         'cookie_samesite' => 'Strict',
         'cookie_secure'   => isset($_SERVER['HTTPS']),
         'cookie_httponly' => true,
     ]);
+    session_start();
 }
 
 /* ---------------------------------------------------------------
@@ -36,8 +43,8 @@ function validate_csrf_token(): void
     }
     $good = $_SESSION['csrf_token'] ?? '';
     $sent = $_POST['csrf_token']
-         ?? $_SERVER['HTTP_X_CSRFTOKEN']
-         ?? '';
+        ?? $_SERVER['HTTP_X_CSRFTOKEN']
+        ?? '';
     if (!hash_equals($good, $sent)) {
         http_response_code(403);
         die('Invalid CSRF token');

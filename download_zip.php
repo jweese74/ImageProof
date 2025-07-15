@@ -10,7 +10,7 @@
 require_once __DIR__ . '/auth.php';
 require_login();                       // ensure session + user
 
-require_once __DIR__ . '/config.php';  // $pdo + helpers
+require_once __DIR__ . '/config.php';
 
 // Get current user ID
 $userId = current_user()['user_id'];

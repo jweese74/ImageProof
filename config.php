@@ -65,6 +65,18 @@ $chosenTagline = $taglines[array_rand($taglines)];
 define('APP_TITLE', APP_NAME . ' ' . APP_VERSION . ' – ' . $chosenTagline);
 define('APP_HEADER', APP_TITLE);
 
+// ---- Transport Security Enforcement (global) -------------------------
+if (
+    php_sapi_name() !== 'cli' &&  // allow CLI scripts to skip HTTPS enforcement
+    (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') &&
+    (!isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $_SERVER['HTTP_X_FORWARDED_PROTO'] !== 'https')
+) {
+    http_response_code(403);
+    exit('PixlKey requires a secure HTTPS connection.');
+}
+
+header('X-Content-Type-Options: nosniff');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 
 // ---------------------------------------------------------------------
 // Optional: load a .env file if one exists and you’re using Composer.
@@ -103,8 +115,8 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
+
 } catch (PDOException $e) {
-    // In dev you may wish to see the stack trace; in prod we log & die quietly.
     if (DB_DEBUG) {
         die('Database connection failed: ' . $e->getMessage());
     }

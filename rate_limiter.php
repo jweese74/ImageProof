@@ -1,5 +1,7 @@
 <?php
 // rate_limiter.php
+require_once __DIR__ . '/config.php';
+
 
 function too_many_attempts(string $key, int $maxAttempts, int $decaySeconds): bool
 {

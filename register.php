@@ -1,6 +1,8 @@
 <?php
 require_once 'auth.php';
 require_once 'rate_limiter.php';
+require_once __DIR__ . '/config.php';
+
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

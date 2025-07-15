@@ -3,9 +3,10 @@
 `/auth.php`
    * Fixed 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
    * Fixed 0.4.6-beta **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse and privilege-escalation replay.
+   * Fixed 0.4.7-beta **Secure cookie flags**: enforced `cookie_secure`, `cookie_httponly`, and `SameSite=Strict` globally via `ini_set()` before `session_start()`.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
    * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
-   * **Strict transport**: enforce HTTPS globally, not merely detect it.
+   * Fixed 0.4.7-beta **Strict transport enforcement**: non-HTTPS requests are blocked with `403 Forbidden` unless originating from CLI; ensures full TLS coverage.
    * **Same Origin Policy**: consider adding `header('X-Frame-Options: DENY')` in a central bootstrap.
 
 `/config.php`
@@ -14,13 +15,17 @@
    * **Credential scope**: ensure file permissions (`chmod 600`) prevent unauthorised reads.
    * **Transport security**: if DB is remote, use TLS-encrypted client connections.
    * **Secrets rotation**: consider runtime reload or container secret mounts to avoid redeploys purely for key rotation.
+   * Fixed 0.4.7-beta **TLS enforcement & headers**:
+     - Aborts any non-HTTPS requests not passed through reverse proxy.
+     - Emits `Strict-Transport-Security`, `X-Content-Type-Options`, and other headers on every page load.
+
 
 `/download_zip.php`
    * **Session fixation**: call `session_regenerate_id(true)` after login (handled in `auth.php`).
    * **Path traversal**: current whitelist regex mitigates most attacks; additionally consider using `realpath()` and confirming the resolved path begins with the expected base directory.
    * **Timing attacks**: fetch ownership with a constant-time comparison (`hash_equals()` on IDs) to avoid user-enumeration via response timing.
    * **Download abuse**: add rate-limiting or signed, expiring URLs to curb hot-linking and scraping.
-   * **MIME sniffing**: send `X-Content-Type-Options: nosniff`.
+   * **MIME sniffing**: sends `X-Content-Type-Options: nosniff` automatically via `/config.php`.
    * **Audit logging**: log successful downloads (user, IP, timestamp) for traceability.
 
 `/functions.php`
@@ -118,3 +123,10 @@
    * **SQL injection** – currently mitigated with PDO prepared statements; maintain strict parameter binding.
    * **Oversized uploads** – add file-size caps and MIME-type whitelists before hashing or DB insert.
    * **Race conditions** – lock the row in `processing_runs` during import to prevent concurrent re-runs.
+
+### Web Server (Apache2 or NGINX)
+* Fixed 0.4.7-beta **Transport Security Headers**:
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+* Required in HTTPS VirtualHost section to ensure browser-enforced transport and content-type constraints.

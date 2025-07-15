@@ -8,7 +8,7 @@
  */
 require_once 'auth.php';
 require_login();
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // ---------------------------------------------------------------
 // Markdown helper (Parsedown - tiny, MIT-licensed)

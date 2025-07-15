@@ -7,6 +7,19 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.7-beta] – 2025-07-14
+### 🔒 Security Enhancements
+- 🧷 Enforced **Transport Layer Security** across all app entry points:
+  - `/config.php` now blocks all non-TLS (plain HTTP) requests, except CLI scripts.
+  - Sends strict security headers (`Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`) on all page loads.
+  - All routes explicitly `require_once 'config.php'` early to guarantee enforcement.
+- 🔐 Hardened **cookie scope** and session flags:
+  - `session.cookie_secure`, `session.cookie_httponly`, and `session.cookie_samesite=Strict` are now set globally via `ini_set()` in `auth.php`.
+
+> This patch ensures all traffic is end-to-end encrypted and protected against downgrade, clickjacking, and MIME-based injection attacks.
+
+---
+
 ## [0.4.6-beta] – 2025-07-14
 ### 🔐 Security Enhancements
 - 🔄 Added **CSRF token rotation** at key session privilege transitions to prevent token reuse:

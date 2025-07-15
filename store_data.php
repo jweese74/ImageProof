@@ -8,6 +8,8 @@
 
 // 1. Include necessary files
 require_once 'auth.php';
+require_once __DIR__ . '/config.php';
+
 require_login();
 
 session_regenerate_id(true);
