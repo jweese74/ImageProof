@@ -10,7 +10,7 @@
 declare(strict_types=1);
 
 // ---- App Metadata ---------------------------------------------------
-define('APP_VERSION', '0.4.6-beta');
+define('APP_VERSION', '0.4.7-beta');
 define('APP_NAME', 'PixlKey');
 
 // Rotating tagline pool
@@ -23,6 +23,8 @@ $taglines = [
     'The Artist\'s Ledger',
     'Verify. License. Protect.',
     'Chain of Creation',
+    'Secured by Light, Delivered by Trust',
+    'HTTPS or GTFO',
     'Image. Identity. Immutable.',
     'Every Image. Accounted For.',
     'Your Signature, Embedded',
@@ -50,6 +52,8 @@ $taglines = [
     'Art So Secure, Even You Can’t Delete It',
     'Putting the “Pro” in Provenance',
     'Pixels with a Paper Trail',
+    'Now Boarding: TLS Only. All Others Will Be Ejected.',
+    'Your Pixels Called—They Demand Encrypted Transit.',
     'Because Metadata Is Sexy',
     'Sign It Like You Meme It',
     'Crypto-ish, Without the Collapse',
