@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Prevent session fixation on registration
         session_regenerate_id(true);
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));  // 🔐 rotate CSRF on new login
         login_user($userId);
         header('Location: index.php');
         exit;

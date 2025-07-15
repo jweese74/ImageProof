@@ -13,6 +13,15 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
+### [0.4.6-beta] – 2025-07-14
+### CSRF Token Rotation (Privilege Boundary Hardening)
+- `/auth.php`: Now regenerates CSRF token immediately after successful login via `login_user()`.
+- `/logout.php`: Starts a fresh session and issues a new CSRF token after teardown.
+- `/register.php`: Rotates CSRF token after account creation before auto-login.
+- `/store_data.php`: Defensively generates a new CSRF token after session ID regeneration.
+
+> Prevents CSRF token reuse across authentication boundaries or session transitions.
+
 ### [0.4.5-beta] – 2025-07-12
 ### UI Branding & Version Centralization
 - Introduced dynamic branding via random tagline selection:

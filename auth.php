@@ -52,6 +52,7 @@ function login_user(string $user_id): void
     global $pdo;
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user_id;
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));  // 🔒 rotate CSRF on login
     $pdo->prepare('UPDATE users SET last_login = NOW() WHERE user_id = ?')
         ->execute([$user_id]);
 }

@@ -33,7 +33,7 @@ Each entry follows the same heading order for clarity:
 4. **Security Considerations**
 
    * FIXED 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
-   * **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse.
+   * FIXED 0.4.6-beta **Token rotation**: rotate CSRF token post-login (`login_user()`), logout (`logout.php`), and after session regeneration (`store_data.php`) to prevent token reuse across privilege transitions.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
    * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
    * **Strict transport**: enforce HTTPS globally, not merely detect it.
@@ -52,6 +52,10 @@ Each entry follows the same heading order for clarity:
    * Evaluate migrating to `SameSite=Lax` with exception lists if third-party integrations are required.
 
 7. **CHANGELOG**
+
+   * **2025-07-14 · v0.4.6-beta** – CSRF Token Rotation Patch:
+     - Added `$_SESSION['csrf_token'] = bin2hex(random_bytes(32))` to `login_user()` immediately after session ID regeneration.
+     - Ensures CSRF token changes after login to prevent cross-context reuse or privilege escalation.
 
    * **2025-07-12 · v0.4.4-beta** – Hardened session integrity:
      - Called `session_regenerate_id(true)` immediately after successful login inside `login_user()`.
@@ -347,7 +351,7 @@ Each entry follows the same heading order for clarity:
    * **Cookie scope**: confirm `path`, `domain`, `secure`, and `httponly` flags mirror those set at login to avoid orphaned cookies.
    * **Cache-Control**: add `header('Cache-Control: no-store')` and `header('Pragma: no-cache')` to prevent cached authenticated pages.
    * **Redirect code**: consider `303 See Other` instead of default `302` to discourage replay of the previous POST.
-   * **Post-logout CSRF token rotation**: regenerate a fresh token if a new session is started immediately afterwards.
+   * FIXED 0.4.6-beta **Post-logout CSRF token rotation**: regenerates a fresh CSRF token after new session is created, preventing token reuse across sessions.
 
 5. **Dependencies**
 
@@ -361,14 +365,18 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
-   * **2025-07-11 · v0.4.2-beta** – Initial inclusion in PixlKey refactor, adds explicit cookie expiry and redirect to login screen.
+   * **2025-07-14 · v0.4.6-beta** – CSRF hardening:
+     - After destroying the current session, a new CSRF token is generated alongside the new session (`session_start()` + `regenerate_id()`).
+     - Prevents reuse of CSRF tokens post-logout and blocks privilege carryover.
+
 
    * **2025-07-12 · v0.4.4-beta** – Hardened against session fixation:
      - Ensures `session_start()` and `session_regenerate_id(true)` are executed **after** session destruction.
      - Fully reinitialises session post-teardown to invalidate fixation vectors.
      - Preserves secure session flags (`SameSite=Strict`, `Secure`, `HttpOnly`) during reinit.
      - Fixes ordering bug where `session_regenerate_id()` was called on an invalidated session.
-
+   
+   * **2025-07-11 · v0.4.2-beta** – Initial inclusion in PixlKey refactor, adds explicit cookie expiry and redirect to login screen.
 -----
 
 `/metadata_extractor.php`
@@ -689,7 +697,9 @@ Each entry follows the same heading order for clarity:
 
 4. **Security Considerations**
 
-   * **Session fixation**: call `session_regenerate_id(true)` after `login_user()` to prevent fixation attacks.
+   * FIXED 0.4.6-beta **Session fixation & CSRF rotation**:
+     - Call `session_regenerate_id(true)` before `login_user()` to prevent fixation attacks.
+     - Rotate CSRF token (`$_SESSION['csrf_token'] = …`) immediately before login to ensure token isolation across privilege levels.
    * **Password policy**: consider enforcing complexity (upper/lower/number/symbol) and breached-password checks (e.g., Have I Been Pwned API).
    * **E-mail verification**: add double-opt-in workflow to stop disposable or mistyped addresses.
    * **Bot defence**: integrate CAPTCHA or address reputation scoring in addition to IP rate limiting.
@@ -711,6 +721,10 @@ Each entry follows the same heading order for clarity:
    * Style sheet is inline; migrate to a dedicated CSS file for maintainability.
 
 7. **CHANGELOG**
+
+   * **2025-07-14 · v0.4.6-beta** – Hardened CSRF boundary:
+     - Added CSRF token rotation after session ID regeneration, before calling `login_user()`.
+     - Prevents token reuse or carryover from anonymous to authenticated context during registration.
 
    * **2025-07-11 · v0.4.2-beta** – Introduced `register.php`: rate-limited sign-up, CSRF guard, password hashing, and automatic post-registration login for PixlKey.
 
@@ -740,6 +754,7 @@ Each entry follows the same heading order for clarity:
 
 4. **Security Considerations**
 
+   * FIXED 0.4.6-beta **CSRF token rotation** – regenerates CSRF token after session ID is refreshed to prevent token reuse during data ingestion.
    * **Session fixation** – regenerate session ID after login (handled in `auth.php`, but essential here).
    * **Directory traversal** – cast/validate `runId` against a strict UUID regex before path building.
    * **Least-privilege storage** – keep `processed/` outside the web-root or protect via web-server ACLs.
@@ -763,6 +778,10 @@ Each entry follows the same heading order for clarity:
    * Add server-side file-type inspection (e.g., `finfo_file`) before processing to harden against spoofed MIME types.
 
 7. **CHANGELOG**
+
+   * **2025-07-14 · v0.4.6-beta** – CSRF hardening:
+     - Added `$_SESSION['csrf_token'] = bin2hex(random_bytes(32))` after session regeneration.
+     - Prevents post-login reuse of stale tokens in authenticated ingestion flows.
 
    * **2025-07-12 · v0.4.4-beta** – Session hardening and integrity fix.
 

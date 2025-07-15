@@ -25,6 +25,9 @@ session_start([
 ]);
 session_regenerate_id(true);
 
+// 🔐 Rotate CSRF token post-logout to prevent token replay
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
 // Redirect to login
 header('Location: login.php');
 exit;

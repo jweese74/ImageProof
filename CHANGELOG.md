@@ -7,6 +7,18 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.6-beta] – 2025-07-14
+### 🔐 Security Enhancements
+- 🔄 Added **CSRF token rotation** at key session privilege transitions to prevent token reuse:
+  - `/auth.php`: `login_user()` now generates a fresh CSRF token immediately after login.
+  - `/logout.php`: new session is created after logout and CSRF token rotated on session restart.
+  - `/register.php`: rotates token post-registration, before calling `login_user()`.
+  - `/store_data.php`: defensively regenerates token after `session_regenerate_id(true)` to guard sensitive POST processing.
+
+> This patch prevents CSRF token replay across authentication transitions, enhancing session isolation and hardening against privilege escalation.
+
+---
+
 ## [0.4.5-beta] – 2025-07-12
 ### 🔧 Internal Improvements
 - 🎲 Introduced dynamic branding support in `config.php`:

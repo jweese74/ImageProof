@@ -11,6 +11,7 @@ require_once 'auth.php';
 require_login();
 
 session_regenerate_id(true);
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));  // 🔐 Rotate CSRF defensively post-login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf_token();
 }

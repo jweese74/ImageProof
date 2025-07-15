@@ -2,7 +2,7 @@
 
 `/auth.php`
    * Fixed 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
-   * **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse.
+   * Fixed 0.4.6-beta **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse and privilege-escalation replay.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
    * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
    * **Strict transport**: enforce HTTPS globally, not merely detect it.
@@ -52,7 +52,7 @@
    * **Cookie scope**: confirm `path`, `domain`, `secure`, and `httponly` flags mirror those set at login to avoid orphaned cookies.
    * **Cache-Control**: add `header('Cache-Control: no-store')` and `header('Pragma: no-cache')` to prevent cached authenticated pages.
    * **Redirect code**: consider `303 See Other` instead of default `302` to discourage replay of the previous POST.
-   * Fixed 0.4.4-beta **Post-logout CSRF token rotation**: regenerate a fresh token if a new session is started immediately afterwards.
+   * Fixed 0.4.6-beta **Post-logout CSRF token rotation**: regenerate a fresh token if a new session is started immediately afterwards.
 
 `/metadata_extractor.php`
    * **Shell safety**: wraps all shell calls with `escapeshellcmd()` / `escapeshellarg()` to block injection.
@@ -102,6 +102,7 @@
 
 `/register.php`
    * Fixed 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` after `login_user()` to prevent fixation attacks.
+   * Fixed 0.4.6-beta **Token rotation**: regenerate CSRF token after session is elevated during registration/login.
    * **Password policy**: consider enforcing complexity (upper/lower/number/symbol) and breached-password checks (e.g., Have I Been Pwned API).
    * **E-mail verification**: add double-opt-in workflow to stop disposable or mistyped addresses.
    * **Bot defence**: integrate CAPTCHA or address reputation scoring in addition to IP rate limiting.
@@ -110,6 +111,7 @@
    
 `/store_data.php`
    * Fixed 0.4.4-beta **Session fixation** – regenerate session ID after login (handled in `auth.php`, but essential here).
+   * Fixed 0.4.6-beta **Token rotation** – regenerate CSRF token defensively when accessing privileged endpoint post-authentication.
    * **Directory traversal** – cast/validate `runId` against a strict UUID regex before path building.
    * **Least-privilege storage** – keep `processed/` outside the web-root or protect via web-server ACLs.
    * **Privilege escalation** – verify `processing_runs.user_id` on every access, not just once.

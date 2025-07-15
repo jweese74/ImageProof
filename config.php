@@ -10,7 +10,7 @@
 declare(strict_types=1);
 
 // ---- App Metadata ---------------------------------------------------
-define('APP_VERSION', '0.4.5-beta');
+define('APP_VERSION', '0.4.6-beta');
 define('APP_NAME', 'PixlKey');
 
 // Rotating tagline pool
@@ -32,6 +32,9 @@ $taglines = [
     'Provenance Made Portable',
     'Proof-of-Creation for the Visual Web',
     'Own What You Create',
+    'Token Integrity Matters',
+    'Immutable Identity, Every Session',
+
 
     // 🧠 Poetic / Mythic
     'Each Pixel Remembers',
@@ -52,6 +55,8 @@ $taglines = [
     'Crypto-ish, Without the Collapse',
     'Less Blockchain, More Brain Cells',
     'Your Art Called—It Wants Rights',
+    'Now with 86% fewer replay attacks!',
+    'Because stale tokens are for salad bars.',
     'The Only Fingerprint Artists Actually Want'
 ];
 
