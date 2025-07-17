@@ -497,8 +497,8 @@ if ($loggedIn) {
         </section>
 
         <div style="text-align:center">
-            <a href="login.php" class="big-btn">Log in</a>
-            <a href="register.php" class="big-btn">Register</a>
+            <a href="/public/login.php" class="big-btn">Log in</a>
+            <a href="/public/register.php" class="big-btn">Register</a>
         </div>
     <?php endif; ?>
 
