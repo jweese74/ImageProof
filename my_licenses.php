@@ -6,24 +6,15 @@
  * • Mark one licence as default
  * --------------------------------------------------------------
  */
-require_once 'auth.php';
+require_once __DIR__ . '/auth.php';
 require_login();
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/functions.php';   // ← adds CSRF helpers, misc utils
+require_once __DIR__ . '/functions.php';   // CSRF helpers, misc utils
+require_once __DIR__ . '/rate_limiter.php'; // Rate-limiting logic
+require_once __DIR__ . '/vendor/autoload.php'; // Composer autoloader for Parsedown and others
 
-require_once __DIR__ . '/rate_limiter.php';
-// Default: limit to 10 actions per minute per user
-
-// ---------------------------------------------------------------
-// Markdown helper (Parsedown - tiny, MIT-licensed)
-//   • composer  :  composer require erusev/parsedown
-//   • manual    :  download Parsedown.php into the project root
-// ---------------------------------------------------------------
-// require_once __DIR__ . '/vendor/parsedown/Parsedown.php';
-// or:  require_once __DIR__ . '/Parsedown.php';
-
-// $md = new Parsedown();
-$md->setSafeMode(true);          // strips raw HTML → XSS protection
+$md = new Parsedown();
+$md->setSafeMode(true); // Strips raw HTML → XSS protection
 
 $user       = current_user();
 $userId     = $user['user_id'];
