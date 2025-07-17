@@ -7,6 +7,18 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.8-beta] – 2025-07-16
+### 🔒 Security Enhancements
+- 🛡️ Enforced **modern password hashing** standards across all authentication flows:
+  - Replaced legacy hash checks with `password_verify()` using `PASSWORD_DEFAULT` (currently `Argon2id`).
+  - All new hashes are generated via `password_hash()`, ensuring strong, upgradable hashing.
+  - Integrated `password_needs_rehash()` during login and auth to auto-upgrade old hashes silently.
+  - Unified logic added to `/auth.php` and `/login.php` to verify, rehash, and persist secure passwords.
+
+> This patch eliminates insecure or deprecated password handling, enabling seamless hash upgrades and future-proofing account authentication.
+
+---
+
 ## [0.4.7-beta] – 2025-07-14
 ### 🔒 Security Enhancements
 - 🧷 Enforced **Transport Layer Security** across all app entry points:

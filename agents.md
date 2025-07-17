@@ -17,7 +17,7 @@ Each entry follows the same heading order for clarity:
 `/auth.php`
 
 1. **Purpose**
-   Provides foundational session management, CSRF protection, and helper functions for authenticating users within **PixlKey**.
+   Provides foundational session management, CSRF protection, secure password handling, and helper functions for authenticating users within **PixlKey**.
 
    As of `v0.4.7-beta`, also globally enforces secure session cookie parameters (`Secure`, `HttpOnly`, `SameSite=Strict`) via `ini_set()` before any session is started.
 
@@ -34,13 +34,14 @@ Each entry follows the same heading order for clarity:
    * Configure global session cookie flags before session startup (`ini_set()`).
    * Enforce CSRF rotation at all privilege transitions.
    * Include `config.php` early to ensure TLS enforcement and HSTS headers are set.
+   * Authenticate credentials using `password_verify()` and securely upgrade outdated hashes using `password_needs_rehash()`.
 
 4. **Security Considerations**
 
    * FIXED 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
    * FIXED 0.4.6-beta **Token rotation**: rotate CSRF token post-login (`login_user()`), logout (`logout.php`), and after session regeneration (`store_data.php`) to prevent token reuse across privilege transitions.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
-   * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
+   * FIXED 0.4.8-beta **Password verification upgrade**: authentication now enforces `password_verify()` with automatic rehashing using `password_needs_rehash()` to upgrade legacy hashes to `PASSWORD_DEFAULT` (Argon2id or bcrypt).
    * Fixed 0.4.7-beta **Strict transport**: enforced HTTPS via `config.php`, which now aborts plain HTTP requests before session or DB logic is reached.
    * Fixed 0.4.7-beta **Secure cookies**: set `session.cookie_secure=1`, `cookie_httponly=1`, and `cookie_samesite=Strict` via `ini_set()` to ensure client-side session hardening.
    * **Same Origin Policy**: consider adding `header('X-Frame-Options: DENY')` in a central bootstrap.
@@ -58,6 +59,11 @@ Each entry follows the same heading order for clarity:
    * Evaluate migrating to `SameSite=Lax` with exception lists if third-party integrations are required.
 
 7. **CHANGELOG**
+
+   * **2025-07-16 · v0.4.8-beta** – Password Hash Verification Upgrade:
+     - Added `authenticate_user()` to unify credential checks using `password_verify()`.
+     - Ensures all logins upgrade legacy hashes via `password_needs_rehash()` to `PASSWORD_DEFAULT`.
+     - Protects against legacy bcrypt downgrade vectors and insecure manual checks.
 
    * **2025-07-14 · v0.4.7-beta** – Enforced secure cookie flags and transport:
      - Set `session.cookie_secure`, `cookie_httponly`, and `cookie_samesite` globally before `session_start()`.
@@ -337,7 +343,7 @@ Each entry follows the same heading order for clarity:
    * Accept `email`, `password`, and optional `next` redirect target.
    * Enforce CSRF protection via `validate_csrf_token()`.
    * Throttle brute-force attempts (`too_many_attempts()`) and lock attackers for 15 minutes after 5 failures.
-   * Verify supplied credentials against the `users` table (`password_verify` on `password_hash`).
+   * Verify supplied credentials against the `users` table using `password_verify()` on `password_hash`, and upgrade outdated hashes on successful login with `password_needs_rehash()` and `password_hash()`.
    * Clear failed-attempt counters and invoke `login_user()` on success, redirecting to `$next`.
    * Accumulate errors for graceful user feedback on the same page.
 
@@ -351,6 +357,8 @@ Each entry follows the same heading order for clarity:
    * Fixed 0.4.7-beta **Application-layer HTTPS enforcement**: now explicitly includes `config.php`, which halts any insecure web requests via global check.
    * Sends HSTS, nosniff, and other security headers as part of standard bootstrap.
    * **2FA readiness**: leave hooks to bolt on TOTP or WebAuthn flows.
+   * **Password rehashing**: on successful login, rehash passwords using `password_needs_rehash()` to ensure stored hashes stay up to date with evolving algorithms or cost parameters.
+
 
 5. **Dependencies**
 
@@ -367,6 +375,8 @@ Each entry follows the same heading order for clarity:
    * Offer a JSON login endpoint for future SPA / mobile clients, re-using the same rate-limiting logic.
 
 7. **CHANGELOG**
+
+   * **2025-07-16 · v0.4.8-beta** – Strengthened password validation: all login logic now uses `password_verify()` with automatic hash upgrade via `password_needs_rehash()` when outdated hashes are detected. Enforces `PASSWORD_DEFAULT` (currently Argon2id or bcrypt).
 
    * **2025-07-14 · v0.4.7-beta** – Enforced transport security by adding `require_once 'config.php'`; now blocks all HTTP logins and injects browser-hardening headers.
 

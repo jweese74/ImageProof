@@ -25,6 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Invalid e-mail or password.';
         record_failed_attempt($rateKey);
     } else {
+        // Rehash password if outdated
+        if (password_needs_rehash($u['password_hash'], PASSWORD_DEFAULT)) {
+            $newHash = password_hash($pwd, PASSWORD_DEFAULT);
+            $update = $pdo->prepare('UPDATE users SET password_hash = ? WHERE user_id = ?');
+            $update->execute([$newHash, $u['user_id']]);
+        }
         clear_failed_attempts($rateKey);
         login_user($u['user_id']);
         header('Location: ' . $next);

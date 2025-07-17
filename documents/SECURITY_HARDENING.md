@@ -5,7 +5,7 @@
    * Fixed 0.4.6-beta **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse and privilege-escalation replay.
    * Fixed 0.4.7-beta **Secure cookie flags**: enforced `cookie_secure`, `cookie_httponly`, and `SameSite=Strict` globally via `ini_set()` before `session_start()`.
    * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
-   * **Password verification**: authentication flow (currently elsewhere) must use `password_hash()` / `password_verify()`.
+   * Fixed 0.4.8-beta **Password verification**: implemented secure password authentication using `password_hash()` / `password_verify()` with `PASSWORD_DEFAULT` and `password_needs_rehash()` for automatic upgrade of outdated hashes.
    * Fixed 0.4.7-beta **Strict transport enforcement**: non-HTTPS requests are blocked with `403 Forbidden` unless originating from CLI; ensures full TLS coverage.
    * **Same Origin Policy**: consider adding `header('X-Frame-Options: DENY')` in a central bootstrap.
 
@@ -52,6 +52,7 @@
    * **Credential stuffing**: pair IP-based limits with (hashed) e-mail-based counters for more granular blocking.
    * **HTTPS & HSTS**: enforce TLS with `Strict-Transport-Security` headers at the web-server level.
    * **2FA readiness**: leave hooks to bolt on TOTP or WebAuthn flows.
+   * Fixed 0.4.8-beta **Password rehashing**: added automatic hash upgrade using `password_needs_rehash()` to ensure legacy hashes are refreshed upon successful login.
 
 `/logout.php`
    * **Cookie scope**: confirm `path`, `domain`, `secure`, and `httponly` flags mirror those set at login to avoid orphaned cookies.

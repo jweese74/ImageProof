@@ -90,3 +90,28 @@ function current_user(): ?array
     $cache = $stmt->fetch();
     return $cache ?: null;
 }
+
+/**
+ * Authenticate user by email and password.
+ * Uses password_verify and password_needs_rehash for secure handling.
+ */
+function authenticate_user(string $email, string $password): ?array
+{
+    global $pdo;
+    $stmt = $pdo->prepare('SELECT user_id, password_hash FROM users WHERE email = ?');
+    $stmt->execute([$email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user || !password_verify($password, $user['password_hash'])) {
+        return null;
+    }
+
+    // Rehash password if needed (algorithm upgrade, cost adjustment, etc.)
+    if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
+        $newHash = password_hash($password, PASSWORD_DEFAULT);
+        $update = $pdo->prepare('UPDATE users SET password_hash = ? WHERE user_id = ?');
+        $update->execute([$newHash, $user['user_id']]);
+    }
+
+    return $user;
+}

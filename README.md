@@ -13,6 +13,13 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
+### [0.4.8-beta] – 2025-07-16
+### Critical Security Check – Password Hash Verification
+- `/auth.php`: Added `authenticate_user()` function using `password_verify()` for login and `password_needs_rehash()` to upgrade legacy hashes to `PASSWORD_DEFAULT` (bcrypt or Argon2id).
+- `/login.php`: Password validation now includes hash upgrade on login using `password_needs_rehash()` with `password_hash()` if algorithm or cost changes are detected.
+
+> Ensures all user authentication uses modern hashing algorithms with rehashing support, eliminating legacy or insecure password validation paths.
+
 ### [0.4.7-beta] – 2025-07-14
 ### Transport Security Enforcement
 - `/config.php`: Enforces TLS-only access for all web traffic (403 if accessed via plain HTTP or misconfigured proxy).
@@ -94,6 +101,11 @@ No changes to database, API, or core logic—this is a visual/UI refinement patc
 - Allow users to manage watermark and license templates.
 - Extract and publish signed metadata reports from processed files.
 
+Authentication & Security Enhancements (from 0.4.8-beta):
+- Passwords are now securely verified using `password_verify()` and hashed with `password_hash()` using `PASSWORD_DEFAULT` (Argon2id or bcrypt).
+- Legacy password hashes are automatically upgraded on login using `password_needs_rehash()`.
+- Removed any legacy or plaintext password validation logic.
+
 Visual/UX enhancements (from 0.4.2-beta):
 - Centered thumbnail grid (5-across) in public and member views.
 - Preview frames for watermark and image uploads.
@@ -106,6 +118,8 @@ Visual/UX enhancements (from 0.4.2-beta):
 2. **Strict `runId` sanitization and ownership checks** in download & store logic. ✅ *(Enforced in 0.4.1-beta)*
 3. **Rate limiting and brute-force protection** on login/registration endpoints. ✅ *(Implemented in 0.4.3-beta via `rate_limiter.php`)*
 4. **CSRF failure, login, and download event logging** for audit and security.
+5. **Enforce secure password hashing/verification** using `password_hash()` and `password_verify()` with `PASSWORD_DEFAULT`. ✅ *(Patched in 0.4.8-beta with rehash fallback support)*
+
 
 ### Configuration & Validation
 5. **Validate required environment variables** (`DB_PASS`, `DB_NAME`, etc.) at runtime.
@@ -134,7 +148,9 @@ Visual/UX enhancements (from 0.4.2-beta):
 - `store_data.php` enforces redundant session ID regeneration before processing.
 - Secure cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`.
 - CSRF token protection on all forms.
-- Passwords hashed with `password_hash()` and verified with `password_verify()`.
+- Passwords securely hashed using `password_hash()` with `PASSWORD_DEFAULT` (Argon2id or bcrypt).
+- Passwords verified using `password_verify()` across all authentication flows.
+- Automatic hash upgrades on login using `password_needs_rehash()` to future-proof security.
 
 - Rate limiting enforced on `/login.php` and `/register.php` using `rate_limiter.php`.
   - Protects against brute-force and scripted abuse.
