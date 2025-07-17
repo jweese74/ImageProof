@@ -150,7 +150,7 @@ $licenses->execute([$userId]);
 <body>
 
     <h1>My Licences</h1>
-    <p><a href="index.php">← back to uploader</a></p>
+    <p><a href="/../index.php">← back to uploader</a></p>
 
     <?php foreach ($messages as $m) {
         echo "<p class='msg'>" . htmlspecialchars($m) . "</p>";

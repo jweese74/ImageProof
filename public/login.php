@@ -3,7 +3,7 @@ require_once __DIR__ . '/../core/auth/auth.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
 
-$next   = $_GET['next'] ?? 'index.php';
+$next   = $_GET['next'] ?? '/../index.php';
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

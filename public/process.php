@@ -630,7 +630,7 @@ EOF;
 
                 echoStep(
                     "<button class='btn' onclick=\"window.location.href='{$dlUrl}'\">Download ZIP</button>"
-                        . "<button class='btn' onclick=\"window.location.href='index.php'\">Return to index</button>",
+                        . "<button class='btn' onclick=\"window.location.href='/../index.php'\">Return to index</button>",
                     'download'
                 );
             } else {
