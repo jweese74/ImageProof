@@ -30,5 +30,5 @@ session_regenerate_id(true);
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 // Redirect to login
-header('Location: login.php');
+header('Location: /public/login.php');
 exit;
