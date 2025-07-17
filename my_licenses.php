@@ -9,6 +9,7 @@
 require_once 'auth.php';
 require_login();
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/functions.php';   // ← adds CSRF helpers, misc utils
 
 require_once __DIR__ . '/rate_limiter.php';
 // Default: limit to 10 actions per minute per user
