@@ -355,9 +355,9 @@ if ($loggedIn) {
         <!-- ===== MEMBER VIEW ===== -->
         <nav>
             <span>Welcome, <?= htmlspecialchars($user['display_name'] ?: $user['email']) ?></span>
-            | <a href="my_watermarks.php">My Watermarks</a>
-            | <a href="my_licenses.php">My Licences</a>
-            | <a href="logout.php">Logout</a>
+            | <a href="/public/my_watermarks.php">My Watermarks</a>
+            | <a href="/public/my_licenses.php">My Licences</a>
+            | <a href="/public/logout.php">Logout</a>
         </nav>
 
         <section class="thumb-grid">
