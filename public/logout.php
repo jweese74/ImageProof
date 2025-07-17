@@ -1,6 +1,6 @@
 <?php
-require_once 'auth.php';
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/config/config.php';
 
 // Clear all session variables
 session_unset();

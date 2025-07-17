@@ -7,8 +7,8 @@
  */
 
 // 1. Include necessary files
-require_once 'auth.php';
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../auth/auth.php';
+require_once __DIR__ . '/../config/config.php';
 
 require_login();
 
@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf_token();
 }
 
-require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/process_helpers.php';
 
 // 2. Function to retrieve UUIDs for existing entries or create new ones

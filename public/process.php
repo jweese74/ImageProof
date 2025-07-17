@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
-require_once __DIR__ . '/rate_limiter.php';
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/../core/auth/rate_limiter.php';
+require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/helpers/functions.php';
 
 validate_csrf_token();                //  ← run early
 
@@ -78,9 +78,9 @@ if (!empty($_FILES['images']['size'])) {
     }
 }
 
-require_once __DIR__ . '/process_helpers.php';
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/../core/processing/process_helpers.php';
+require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/helpers/functions.php';
 
 // 2) Disable output buffering and enable implicit flushing
 @ini_set('output_buffering', 'off');
@@ -528,7 +528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $metadataFile = $runDir . '/' . $fileBaseSanitised . '_metadata.md';
 
         // Path to metadata_extractor.php
-        $metadataExtractor = __DIR__ . '/metadata_extractor.php';
+        $metadataExtractor = __DIR__ . '/../core/metadata/metadata_extractor.php';
 
         // Ensure the metadata extractor script exists
         if (!file_exists($metadataExtractor)) {

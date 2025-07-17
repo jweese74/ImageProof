@@ -1,7 +1,10 @@
 <?php
 /**
- * PixlKey – central configuration & PDO bootstrap.
+ * PixlKey – central configuration & PDO bootstrap
+ * Location: /core/config/config.php
  *
+ * This file sets up PDO, secure headers, HTTPS enforcement, and global constants
+ * such as upload limits and rate-limiting thresholds.
  * Sensitive values are pulled from environment variables that can be supplied
  * either by a `.env` file (loaded via php-dotenv) or by Apache SetEnv
  * directives.  Hard-coding secrets is no longer necessary.
@@ -93,10 +96,10 @@ header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload'
 // Optional: load a .env file if one exists and you’re using Composer.
 // Comment these three lines out if you’re not using php-dotenv yet.
 // ---------------------------------------------------------------------
-// require_once __DIR__ . '/vendor/autoload.php';
-// if (class_exists(\Dotenv\Dotenv::class)) {
-//     \Dotenv\Dotenv::createImmutable(__DIR__ . '/../')->safeLoad();
-// }
+require_once __DIR__ . '/../../vendor/autoload.php';
+if (class_exists(\Dotenv\Dotenv::class)) {
+    \Dotenv\Dotenv::createImmutable(__DIR__ . '/../../')->safeLoad();
+}
 
 // ---- ENV → constants ------------------------------------------------
 define('DB_HOST',  getenv('DB_HOST')  ?: 'localhost');

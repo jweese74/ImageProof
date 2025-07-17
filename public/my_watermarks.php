@@ -6,10 +6,10 @@
  * • List / delete / set default
  * --------------------------------------------------------------
  */
-require_once 'auth.php';
+require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/rate_limiter.php';
+require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/auth/rate_limiter.php';
 
 /**
  * Watermark-specific rate-limit thresholds.

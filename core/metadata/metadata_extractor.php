@@ -10,7 +10,7 @@
  * This script extracts metadata from a signed image using ExifTool,
  * filters out sensitive information, and formats the remaining data into a polished Markdown file.
  */
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../config/config.php';
 
 // Parse command-line arguments
 $options = getopt("", ["input:", "output:"]);

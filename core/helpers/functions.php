@@ -9,7 +9,7 @@
 // ---------------------------
 // Configuration
 // ---------------------------
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../config/config.php';
 
 $maxFileSizeMb     = 250;  // 250 MB
 $allowedExtensions = ['jpg','jpeg','png','webp','tiff','tif'];

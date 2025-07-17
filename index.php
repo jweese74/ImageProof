@@ -2,10 +2,10 @@
 // index.php  — unified public / member landing page
 // --------------------------------------------------
 
-require_once 'auth.php';                          // start session early
-require_once __DIR__ . '/config.php';
-require_once 'rate_limiter.php';                  // safe after session
-require_once 'functions.php';
+require_once __DIR__ . '/core/auth/auth.php';                 // session, CSRF, login
+require_once __DIR__ . '/core/config/config.php';             // DB + HTTPS headers
+require_once __DIR__ . '/core/auth/rate_limiter.php';         // request throttling
+require_once __DIR__ . '/core/helpers/functions.php';         // misc shared utils
 
 $user      = current_user();           // null when signed-out
 $loggedIn  = $user !== null;

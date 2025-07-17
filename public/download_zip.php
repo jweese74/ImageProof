@@ -7,11 +7,11 @@
  * currently-logged-in user and the requested runId.
  */
 
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../core/auth/auth.php';
 require_login();                       // ensure session + user
 
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/rate_limiter.php';
+require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/auth/rate_limiter.php';
 
 // Get current user ID
 $userId = current_user()['user_id'];
@@ -55,7 +55,7 @@ if (!$stmt->fetchColumn()) {
    2.  Build expected file path
 ----------------------------------------------------------------- */
 $userId       = current_user()['user_id'];             // UUID from session
-$processedDir = __DIR__ . '/processing';               // same as process.php
+$processedDir = __DIR__ . '/../processing';            // root-level directory outside /public
 $zipFile      = $processedDir . '/' . $userId . '/' . $runId . '/final_assets.zip';
 
 if (!file_exists($zipFile)) {

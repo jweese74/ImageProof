@@ -9,8 +9,7 @@
  */
 
 declare(strict_types=1);
-require_once __DIR__ . '/config.php';
-
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/rate_limiter.php';
 
 // Enforce secure cookie flags globally (before session_start)
@@ -79,7 +78,7 @@ function require_login(): void
 {
     if (empty($_SESSION['user_id'])) {
         $dest = urlencode($_SERVER['REQUEST_URI'] ?? '/');
-        header('Location: login.php?next=' . $dest);
+        header('Location: /login.php?next=' . $dest);
         exit;
     }
 }

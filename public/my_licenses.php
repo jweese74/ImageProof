@@ -6,12 +6,12 @@
  * • Mark one licence as default
  * --------------------------------------------------------------
  */
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/functions.php';   // CSRF helpers, misc utils
-require_once __DIR__ . '/rate_limiter.php'; // Rate-limiting logic
-require_once __DIR__ . '/vendor/autoload.php'; // Composer autoloader for Parsedown and others
+require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/helpers/functions.php';
+require_once __DIR__ . '/../core/auth/rate_limiter.php';
+require_once __DIR__ . '/../vendor/autoload.php'; // Composer autoloader for Parsedown and others
 
 $md = new Parsedown();
 $md->setSafeMode(true); // Strips raw HTML → XSS protection

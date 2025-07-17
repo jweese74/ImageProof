@@ -1,7 +1,7 @@
 <?php
 // rate_limiter.php
 
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../config/config.php';
 
 // Default thresholds — override in config.php or .env
 defined('LOGIN_ATTEMPT_LIMIT') || define('LOGIN_ATTEMPT_LIMIT', 5);
@@ -12,7 +12,8 @@ defined('DOWNLOAD_DECAY_SECONDS') || define('DOWNLOAD_DECAY_SECONDS', 60); // 1 
 /**
  * Optional: Send 429 Too Many Requests with Retry-After header.
  */
-function rate_limit_exceeded_response(int $retryAfterSeconds = 60): void {
+function rate_limit_exceeded_response(int $retryAfterSeconds = 60): void
+{
     header('HTTP/1.1 429 Too Many Requests');
     header('Retry-After: ' . $retryAfterSeconds);
     echo "Too many requests. Please wait {$retryAfterSeconds} seconds.";
