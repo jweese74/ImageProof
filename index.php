@@ -2,12 +2,19 @@
 // index.php  — unified public / member landing page
 // --------------------------------------------------
 
-require_once 'auth.php';
+require_once 'auth.php';                          // start session early
 require_once __DIR__ . '/config.php';
+require_once 'rate_limiter.php';                  // safe after session
 require_once 'functions.php';
 
-$user      = current_user();           // null when signed-out :contentReference[oaicite:0]{index=0}
+$user      = current_user();           // null when signed-out
 $loggedIn  = $user !== null;
+
+// --- Per-IP upload throttling (members only) ------------------------
+$ipKey = 'upload:' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+if ($loggedIn && RATE_LIMITING_ENABLED && too_many_attempts($ipKey, 10, 60)) {
+    rate_limit_exceeded_response(60);
+}
 $thumbs    = [];
 
 /* ------------------------------------------------------------------

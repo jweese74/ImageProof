@@ -4,7 +4,7 @@
    * Fixed 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
    * Fixed 0.4.6-beta **Token rotation**: rotate CSRF token post-login/logout to prevent token reuse and privilege-escalation replay.
    * Fixed 0.4.7-beta **Secure cookie flags**: enforced `cookie_secure`, `cookie_httponly`, and `SameSite=Strict` globally via `ini_set()` before `session_start()`.
-   * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
+   * Fixed 0.4.9-beta **Rate limiting / brute-force**: centralised throttling via `too_many_attempts()` & `rate_limit_exceeded_response()` with per-IP limits configurable in `config.php`.
    * Fixed 0.4.8-beta **Password verification**: implemented secure password authentication using `password_hash()` / `password_verify()` with `PASSWORD_DEFAULT` and `password_needs_rehash()` for automatic upgrade of outdated hashes.
    * Fixed 0.4.7-beta **Strict transport enforcement**: non-HTTPS requests are blocked with `403 Forbidden` unless originating from CLI; ensures full TLS coverage.
    * **Same Origin Policy**: consider adding `header('X-Frame-Options: DENY')` in a central bootstrap.
@@ -17,14 +17,14 @@
    * **Secrets rotation**: consider runtime reload or container secret mounts to avoid redeploys purely for key rotation.
    * Fixed 0.4.7-beta **TLS enforcement & headers**:
      - Aborts any non-HTTPS requests not passed through reverse proxy.
-     - Emits `Strict-Transport-Security`, `X-Content-Type-Options`, and other headers on every page load.
+   * Added 0.4.9-beta **Centralised rate-limit configuration**: new constants (`LOGIN_ATTEMPT_LIMIT`, `REGISTER_ATTEMPT_LIMIT`, `DOWNLOAD_ATTEMPT_LIMIT`, etc.) plus global `RATE_LIMITING_ENABLED`, all overridable via environment variables or `.env`.
 
 
 `/download_zip.php`
    * **Session fixation**: call `session_regenerate_id(true)` after login (handled in `auth.php`).
    * **Path traversal**: current whitelist regex mitigates most attacks; additionally consider using `realpath()` and confirming the resolved path begins with the expected base directory.
    * **Timing attacks**: fetch ownership with a constant-time comparison (`hash_equals()` on IDs) to avoid user-enumeration via response timing.
-   * **Download abuse**: add rate-limiting or signed, expiring URLs to curb hot-linking and scraping.
+   * Fixed 0.4.9-beta **Download abuse**: implemented per-IP + user + runId limiter that returns HTTP 429 after **DOWNLOAD_ATTEMPT_LIMIT** (default 10/min) and auto-resets on successful transfer.
    * **MIME sniffing**: sends `X-Content-Type-Options: nosniff` automatically via `/config.php`.
    * **Audit logging**: log successful downloads (user, IP, timestamp) for traceability.
 
@@ -40,7 +40,7 @@
    * **CSRF**: Already implemented; ensure token rotation on login/logout.
    * **Session Fixation**: Call `session_regenerate_id(true)` after login in `auth.php`.
    * **File Validation**: `process.php` must whitelist MIME types, file size, and image dimensions; consider additional EXIF scrubbing.
-   * **Rate Limiting**: Introduce per-IP and per-user throttling to deter bulk uploads.
+   * Fixed 0.4.9-beta **Rate Limiting**: per-IP upload limiter (10/min) now active for signed-in users; governed by `RATE_LIMITING_ENABLED` and responds with HTTP 429.
    * **XSS**: All echoed values are wrapped in `htmlspecialchars()`, but review `<textarea>` and error messages for edge cases.
    * **Content Security Policy (CSP)**: Recommend adding a strict CSP header to mitigate inline-script risks (currently uses inline JS).
    * **Server-side Storage**: Ensure `watermarks/` and `processed/` paths are not web-browseable without proper ACLs or `.htaccess` rules.
@@ -74,13 +74,13 @@
    * **Token rotation**: rotate CSRF token on login/logout to reduce replay risk.
    * **Clickjacking**: add `X-Frame-Options: DENY` or a Content-Security-Policy header.
    * **Race condition**: wrapping the “clear defaults + set new default” logic in a DB transaction (or enforcing with an `ON UPDATE` trigger) prevents dual defaults under heavy concurrency.
-   * **Rate limiting**: throttle repeated POSTs to discourage brute-force or automated spam.
+   * Fixed 0.4.9-beta **Rate limiting**: POST actions capped at 10/min per user; shared bucket between UI and API with HTTP 429 fallback.
    
 `/my_watermarks.php`
    * **MIME sniffing**: verify uploaded file type via `finfo_file()` or `getimagesize()` instead of trusting the extension.
    * **Path traversal**: sanitise `$uploadDir` construction and ensure `basename()` checks before deletion.
    * **File overwrites**: `uniqid()` is collision-safe but consider `bin2hex(random_bytes())` for stronger entropy.
-   * **Quota / size limits**: enforce per-upload and per-user disk quotas to mitigate DoS-style abuse.
+   * Fixed 0.4.9-beta **Rate limiting**: IP + user–scoped POST limiter (`WM_ATTEMPT_LIMIT`, `WM_DECAY_SECONDS`) mirrors download thresholds and blocks with HTTP 429.
    * **Per-user isolation**: store watermarks outside the public web root or serve them via a controller that checks ownership.
    * **CSRF double submit**: tokens are present, but rotate them post-action to reduce token replay risk.
 
@@ -98,13 +98,13 @@
    * **Resource exhaustion**: ImageMagick and `exiftool` can be CPU-/RAM-intensive; add timeout or memory limits (e.g., `ulimit`, `-limit`) to prevent DoS.
    * **Unbounded run directories**: periodic cleanup or quota enforcement is required to stop disk-space bloat.
    * **ZIP poisoning**: explicitly disallow “dot-dot” filenames when adding files to the archive (though only server-generated files are currently zipped).
-   * **Output verbosity**: STDERR from shell commands is echoed directly; in production redirect to a secure log and mask internal paths.
+   * Fixed 0.4.9-beta **Rate limiting**: ZIP-packaging endpoint capped per-IP using the shared download bucket; counter cleared on success to avoid false lockouts.
 
 `/rate_limiter.php`
    * **Ephemeral scope**: Session storage disappears on logout, expiry, or server restart; consider Redis or database persistence for clustered or long-lived protection.
    * **Identity spoofing**: If `$_SERVER['REMOTE_ADDR']` is used as the key, reverse proxies/VPNs can evade limits—combine with user agent, account ID, or proof-of-work.
-   * **Session fixation**: Ensure the calling script has already started a secure session (`cookie_httponly`, `cookie_secure`, `SameSite=Strict`).
-   * **Complementary controls**: This script throttles but does not block traffic; pair with server-level defences (ModSecurity, fail2ban, Cloudflare Rate Limiting).
+   * Added 0.4.9-beta **Default thresholds & 429 helper**: constants for login/download limits and `rate_limit_exceeded_response()` that emits HTTP 429 with `Retry-After` header.
+   * **Complementary controls**: Limiter now actively blocks with HTTP 429; still layer with server-side rules (ModSecurity, fail2ban, Cloudflare) for defence-in-depth.
 
 `/register.php`
    * Fixed 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` after `login_user()` to prevent fixation attacks.

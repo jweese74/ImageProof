@@ -12,10 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = strtolower(trim($_POST['email'] ?? ''));
     $pwd   = $_POST['password'] ?? '';
 
-    // Check rate limit before processing
-    $rateKey = 'login:' . $_SERVER['REMOTE_ADDR'];
-    if (too_many_attempts($rateKey, 5, 900)) {  // 5 tries, 15-minute lock
-        $errors[] = 'Too many failed attempts. Try again later.';
+    // Match back-end bucket name so the same counter is shared everywhere
+    $rateKey = 'login_' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    if (RATE_LIMITING_ENABLED && too_many_attempts($rateKey, LOGIN_ATTEMPT_LIMIT, LOGIN_DECAY_SECONDS)) {
+        // Optional: respond with HTTP 429 instead of HTML form error
+        // rate_limit_exceeded_response(LOGIN_DECAY_SECONDS);
+        $errors[] = 'Too many failed login attempts. Please wait before trying again.';
     } else {
     $stmt = $pdo->prepare('SELECT user_id,password_hash FROM users WHERE email = ?');
     $stmt->execute([$email]);

@@ -7,6 +7,23 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.4.9-beta] – 2025-07-17
+### 🔒 Critical Security Enhancements
+- 🚦 **Global rate limiting** introduced to harden authentication and asset-download endpoints:  
+  - New `rate_limiter.php` middleware with sane defaults (⏱ 5 login attempts / 15 min, 10 downloads / min).  
+  - Integrated into `/auth.php`, `/login.php`, `/register.php`, `/download_zip.php`, `/process.php`, `/my_watermarks.php`, `/my_licenses.php`, and the member landing page.  
+  - Exceeds return `429 Too Many Requests` plus `Retry-After` header for graceful client back-off.  
+  - Thresholds and master toggle (`RATE_LIMITING_ENABLED`) centralised in **config.php** and fully overridable via `.env`.  
+  - Buckets reset on successful actions; optional file logger provides groundwork for future audit trails.
+
+### ⚙️ Refactors & Misc
+- Harmonised bucket-naming scheme so UI and API share counters (`login_`, `register:`, `wm:`, etc.).  
+- Deferred `require_once 'rate_limiter.php'` until after session initialisation to avoid header-sent warnings.  
+
+> This release mitigates brute-force credential stuffing and download scraping while remaining lightweight and easily extensible (e.g., Redis persistence in future).
+
+---
+
 ## [0.4.8-beta] – 2025-07-16
 ### 🔒 Security Enhancements
 - 🛡️ Enforced **modern password hashing** standards across all authentication flows:

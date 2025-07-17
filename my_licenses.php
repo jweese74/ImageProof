@@ -10,6 +10,9 @@ require_once 'auth.php';
 require_login();
 require_once __DIR__ . '/config.php';
 
+require_once __DIR__ . '/rate_limiter.php';
+// Default: limit to 10 actions per minute per user
+
 // ---------------------------------------------------------------
 // Markdown helper (Parsedown - tiny, MIT-licensed)
 //   • composer  :  composer require erusev/parsedown
@@ -30,6 +33,14 @@ $messages   = [];
    Handle POST actions
 ------------------------------------------------------------------ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $rateKey = 'license-post-' . $userId;
+    if (RATE_LIMITING_ENABLED && too_many_attempts($rateKey, 10, 60)) {
+        rate_limit_exceeded_response(60);
+    }
+
+    record_failed_attempt($rateKey);  // Always track POSTs — not tied to validity
+
     validate_csrf_token();
     $action = $_POST['action'] ?? '';
 

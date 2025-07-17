@@ -9,6 +9,14 @@
 require_once 'auth.php';
 require_login();
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/rate_limiter.php';
+
+/**
+ * Watermark-specific rate-limit thresholds.
+ * Falls back to download limits until dedicated values are added to config.php
+ */
+defined('WM_ATTEMPT_LIMIT')  || define('WM_ATTEMPT_LIMIT',  DOWNLOAD_ATTEMPT_LIMIT);
+defined('WM_DECAY_SECONDS')  || define('WM_DECAY_SECONDS',  DOWNLOAD_DECAY_SECONDS);
 
 $user       = current_user();
 $userId     = $user['user_id'];
@@ -25,6 +33,15 @@ if (!is_dir($uploadDir)) {
    Handle POST actions
 ------------------------------------------------------------------ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Limit watermark POST rate: IP+user scoped
+    $rateKey = 'wm:' . $userId . ':' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    if (RATE_LIMITING_ENABLED &&
+        too_many_attempts($rateKey, WM_ATTEMPT_LIMIT, WM_DECAY_SECONDS)) {
+        rate_limit_exceeded_response(WM_DECAY_SECONDS);
+    }
+
+    // Only record failed attempts for upload errors
+    $recordFailure = false;
     validate_csrf_token();
     $action = $_POST['action'] ?? '';
 
@@ -32,10 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'upload') {
         if (!isset($_FILES['wm_file']) || $_FILES['wm_file']['error'] !== UPLOAD_ERR_OK) {
             $errors[] = 'No file selected or upload error.';
+            $recordFailure = true;
         } else {
             $ext = strtolower(pathinfo($_FILES['wm_file']['name'], PATHINFO_EXTENSION));
             if (!in_array($ext, ['png', 'jpg', 'jpeg', 'webp'])) {
                 $errors[] = 'Only PNG, JPG, JPEG or WEBP files allowed.';
+                $recordFailure = true;
             } else {
                 $newName  = uniqid('wm_') . '.' . $ext;
                 $destAbs  = $uploadDir . $newName;
@@ -56,8 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $messages[] = 'Watermark uploaded.';
                 } else {
                     $errors[] = 'Could not move uploaded file.';
+                    $recordFailure = true;
                 }
             }
+        }
+
+        // Log rate attempt on failure only
+        if ($recordFailure && RATE_LIMITING_ENABLED) {
+            record_failed_attempt($rateKey);
         }
 
         /* ---- set default ------------------------------------------- */

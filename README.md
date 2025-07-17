@@ -13,6 +13,17 @@ The core goal of PixlKey is to create a **searchable, decentralized registry of 
 
 ## 📜 Changelog
 
+### [0.4.9-beta] – 2025-07-17
+### Critical Security Task – Rate Limiting for Auth & Downloads
+- **New module** `rate_limiter.php` introduces `too_many_attempts()`, `record_failed_attempt()`, and `rate_limit_exceeded_response()`—sending RFC-compliant **429 Too Many Requests** with `Retry-After`.
+- **Centralised thresholds** moved to `config.php` (`LOGIN_ATTEMPT_LIMIT`, `DOWNLOAD_ATTEMPT_LIMIT`, `REGISTER_ATTEMPT_LIMIT`, etc.) and are override-able via environment variables. A master switch `RATE_LIMITING_ENABLED` allows runtime-wide disablement for load-testing.
+- **Authentication flows** (`/auth.php`, `/login.php`, `/register.php`) now share the same IP-bucket (`login_<IP>`) with 5 attempts/15 min default; counters reset on successful login.
+- **Download & processing endpoints** (`/download_zip.php`, `/process.php`) throttle ZIP access/build (10 requests/min per IP + user + runId) and respond with `429` on excess, protecting bandwidth and CPU.
+- **Account actions** (`/my_watermarks.php`, `/my_licenses.php`, `/index.php`) adopt conservative 10 actions/min limits to curb spam and abusive form submissions.
+- **Optional audit log**: commented `error_log()` helper can output to `/logs/rate_limiter.log` for forensics without polluting stdout.
+
+> Provides defence-in-depth against brute-force attacks and bandwidth abuse, while keeping limits configurable for future Redis/IP-hash back-ends.
+
 ### [0.4.8-beta] – 2025-07-16
 ### Critical Security Check – Password Hash Verification
 - `/auth.php`: Added `authenticate_user()` function using `password_verify()` for login and `password_needs_rehash()` to upgrade legacy hashes to `PASSWORD_DEFAULT` (bcrypt or Argon2id).
@@ -100,11 +111,14 @@ No changes to database, API, or core logic—this is a visual/UI refinement patc
 - Persist image fingerprint, metadata, license ID, and ownership to a relational database.
 - Allow users to manage watermark and license templates.
 - Extract and publish signed metadata reports from processed files.
+- Adaptive rate limiting across authentication, downloads, uploads, watermark and licence actions (configurable via `config.php` / `.env`).
 
-Authentication & Security Enhancements (from 0.4.8-beta):
+
+Authentication & Security Enhancements **(updated in 0.4.9-beta)**:
 - Passwords are now securely verified using `password_verify()` and hashed with `password_hash()` using `PASSWORD_DEFAULT` (Argon2id or bcrypt).
 - Legacy password hashes are automatically upgraded on login using `password_needs_rehash()`.
 - Removed any legacy or plaintext password validation logic.
+- Rate limiting now extends beyond login/registration to cover `/download_zip.php`, watermark uploads, licence management, ZIP processing and index-page uploads, with a global toggle (`RATE_LIMITING_ENABLED`) and per-endpoint thresholds.
 
 Visual/UX enhancements (from 0.4.2-beta):
 - Centered thumbnail grid (5-across) in public and member views.
@@ -116,7 +130,7 @@ Visual/UX enhancements (from 0.4.2-beta):
 ### Security & Session Hardening
 1. **Regenerate session ID on login** to mitigate fixation attacks. *(Implemented in `auth.php` and `logout.php`)*
 2. **Strict `runId` sanitization and ownership checks** in download & store logic. ✅ *(Enforced in 0.4.1-beta)*
-3. **Rate limiting and brute-force protection** on login/registration endpoints. ✅ *(Implemented in 0.4.3-beta via `rate_limiter.php`)*
+3. **Rate limiting and brute-force protection** across authentication, downloads, uploads and critical POST actions. ✅ *(Expanded in 0.4.9-beta via deeper `rate_limiter.php` integrations)*
 4. **CSRF failure, login, and download event logging** for audit and security.
 5. **Enforce secure password hashing/verification** using `password_hash()` and `password_verify()` with `PASSWORD_DEFAULT`. ✅ *(Patched in 0.4.8-beta with rehash fallback support)*
 
@@ -125,7 +139,7 @@ Visual/UX enhancements (from 0.4.2-beta):
 5. **Validate required environment variables** (`DB_PASS`, `DB_NAME`, etc.) at runtime.
 6. **MIME-type validation** for uploads (`mime_content_type`) in addition to file extension checks.
 7. **Restrict watermark and upload directories** to correct permissions (`0700`, `0750`).
-8. **Centralize config values** like `$allowedExtensions`, watermark paths, and max file size into `.env` or `config.php`.
+8. **Centralize config values** like `$allowedExtensions`, watermark paths, max file size, **and rate-limiting thresholds** into `.env` or `config.php`. ✅
 
 ### Maintainability & Modularity
 9. **Refactor monolithic `store_data.php`** into modular handlers per table (e.g., `Artworks`, `Images`, `Submissions`).
@@ -139,7 +153,7 @@ Visual/UX enhancements (from 0.4.2-beta):
 - **Frontend**: Vanilla JS, dynamic HTML form generation, live processing feedback
 - **Security**: Session hardening, CSRF protection, XSS filtering, SQL injection prevention
 - **Persistence**: UUID-based relational schema with SHA-256 image fingerprinting
-- **Optional**: `.env` configuration via `php-dotenv`
+- **Optional**: `.env` configuration via `php-dotenv`; **Redis** (future) for persistent rate-limiting buckets
 
 ## 🔐 Security Enhancements
 
@@ -152,9 +166,10 @@ Visual/UX enhancements (from 0.4.2-beta):
 - Passwords verified using `password_verify()` across all authentication flows.
 - Automatic hash upgrades on login using `password_needs_rehash()` to future-proof security.
 
-- Rate limiting enforced on `/login.php` and `/register.php` using `rate_limiter.php`.
-  - Protects against brute-force and scripted abuse.
-  - Session-based tracking; configurable attempt and decay thresholds.
+- Adaptive rate limiting enforced across authentication, downloads, watermark uploads, licence actions and ZIP processing, driven by `rate_limiter.php`.
+  - Protects against brute-force, scraping and bandwidth abuse.
+  - Central thresholds (`LOGIN_ATTEMPT_LIMIT`, `DOWNLOAD_ATTEMPT_LIMIT`, etc.) overrideable via environment variables.
+  - Optional global toggle (`RATE_LIMITING_ENABLED`) plus graceful **429** responses with `Retry-After`.
 
 - HTTPS is now **strictly required** for all web access:
   - Non-TLS requests are rejected with `403 Forbidden`.

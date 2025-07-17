@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth.php';
 require_login();
+require_once __DIR__ . '/rate_limiter.php';
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/functions.php';
 
@@ -296,6 +297,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echoStep("Creating processing directory...");
     $runId        = date('Ymd_His') . '_' . uniqid();
     $userProcBase = $processedDir . '/' . $userId;          // user-scoped
+
+    // Rate limit ZIP processing to prevent abuse
+    $rateKey = 'zipproc_' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    if (RATE_LIMITING_ENABLED && too_many_attempts($rateKey, DOWNLOAD_ATTEMPT_LIMIT, DOWNLOAD_DECAY_SECONDS)) {
+        http_response_code(429);
+        echoStep("Too many download packaging requests from your IP. Please wait before retrying.", 'error');
+        echoStep("Download throttled. Try again later.", 'error');
+        exit;
+    }
+
+    /* -----------------------------------------------------------
+       Record the attempt only when the limiter is active. This
+       prevents the counter from filling up when admins have
+       RATE_LIMITING_ENABLED = false (e.g. during load-testing).
+    ----------------------------------------------------------- */
+    if (RATE_LIMITING_ENABLED) {
+        record_failed_attempt($rateKey);
+    }
 
     // Register runId in processing_runs table
     $stmt = $pdo->prepare('INSERT INTO processing_runs (run_id, user_id, zip_path) VALUES (?, ?, ?)');
@@ -625,6 +644,15 @@ EOF;
     }
 
     echoStep("Processing completed.", 'success');
+
+    /* -----------------------------------------------------------
+       The ZIP build succeeded, so we shouldn’t keep counting this
+       run against the user.  Reset the bucket to avoid locking
+       well-behaved clients out after several large batches.
+    ----------------------------------------------------------- */
+    if (RATE_LIMITING_ENABLED) {
+        clear_failed_attempts($rateKey);
+    }
 
     // End of processing
     @ob_end_flush();

@@ -13,10 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pwd      = $_POST['password'] ?? '';
     $confirm  = $_POST['password_confirm'] ?? '';
 
-    // 🔒 Rate limit by IP (5 attempts in 30 minutes)
-    $rateKey = 'register:' . $_SERVER['REMOTE_ADDR'];
-    if (too_many_attempts($rateKey, 5, 1800)) {
-        $errors[] = 'Too many registration attempts. Please wait and try again.';
+    // 🔒 Centralized Rate Limiting Config
+    $rateKey = 'register:' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    if (RATE_LIMITING_ENABLED && too_many_attempts($rateKey, REGISTER_ATTEMPT_LIMIT, REGISTER_DECAY_SECONDS)) {
+        rate_limit_exceeded_response(REGISTER_DECAY_SECONDS);
     } else {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Please enter a valid e-mail address.';

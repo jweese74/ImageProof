@@ -17,18 +17,20 @@ Each entry follows the same heading order for clarity:
 `/auth.php`
 
 1. **Purpose**
-   Provides foundational session management, CSRF protection, secure password handling, and helper functions for authenticating users within **PixlKey**.
+   Provides foundational session management, CSRF protection, secure password handling, **per-IP rate-limiting**, and helper functions for authenticating users within **PixlKey**.
 
-   As of `v0.4.7-beta`, also globally enforces secure session cookie parameters (`Secure`, `HttpOnly`, `SameSite=Strict`) via `ini_set()` before any session is started.
+   As of `v0.4.9-beta`, `login_user()` is wrapped with the shared **Rate-Limiter** (`rate_limiter.php`), and the file inherits sane defaults (`LOGIN_ATTEMPT_LIMIT`, `LOGIN_DECAY_SECONDS`) from `config.php`.
+
+   Earlier security upgrades still apply: from `v0.4.7-beta` onward the script globally enforces secure session cookie parameters (`Secure`, `HttpOnly`, `SameSite=Strict`) via `ini_set()` before any session is started.
 
 2. **Agent Role**
-   Acts as the **Security & Session Agent**, enforcing safe request flows (login, form-submission) and exposing a unified API (`login_user()`, `require_login()`, `current_user()`) to the remainder of the application.
+   Acts as the **Security, Session & Rate-Limit Agent**, enforcing safe request flows (login, form-submission) and exposing a unified API (`login_user()`, `require_login()`, `current_user()`) to the remainder of the application.
 
 3. **Key Responsibilities**
 
    * Initialise a hardened PHP session (SameSite = Strict, HTTPS-aware, HttpOnly).
    * Generate and verify CSRF tokens for all non-GET requests.
-   * Log users in, updating their `last_login` timestamp.
+   * Log users in, updating their `last_login` timestamp **while throttling brute-force attempts via `too_many_attempts()`**.
    * Gatekeep protected routes via `require_login()`, redirecting unauthenticated users.
    * Provide a cached `current_user()` lookup for downstream business logic.
    * Configure global session cookie flags before session startup (`ini_set()`).
@@ -40,7 +42,7 @@ Each entry follows the same heading order for clarity:
 
    * FIXED 0.4.4-beta **Session fixation**: call `session_regenerate_id(true)` immediately after successful login.
    * FIXED 0.4.6-beta **Token rotation**: rotate CSRF token post-login (`login_user()`), logout (`logout.php`), and after session regeneration (`store_data.php`) to prevent token reuse across privilege transitions.
-   * **Rate limiting / brute-force**: implement throttling on `login_user()` calls.
+   * **FIXED 0.4.9-beta Rate limiting / brute-force**: `login_user()` now checks `too_many_attempts()` and emits an HTTP `429` (via `rate_limit_exceeded_response()`) after `LOGIN_ATTEMPT_LIMIT` failures.
    * FIXED 0.4.8-beta **Password verification upgrade**: authentication now enforces `password_verify()` with automatic rehashing using `password_needs_rehash()` to upgrade legacy hashes to `PASSWORD_DEFAULT` (Argon2id or bcrypt).
    * Fixed 0.4.7-beta **Strict transport**: enforced HTTPS via `config.php`, which now aborts plain HTTP requests before session or DB logic is reached.
    * Fixed 0.4.7-beta **Secure cookies**: set `session.cookie_secure=1`, `cookie_httponly=1`, and `cookie_samesite=Strict` via `ini_set()` to ensure client-side session hardening.
@@ -48,17 +50,23 @@ Each entry follows the same heading order for clarity:
 
 5. **Dependencies**
 
-   * `config.php` – establishes `$pdo` database handle.
+   * `config.php` – establishes `$pdo` database handle **and centralises rate-limit thresholds**.
+   * `rate_limiter.php` – shared helper for `too_many_attempts()`, `record_failed_attempt()`, and consistent `429` responses.
    * Database table `users` with columns: `user_id`, `email`, `display_name`, `is_admin`, `last_login`.
    * PHP `session` extension, `openssl` / `random_bytes` functions.
 
 6. **Additional Notes**
 
    * Exports are deliberately minimal; keep business-logic-free to simplify unit tests.
-   * Future releases might expose a JSON Web Token (JWT) endpoint for API access while preserving the same CSRF model for browser forms.
+   * Evaluate persisting rate-limit buckets to Redis for horizontal scaling (currently session-scoped).
    * Evaluate migrating to `SameSite=Lax` with exception lists if third-party integrations are required.
 
 7. **CHANGELOG**
+
+   * **2025-07-17 · v0.4.9-beta** – Login Rate-Limiting Integration:
+     - Wrapped `login_user()` with shared `too_many_attempts()` / `record_failed_attempt()` calls.
+     - Added `rate_limit_exceeded_response()` path returning HTTP `429` with `Retry-After`.
+     - Centralised thresholds (`LOGIN_ATTEMPT_LIMIT`, `LOGIN_DECAY_SECONDS`) in `config.php`; documentation updated to reflect new dependency.
 
    * **2025-07-16 · v0.4.8-beta** – Password Hash Verification Upgrade:
      - Added `authenticate_user()` to unify credential checks using `password_verify()`.
@@ -86,7 +94,7 @@ Each entry follows the same heading order for clarity:
 `/config.php`
 
 1. **Purpose**
-   Establishes a PDO connection to the PixlKey MariaDB / MySQL database, pulling credentials from environment variables (with sensible fallbacks) and enforcing upload-size limits at runtime.
+   Establishes a PDO connection to the PixlKey MariaDB / MySQL database, pulling credentials from environment variables (with sensible fallbacks) and enforcing both upload-size limits **and global rate-limiting thresholds** at runtime.
 
    Also enforces HTTPS-only access for all web-based routes and emits standard security headers (`HSTS`, `nosniff`, etc.) on every request.
 
@@ -98,6 +106,8 @@ Each entry follows the same heading order for clarity:
    * Load optional `.env` secrets via *php-dotenv* (Composer).
    * Convert environment variables into constants (`DB_HOST`, `DB_NAME`, … ).
    * Enforce PHP `upload_max_filesize` & `post_max_size` based on `MAX_UPLOAD_MB`.
+   * Expose **centralised Rate-Limiting Configuration** constants  
+     (`LOGIN_ATTEMPT_LIMIT`, `REGISTER_ATTEMPT_LIMIT`, `DOWNLOAD_ATTEMPT_LIMIT`, their matching `*_DECAY_SECONDS`, and the boolean `RATE_LIMITING_ENABLED`) so that all modules share one source of truth.
    * Instantiate the PDO connection with hardened defaults:
 
      * `ERRMODE_EXCEPTION` for predictable error handling.
@@ -114,6 +124,7 @@ Each entry follows the same heading order for clarity:
    * **Credential scope**: ensure file permissions (`chmod 600`) prevent unauthorised reads.
    * **Transport security**: if DB is remote, use TLS-encrypted client connections.
    * **Secrets rotation**: consider runtime reload or container secret mounts to avoid redeploys purely for key rotation.
+   * **Rate-limit bypass / lock-out**: keep `RATE_LIMITING_ENABLED=true` in production; disabling it invites brute-force attacks, while overly-aggressive thresholds may cause self-DOS.
    * Fixed 0.4.7-beta **TLS-only application access**:
      - Web requests over plain HTTP are blocked at config bootstrap unless explicitly proxied.
      - Adds global security headers for stricter browser behavior.
@@ -133,6 +144,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-17 · v0.4.9-beta** – Added centralised rate-limiting constants & `RATE_LIMITING_ENABLED` toggle; removed hard-coded attempt counters from individual modules.
+
    * **2025-07-14 · v0.4.7-beta** – Enforced HTTPS-only access with transport check and global security headers (`HSTS`, `nosniff`); early exit for insecure requests.
 
    * **2025-07-12 · v0.4.5-beta** – Added dynamic `APP_VERSION`, `APP_NAME`, and randomized `APP_TITLE`/`APP_HEADER` string rotation for branding consistency across pages.
@@ -146,7 +159,7 @@ Each entry follows the same heading order for clarity:
 1. **Purpose**
    Delivers a previously-generated archive (`final_assets.zip`) associated with a specific `runId`, allowing the logged-in PixlKey user to download the finished asset bundle.
 
-   Now includes early invocation of `config.php` to enforce HTTPS and emit global security headers.
+   Now includes early invocation of **both** `config.php` (HTTPS ⟶ HSTS, security headers) **and** `rate_limiter.php` (per-IP download throttling).
 
 2. **Agent Role**
    Operates as the **Download & Delivery Agent** at the terminus of the processing pipeline, ensuring that only the rightful owner of a processing run can retrieve its packaged results.
@@ -159,13 +172,14 @@ Each entry follows the same heading order for clarity:
    * Resolve the canonical path to `processing/<user_id>/<runId>/final_assets.zip`.
    * Emit appropriate HTTP error codes (400, 403, 404) on failure states.
    * Stream the ZIP file with correct `Content-Type`, `Content-Disposition`, and `Content-Length` headers.
+   * Throttle excessive download attempts; when limits are exceeded, return **`429 Too Many Requests`** with a `Retry-After` header (values come from `DOWNLOAD_*` constants or `.env`).
 
 4. **Security Considerations**
 
    * **Session fixation**: call `session_regenerate_id(true)` after login (handled in `auth.php`).
    * **Path traversal**: current whitelist regex mitigates most attacks; additionally consider using `realpath()` and confirming the resolved path begins with the expected base directory.
    * **Timing attacks**: fetch ownership with a constant-time comparison (`hash_equals()` on IDs) to avoid user-enumeration via response timing.
-   * **Download abuse**: add rate-limiting or signed, expiring URLs to curb hot-linking and scraping.
+   * **Download abuse**: **rate-limiter now integrated (v0.4.9-beta).** Per-IP + user + `runId` buckets cap downloads at **`DOWNLOAD_ATTEMPT_LIMIT`** per **`DOWNLOAD_DECAY_SECONDS`** (defaults: 10 req / 60 s). Exceeding the threshold triggers a 429 with `Retry-After` and is logged for audit.
    * **MIME sniffing**: `X-Content-Type-Options: nosniff` now automatically emitted via `config.php`.
    * Fixed 0.4.7-beta: added `require_once 'config.php'` to enforce HTTPS transport and inject secure headers globally.
    * **Audit logging**: log successful downloads (user, IP, timestamp) for traceability.
@@ -174,6 +188,7 @@ Each entry follows the same heading order for clarity:
 
    * `auth.php` – session, `require_login()`, `current_user()`.
    * `config.php` – provides `$pdo` database handle.
+   * `rate_limiter.php` – shared throttling helpers (`too_many_attempts()`, `record_failed_attempt()`, `rate_limit_exceeded_response()`).
    * Database table `processing_runs (run_id, user_id, …)`.
    * Directory structure rooted at `processing/<user_id>/<runId>/`.
 
@@ -184,6 +199,8 @@ Each entry follows the same heading order for clarity:
    * Future release: expose an API endpoint returning a short-lived pre-signed download URL suitable for headless clients.
 
 7. **CHANGELOG**
+
+   * **2025-07-17 · v0.4.9-beta** – Integrated per-IP/user/`runId` rate-limiting via `rate_limiter.php`; endpoint may now emit **429 Too Many Requests** with `Retry-After`; thresholds configurable through `.env`.
 
    * **2025-07-14 · v0.4.7-beta** – Enforced HTTPS by requiring `config.php` early; ensures transport checks and standard security headers are injected on ZIP downloads.
 
@@ -247,7 +264,8 @@ Each entry follows the same heading order for clarity:
 1. **Purpose**
    Serves as the public and member‐facing landing page for **PixlKey**. It renders the artwork-upload form, recent‐thumbnail galleries, and navigation, acting as the visual gateway between artists and the platform’s backend processing pipeline.
 
-   As of v0.4.7-beta, it also enforces HTTPS transport at bootstrap via `config.php`, ensuring all visitors are securely connected.
+   As of v0.4.7-beta, it also enforces HTTPS transport at bootstrap via `config.php`, ensuring all visitors are securely connected.  
+   **New in v0.4.9-beta:** integrates centralised rate-limiting through `rate_limiter.php`, protecting the upload endpoint from abuse (10 actions / minute per IP by default).
 
 2. **Agent Role**
    Functions as the **UI & Intake Agent**. It gathers user-supplied metadata and image files, injects CSRF tokens, and dispatches the payload to `process.php`. It also surfaces user-specific resources (watermarks, licences, thumbnails) when an authenticated session is present, or a read-only gallery when not.
@@ -256,24 +274,32 @@ Each entry follows the same heading order for clarity:
 
    * **Bootstrap**
 
-     * `require_once` of `auth.php`, `config.php`, and `functions.php`.
+     * `require_once` order: `auth.php` → `config.php` → **`rate_limiter.php`** → `functions.php`.
+
    * **Thumbnail Retrieval**
 
      * Query the `images` table for the 10 most recent thumbnails (user-specific when logged in; global otherwise).
+
    * **Conditional UI Rendering**
 
      * Member view: personalised nav, two-row thumbnail grid, upload form.
      * Public view: global thumbnail grid plus login / register calls-to-action.
+
    * **Upload Form**
 
      * Collect artwork metadata (title, creator, description, genre, keywords, etc.).
      * Gather optional watermark and licence selections (populated from the user’s saved items).
      * Accept up to 20 MB per image, with live previews via vanilla JavaScript.
-     * Embed CSRF token (`generate_csrf_token()`) and enforce `require_login()` when gated.
+     * Embed CSRF token (`generate_csrf_token()`), enforce `require_login()` when gated, **and respect the per-IP upload throttle managed by `rate_limiter.php`.**
+
+   * **Rate-Limiting Enforcement**
+     * Applies the `upload:` bucket from `rate_limiter.php` to throttle signed-in users to **10 uploads per minute per IP** (configurable via `.env`).
+
    * **Styling & UX**
 
      * Inline dark-theme CSS, Orbitron headline font, 5-column adaptive thumbnail grid.
      * Placeholder dashed frames prevent broken‐image icons until a preview is loaded.
+
    * **Client-side Enhancements**
 
      * JavaScript `FileReader` previews for watermark and image uploads.
@@ -284,7 +310,7 @@ Each entry follows the same heading order for clarity:
    * **CSRF**: Already implemented; ensure token rotation on login/logout.
    * **Session Fixation**: Call `session_regenerate_id(true)` after login in `auth.php`.
    * **File Validation**: `process.php` must whitelist MIME types, file size, and image dimensions; consider additional EXIF scrubbing.
-   * **Rate Limiting**: Introduce per-IP and per-user throttling to deter bulk uploads.
+   * **Rate Limiting**: Implemented per-IP and per-user throttling (10 uploads / min default) via `rate_limiter.php`; thresholds are centrally configurable in `config.php` / environment.
    * **XSS**: All echoed values are wrapped in `htmlspecialchars()`, but review `<textarea>` and error messages for edge cases.
    * **Content Security Policy (CSP)**: Recommend adding a strict CSP header to mitigate inline-script risks (currently uses inline JS).
    * **Server-side Storage**: Ensure `watermarks/` and `processed/` paths are not web-browseable without proper ACLs or `.htaccess` rules.
@@ -297,11 +323,14 @@ Each entry follows the same heading order for clarity:
      * `auth.php` – session, CSRF, user helpers.
      * `config.php` – instantiates `$pdo`.
      * `functions.php` – shared utilities.
+     * `rate_limiter.php` – global request-throttling helper.
      * `process.php` – receives form data for watermarking, hashing, and DB insertion.
+   
    * **Database Tables**
 
      * `images` (`thumbnail_path`, `user_id`, `created_at`).
      * `watermarks`, `licenses`.
+   
    * **External Resources**
 
      * Google Fonts (Orbitron).
@@ -316,6 +345,8 @@ Each entry follows the same heading order for clarity:
    * Scheduled cleanup of original uploads (10 MB cap) should be handled by a cron‐driven artisan task to avoid disk bloat.
 
 7. **CHANGELOG**
+
+   * **0.4.9-beta (2025-07-17)** – Added `rate_limiter.php` to bootstrap and activated per-IP upload throttling; documentation updated to reflect new dependency and security posture.
 
    * **0.4.7-beta (2025-07-14)** – HTTPS-only enforcement now activated through `config.php`, blocking all non-secure access. Page now inherits HSTS and `X-Content-Type-Options` headers globally.
    
@@ -343,6 +374,8 @@ Each entry follows the same heading order for clarity:
    * Accept `email`, `password`, and optional `next` redirect target.
    * Enforce CSRF protection via `validate_csrf_token()`.
    * Throttle brute-force attempts (`too_many_attempts()`) and lock attackers for 15 minutes after 5 failures.
+   * Leverage centralised rate-limiting constants `LOGIN_ATTEMPT_LIMIT` and `LOGIN_DECAY_SECONDS` (overridable via environment variables) and honour the global `RATE_LIMITING_ENABLED` toggle.
+   * Optionally emit an HTTP **429 Too Many Requests** via `rate_limit_exceeded_response()` when thresholds are exceeded.
    * Verify supplied credentials against the `users` table using `password_verify()` on `password_hash`, and upgrade outdated hashes on successful login with `password_needs_rehash()` and `password_hash()`.
    * Clear failed-attempt counters and invoke `login_user()` on success, redirecting to `$next`.
    * Accumulate errors for graceful user feedback on the same page.
@@ -353,6 +386,7 @@ Each entry follows the same heading order for clarity:
    * FIXED 0.4.4-beta **Session fixation**: ensure `session_regenerate_id(true)` is called inside `login_user()`.
    * **Timing-side-channel**: always run `password_verify()` even when the e-mail is missing to equalise response time.
    * **Credential stuffing**: pair IP-based limits with (hashed) e-mail-based counters for more granular blocking.
+   * **Rate-limiter bypass control**: the environment variable `RATE_LIMITING_ENABLED=false` cleanly disables counters during load-testing without code changes.
    * **HTTPS & HSTS**: enforce TLS with `Strict-Transport-Security` headers at the web-server level.
    * Fixed 0.4.7-beta **Application-layer HTTPS enforcement**: now explicitly includes `config.php`, which halts any insecure web requests via global check.
    * Sends HSTS, nosniff, and other security headers as part of standard bootstrap.
@@ -375,6 +409,8 @@ Each entry follows the same heading order for clarity:
    * Offer a JSON login endpoint for future SPA / mobile clients, re-using the same rate-limiting logic.
 
 7. **CHANGELOG**
+
+   * **2025-07-17 · v0.4.9-beta** – Unified login rate-limiter bucket naming (`login_`), centralised thresholds via `LOGIN_*` constants, respected the `RATE_LIMITING_ENABLED` kill-switch, and introduced optional HTTP 429 handling through `rate_limit_exceeded_response()`.
 
    * **2025-07-16 · v0.4.8-beta** – Strengthened password validation: all login logic now uses `password_verify()` with automatic hash upgrade via `password_needs_rehash()` when outdated hashes are detected. Enforces `PASSWORD_DEFAULT` (currently Argon2id or bcrypt).
 
@@ -505,6 +541,7 @@ Each entry follows the same heading order for clarity:
 
    * Enforce authenticated access via `require_login()`.
    * Validate CSRF tokens for every non-GET request.
+   * Apply per-user rate limiting (default **10 POST actions per minute**) via `rate_limiter.php` to discourage brute-force or automated spam.
    * Persist licence records (`INSERT`, `UPDATE`, `DELETE`) in the `licenses` table, scoped to the current `user_id`.
    * Guarantee only *one* default licence per user by clearing existing defaults before setting a new one.
    * Render licence text safely by converting Markdown with `Parsedown` in Safe Mode.
@@ -517,7 +554,7 @@ Each entry follows the same heading order for clarity:
    * **Token rotation**: rotate CSRF token on login/logout to reduce replay risk.
    * **Clickjacking**: add `X-Frame-Options: DENY` or a Content-Security-Policy header.
    * **Race condition**: wrapping the “clear defaults + set new default” logic in a DB transaction (or enforcing with an `ON UPDATE` trigger) prevents dual defaults under heavy concurrency.
-   * **Rate limiting**: throttle repeated POSTs to discourage brute-force or automated spam.
+   * **Rate limiting**: actively enforced (10 actions / minute, configurable via `config.php`) using `rate_limiter.php`; exceeding the limit returns **HTTP 429** with a `Retry-After` header.
    * Fixed 0.4.7-beta **Transport security hardening**:
      - HTTPS-only access enforced via `config.php`.
      - Automatically sends `Strict-Transport-Security`, `X-Frame-Options`, and `X-Content-Type-Options`.
@@ -526,6 +563,7 @@ Each entry follows the same heading order for clarity:
 
    * `auth.php` – session, CSRF, and user helpers.
    * `config.php` – supplies the PDO handle `$pdo`.
+   * `rate_limiter.php` – shared helper exposing `too_many_attempts()`, `record_failed_attempt()`, etc.
    * `vendor/parsedown/Parsedown.php` (MIT) – Markdown parser.
    * Database table `licenses` (`license_id UUID`, `user_id`, `name`, `text_blob`, `is_default`, `created_at`).
    * Inline JavaScript function `editLicence()` for client-side form population.
@@ -539,6 +577,8 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-17 · v0.4.9-beta** – Integrated per-user POST rate limiting (10/min) with HTTP 429 responses and centralised thresholds.
+
    * **2025-07-14 · v0.4.7-beta** – Enforced TLS-only transport and added global browser security headers via `config.php` inclusion.
 
    * **2025-07-11 · v0.4.2-beta** – Initial integration into PixlKey: built CSRF-protected CRUD flow, Markdown preview with Parsedown Safe Mode, and single-default enforcement.
@@ -550,7 +590,7 @@ Each entry follows the same heading order for clarity:
 1. **Purpose**
    Provides a self-service dashboard where logged-in artists can upload, list, designate a default, and delete personal watermark images (PNG, JPG/JPEG, or WEBP) for use throughout **PixlKey**.
 
-   Also now bootstraps full TLS and header security via `config.php` before any HTML or session output.
+   Also now bootstraps full TLS and header security via `config.php` **and** enforces centralised request throttling via `rate_limiter.php` before any HTML or session output.
 
 2. **Agent Role**
    Functions as the **Watermark-CRUD Agent**, interfacing between the user, the filesystem, and the database to maintain each creator’s private watermark library.
@@ -559,6 +599,7 @@ Each entry follows the same heading order for clarity:
 
    * Verify the session and enforce authentication (`require_login()`).
    * Accept watermark uploads, validating extension and moving the file to a per-user directory.
+   * Enforce per-IP + user rate limits (`WM_ATTEMPT_LIMIT` / `WM_DECAY_SECONDS`) on all write actions; return **HTTP 429** with `Retry-After` on excess.
    * Insert metadata into the `watermarks` table, auto-marking the first entry as default.
    * Allow users to:
 
@@ -572,6 +613,7 @@ Each entry follows the same heading order for clarity:
    * **MIME sniffing**: verify uploaded file type via `finfo_file()` or `getimagesize()` instead of trusting the extension.
    * **Path traversal**: sanitise `$uploadDir` construction and ensure `basename()` checks before deletion.
    * **File overwrites**: `uniqid()` is collision-safe but consider `bin2hex(random_bytes())` for stronger entropy.
+   * **Rate limiting**: global limiter logs and throttles abusive bursts; counters reset after a successful action to keep well-behaved users unhindered.
    * **Quota / size limits**: enforce per-upload and per-user disk quotas to mitigate DoS-style abuse.
    * **Per-user isolation**: store watermarks outside the public web root or serve them via a controller that checks ownership.
    * **CSRF double submit**: tokens are present, but rotate them post-action to reduce token replay risk.
@@ -581,6 +623,7 @@ Each entry follows the same heading order for clarity:
 
    * `auth.php` – session, CSRF, and user helpers.
    * `config.php` – provides `$pdo` connection and base configuration.
+   * `rate_limiter.php` – shared limiter utilities and constants (`WM_ATTEMPT_LIMIT`, `WM_DECAY_SECONDS`, `RATE_LIMITING_ENABLED`).
    * Database table `watermarks` with columns: `watermark_id` (UUID), `user_id`, `filename`, `path`, `is_default`, `uploaded_at`.
    * PHP extensions: `fileinfo`, `gd`/`imagick` (optional future format validation).
 
@@ -588,10 +631,13 @@ Each entry follows the same heading order for clarity:
 
    * Consider adding a **preview overlay** that shows the watermark atop a sample artwork before saving as default.
    * UI could benefit from drag-and-drop uploads and client-side validation (max dimensions, file weight).
+   * Consider a countdown timer in the UI when the user hits the rate cap to improve feedback.
    * Future release: allow SVG watermarks with strict sanitisation (e.g., `svg-sanitizer`).
    * Provide an audit trail so users can restore accidentally deleted watermarks.
 
 7. **CHANGELOG**
+
+   * **2025-07-17 · v0.4.9-beta** – Integrated project-wide rate-limiter; added configurable `WM_ATTEMPT_LIMIT` & `WM_DECAY_SECONDS`; returns **429** responses with `Retry-After`; documentation updated.
 
    * **2025-07-14 · v0.4.7-beta** – Enforced HTTPS-only access by requiring `config.php` early; inherits TLS enforcement and headers (`HSTS`, `nosniff`) from global bootstrap.
 
@@ -674,6 +720,7 @@ Each entry follows the same heading order for clarity:
    * Parse, sanitise, and validate all form inputs (dates, text fields, keywords).
    * Resolve the active watermark (saved vs. one-off upload) and licence text for embedding.
    * Enforce per-file upload constraints (≤ 200 MB; allowed extensions).
+   * Throttle ZIP-packaging requests via **`rate_limiter.php`** (default 10 requests / IP / minute); automatically clear counters after a successful build.
    * For every uploaded artwork file:
 
      * Move it into a user-scoped *run* directory with a unique `runId`.
@@ -695,11 +742,12 @@ Each entry follows the same heading order for clarity:
    * **Unbounded run directories**: periodic cleanup or quota enforcement is required to stop disk-space bloat.
    * **ZIP poisoning**: explicitly disallow “dot-dot” filenames when adding files to the archive (though only server-generated files are currently zipped).
    * **Output verbosity**: STDERR from shell commands is echoed directly; in production redirect to a secure log and mask internal paths.
+   * **Rate limiting**: excessive ZIP builds now trigger HTTP 429 with `Retry-After`; thresholds are configurable in `config.php` and can be globally disabled (`RATE_LIMITING_ENABLED=false`).
 
 5. **Dependencies**
 
    * **PHP** ≥ 8.1 with extensions: `PDO`, `file_uploads`, `openssl` (for `random_bytes`).
-   * **Helper scripts**: `auth.php`, `config.php`, `functions.php`, `process_helpers.php`, `metadata_extractor.php`.
+   * **Helper scripts**: `auth.php`, `config.php`, `rate_limiter.php`, `functions.php`, `process_helpers.php`, `metadata_extractor.php`.
    * **CLI tools**: `exiftool`, `convert`/`identify` (ImageMagick), `sha256sum`, `zip`.
    * **Database**: Tables `processing_runs`, `images`, `watermarks`, `licenses`, `users`.
    * Writable processing root (`/processing`) outside the public web root, protected via `.htaccess` or Nginx rules.
@@ -713,6 +761,9 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **2025-07-17 – v0.4.9-beta**
+     *Integrated per-IP rate limiting for ZIP packaging:* imported `rate_limiter.php`, added throttling (10 requests / min) with automatic counter reset on success and configurable `RATE_LIMITING_ENABLED` toggle.
+
    * **2025-07-11 – v0.4.2-beta**
      *Initial PixlKey refactor:* renamed UI strings, added CSRF validation call, user-scoped run directories, full IPTC/XMP embedding, metadata extraction step, certificate generation, and ZIP packaging with authenticated `runId` tracking.
 
@@ -721,9 +772,12 @@ Each entry follows the same heading order for clarity:
 `/rate_limiter.php`
 
 1. **Purpose**
-   Implements a lightweight, session-scoped rate-limiting utility to curb brute-force or abuse attempts (e.g., login, registration) within **PixlKey**.
+   Implements a lightweight, session-scoped rate-limiting utility to curb brute-force or abuse attempts (e.g., login, registration, bulk downloads) within **PixlKey**.
 
-   Automatically pulls in `/config.php` to enforce HTTPS-only execution and emit transport-level headers.
+   * Introduces _default threshold constants_ (`LOGIN_ATTEMPT_LIMIT`, `DOWNLOAD_ATTEMPT_LIMIT`, etc.) that can be overridden via **environment variables** or `config.php`.
+   * Adds a convenience helper `rate_limit_exceeded_response()` that returns **HTTP 429** with an optional `Retry-After` header.
+
+   Automatically pulls in `/config.php` to inherit TLS enforcement, global security headers, and configurable limits.
 
 2. **Agent Role**
    Serves as a **Security Utility Agent**, supplying plug-and-play functions that any controller can call to detect and throttle rapid-fire requests tied to the same identifier (IP, username, or other token).
@@ -732,21 +786,24 @@ Each entry follows the same heading order for clarity:
 
    * Maintain an in-memory (session) log of recent request timestamps keyed by a caller-supplied string.
    * Evaluate whether the caller has exceeded a configurable threshold (`$maxAttempts`) within a decay window (`$decaySeconds`).
-   * Expose helpers to record (`record_failed_attempt()`), test (`too_many_attempts()`), and clear (`clear_failed_attempts()`) violations.
+   * Expose helpers to **record** (`record_failed_attempt()`), **test** (`too_many_attempts()`), **clear** (`clear_failed_attempts()`), and **respond** (`rate_limit_exceeded_response()`) to violations.
+   * Respect the global toggle `RATE_LIMITING_ENABLED` to allow admins to disable counting during load-testing.
 
 4. **Security Considerations**
 
    * **Ephemeral scope**: Session storage disappears on logout, expiry, or server restart; consider Redis or database persistence for clustered or long-lived protection.
    * **Identity spoofing**: If `$_SERVER['REMOTE_ADDR']` is used as the key, reverse proxies/VPNs can evade limits—combine with user agent, account ID, or proof-of-work.
    * **Session fixation**: Ensure the calling script has already started a secure session (`cookie_httponly`, `cookie_secure`, `SameSite=Strict`).
+   * **HTTP feedback loop**: Exceeding a limit triggers **429 Too Many Requests**; clients should back off based on the `Retry-After` header.
    * **Complementary controls**: This script throttles but does not block traffic; pair with server-level defences (ModSecurity, fail2ban, Cloudflare Rate Limiting).
 
 5. **Dependencies**
 
    * PHP sessions (`$_SESSION`) must be initialised (`session_start()`) **before** any function call.
    * No database requirement, but designed to coexist with the PDO instance loaded by `config.php`.
-   * Typically included in `login.php`, `register.php`, or any endpoint vulnerable to spamming.
-   * Requires `config.php` as of v0.4.7-beta to inherit global transport and header enforcement.
+   * Typically included in `login.php`, `register.php`, `download_zip.php`, or any endpoint vulnerable to spamming.
+   * Requires `config.php` (≥ v0.4.9-beta) to inherit global transport, header enforcement, and limit constants.
+   * Reads **environment variables** (`LOGIN_ATTEMPT_LIMIT`, `DOWNLOAD_ATTEMPT_LIMIT`, etc.) to allow container-level tuning.
 
 6. **Additional Notes**
 
@@ -754,15 +811,17 @@ Each entry follows the same heading order for clarity:
    * Future revisions may:
 
      * Migrate storage to Redis for horizontal scaling.
-     * Emit audit logs for SIEM correlation.
+     * Emit audit logs for SIEM correlation (proof-of-concept `error_log()` already stubbed).
      * Support exponential back-off or CAPTCHA escalation after repeated lockouts.
+     * Provide per-endpoint limit buckets (e.g., watermark uploads) with dedicated constants.
 
 7. **CHANGELOG**
 
+   * **2025-07-17 · v0.4.9-beta** – Added default limit constants, ENV overrides, `rate_limit_exceeded_response()`, optional audit logging, and global toggle `RATE_LIMITING_ENABLED`.
+
    * **2025-07-14 · v0.4.7-beta** – Added `require_once 'config.php'` to inherit TLS transport checks and global security headers.
 
-   * **2025-07-11 · v0.4.2-beta** — Initial introduction of `rate_limiter.php` to PixlKey codebase with three core helpers (`too_many_attempts`, `record_failed_attempt`, `clear_failed_attempts`).
-
+   * **2025-07-11 · v0.4.2-beta** — Initial introduction with three core helpers (`too_many_attempts`, `record_failed_attempt`, `clear_failed_attempts`).
 -----
 
 `/register.php`
@@ -779,8 +838,10 @@ Each entry follows the same heading order for clarity:
 
    * Render a minimal, dark-themed HTML registration form.
    * Enforce CSRF protection via `validate_csrf_token()`.
-   * Throttle abusive sign-ups (max 5 attempts / IP / 30 min) with `rate_limiter.php`.
+   * Throttle abusive sign-ups via `rate_limiter.php`; default **REGISTER_ATTEMPT_LIMIT** = 5 per **REGISTER_DECAY_SECONDS** = 1800 s (30 min), both configurable via `.env` or `config.php`.  
+     When the limit is tripped (and `RATE_LIMITING_ENABLED` is `true`) the server responds with **HTTP 429 Too Many Requests** plus a `Retry-After` header.
    * Validate inputs (RFC-5322 e-mail, password confirmation, ≥ 8-char length).
+   * Honour the global `RATE_LIMITING_ENABLED` toggle to temporarily disable throttling during controlled load-testing.
    * Ensure e-mail uniqueness before insertion.
    * Persist user with `password_hash()` (bcrypt/argon via `PASSWORD_DEFAULT`).
    * Clear rate-limit counters on success and call `login_user()` for instant access.
@@ -793,7 +854,8 @@ Each entry follows the same heading order for clarity:
      - Rotate CSRF token (`$_SESSION['csrf_token'] = …`) immediately before login to ensure token isolation across privilege levels.
    * **Password policy**: consider enforcing complexity (upper/lower/number/symbol) and breached-password checks (e.g., Have I Been Pwned API).
    * **E-mail verification**: add double-opt-in workflow to stop disposable or mistyped addresses.
-   * **Bot defence**: integrate CAPTCHA or address reputation scoring in addition to IP rate limiting.
+   * **Bot defence**: integrate CAPTCHA or address-reputation scoring in addition to IP rate limiting.
+   * **Rate-limit feedback**: Violations now produce an HTTP 429 with a `Retry-After` header, allowing well-behaved clients to back off gracefully.
    * **HTML escaping**: error output already uses `htmlspecialchars`, but ensure any future templating remains XSS-safe.
    * Fixed 0.4.7-beta **Transport security enforcement**:
      - Insecure (HTTP) access is explicitly rejected during config bootstrap.
@@ -802,7 +864,8 @@ Each entry follows the same heading order for clarity:
 5. **Dependencies**
 
    * `auth.php` – session, CSRF utilities, and `login_user()`.
-   * `rate_limiter.php` – `too_many_attempts()`, `record_failed_attempt()`, `clear_failed_attempts()`.
+   * `rate_limiter.php` – `too_many_attempts()`, `record_failed_attempt()`, `clear_failed_attempts()`, `rate_limit_exceeded_response()`.
+   * Config constants: `REGISTER_ATTEMPT_LIMIT`, `REGISTER_DECAY_SECONDS`, `RATE_LIMITING_ENABLED`.
    * Database table `users` (`email`, `password_hash`, `display_name`, etc.) via `$pdo`.
    * PHP extensions: `pdo_mysql` (or relevant driver), `openssl`/`random_bytes`.
 
@@ -814,6 +877,11 @@ Each entry follows the same heading order for clarity:
    * Style sheet is inline; migrate to a dedicated CSS file for maintainability.
 
 7. **CHANGELOG**
+
+   * **2025-07-17 · v0.4.8-beta** – Centralised rate-limit configuration:  
+     - Replaced hard-coded thresholds with `REGISTER_ATTEMPT_LIMIT` / `REGISTER_DECAY_SECONDS` constants loaded from environment.  
+     - Added `RATE_LIMITING_ENABLED` global switch for maintenance windows.  
+     - On limit breach, `rate_limit_exceeded_response()` returns HTTP 429 with `Retry-After`.
 
    * **2025-07-14 · v0.4.7-beta** – Enforced secure transport:
      - Registration page now inherits global TLS-only policy from `config.php`.

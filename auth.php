@@ -11,6 +11,8 @@
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 
+require_once __DIR__ . '/rate_limiter.php';
+
 // Enforce secure cookie flags globally (before session_start)
 ini_set('session.cookie_secure', '1');
 ini_set('session.cookie_httponly', '1');
@@ -57,11 +59,20 @@ function validate_csrf_token(): void
 function login_user(string $user_id): void
 {
     global $pdo;
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $rateKey = 'login_' . $ip;
+
+    if (too_many_attempts($rateKey, LOGIN_ATTEMPT_LIMIT, LOGIN_DECAY_SECONDS)) {
+        rate_limit_exceeded_response(LOGIN_DECAY_SECONDS);
+    }
+
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user_id;
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));  // 🔒 rotate CSRF on login
     $pdo->prepare('UPDATE users SET last_login = NOW() WHERE user_id = ?')
         ->execute([$user_id]);
+
+    clear_failed_attempts($rateKey); // ✅ reset on successful login
 }
 
 function require_login(): void
@@ -102,7 +113,11 @@ function authenticate_user(string $email, string $password): ?array
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $rateKey = 'login_' . $ip;
+
     if (!$user || !password_verify($password, $user['password_hash'])) {
+        record_failed_attempt($rateKey); // ❌ increment on failure
         return null;
     }
 
