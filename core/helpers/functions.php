@@ -21,7 +21,7 @@
  *  - Employs shell command sanitisation via `escapeshellarg`
  *
  * @package    PixlKey
- * @subpackage core\helpers
+ * @subpackage Core\Helpers
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
