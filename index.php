@@ -382,7 +382,7 @@ if ($loggedIn) {
         </div>
 
         <!-- ===== UPLOAD FORM (unchanged except CSRF token) ===== -->
-        <form action="process.php" method="post" enctype="multipart/form-data" id="uploadForm">
+        <form action="/public/process.php" method="post" enctype="multipart/form-data" id="uploadForm">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
 
             <!-- watermark select -->
