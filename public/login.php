@@ -1,4 +1,25 @@
 <?php
+
+/**
+ * login.php — Authenticates users and initiates secure login sessions
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * This controller handles user login by verifying credentials,
+ * enforcing CSRF protection, and applying rate limiting to
+ * mitigate brute-force attacks. On success, it establishes a
+ * secure session and redirects the user accordingly.
+ *
+ * @package    PixlKey
+ * @subpackage Core\Public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/auth/auth.php, /core/auth/rate_limiter.php
+ */
+
 require_once __DIR__ . '/../core/auth/auth.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
