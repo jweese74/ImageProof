@@ -1,4 +1,34 @@
 <?php
+
+/**
+ * process.php — Handles full upload-to-output workflow for artwork processing
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * This controller processes user-submitted artwork files by validating inputs,
+ * applying optional watermarks, stripping metadata, converting formats,
+ * embedding rights/licensing metadata, generating SHA-256 hashes,
+ * producing thumbnails/previews, and extracting provenance details.
+ * It writes certificates of authenticity, stores image records to MariaDB,
+ * and packages final assets into a downloadable ZIP archive.
+ *
+ * Security measures include:
+ * - Login enforcement
+ * - CSRF validation
+ * - Upload size limits
+ * - Per-IP rate limiting
+ * - Sanitisation of all user input
+ *
+ * @package    PixlKey
+ * @subpackage Public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /download_zip.php, /core/processing/process_helpers.php, /core/metadata/metadata_extractor.php
+ */
+
 require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
