@@ -1,5 +1,23 @@
 <?php
-// rate_limiter.php
+
+/**
+ * rate_limiter.php — Session-based rate limiting for sensitive PixlKey actions
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Provides request throttling using time-based session tracking to mitigate brute-force,
+ * abuse, and spam on login, download, and registration endpoints. Sends HTTP 429 responses
+ * when thresholds are exceeded. Integrates with configurable limits and optional audit logging.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Auth
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/auth/login.php, /download_zip.php, /register.php
+ */
 
 require_once __DIR__ . '/../config/config.php';
 
