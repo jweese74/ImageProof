@@ -1,11 +1,21 @@
 <?php
 
 /**
- * Session / Auth / CSRF helpers
- * ---------------------------------------------------------------
- *  • Starts a secure session.
- *  • Exposes:  generate_csrf_token(), validate_csrf_token()
- *              login_user(), require_login(), current_user()
+ * auth.php — Manages authentication, session security, and CSRF protection
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Handles login sessions, user identity retrieval, and form protection via CSRF tokens.
+ * Enforces rate limiting on login attempts and applies secure cookie/session policies.
+ *
+ * @package    PixlKey
+ * @subpackage Core\Auth
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/config/config.php, /core/auth/rate_limiter.php
  */
 
 declare(strict_types=1);
