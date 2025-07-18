@@ -1,6 +1,26 @@
 <?php
-// index.php  — unified public / member landing page
-// --------------------------------------------------
+/**
+ * index.php — Unified public/member landing page with latest uploads and upload form
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Provides both public and authenticated user interfaces:
+ * • Displays latest image thumbnails (site-wide or per-user)
+ * • Shows upload form for logged-in users with CSRF token, watermark/licence options, and metadata inputs
+ * • Enforces IP-based upload throttling for signed-in users
+ *
+ * Dependencies include authentication/session management, CSRF validation,
+ * rate limiting, and secure user data handling with HTML escaping.
+ *
+ * @package    PixlKey
+ * @subpackage public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /public/process.php, /public/my_watermarks.php, /public/my_licenses.php
+ */
 
 require_once __DIR__ . '/core/auth/auth.php';                 // session, CSRF, login
 require_once __DIR__ . '/core/config/config.php';             // DB + HTTPS headers
