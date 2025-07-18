@@ -2,9 +2,10 @@
 require_once __DIR__ . '/../core/auth/auth.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/helpers/functions.php';
 
-$next   = $_GET['next'] ?? '/../index.php';
-$errors = [];
+$next   = $_GET['next']
+       ?? ($_POST['next'] ?? '/index.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf_token();
