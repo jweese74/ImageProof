@@ -12,7 +12,7 @@
  * Part of a secure PHP platform for managing digital artwork.
  *
  * @package    PixlKey
- * @subpackage Core/Public
+ * @subpackage Public
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
