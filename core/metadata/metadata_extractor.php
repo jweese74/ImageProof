@@ -1,15 +1,24 @@
 <?php
-// metadata_extractor.php
 
 /**
- * Metadata Extractor Script
+ * metadata_extractor.php — Extracts and sanitises embedded image metadata for Markdown export
  *
- * Usage:
- * php metadata_extractor.php --input=/path/to/signed_image.png --output=/path/to/metadata.md
+ * PixlKey Project – Beta 0.5.0
+ * Part of a secure PHP platform for managing digital artwork.
  *
- * This script extracts metadata from a signed image using ExifTool,
- * filters out sensitive information, and formats the remaining data into a polished Markdown file.
+ * This command-line utility parses metadata from uploaded artwork using ExifTool, removes sensitive fields,
+ * applies friendly labels, and generates a structured Markdown report. Intended for provenance tracking
+ * and human-readable metadata review post-upload.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Metadata
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /process.php, /core/watermark/watermark_embedder.php
  */
+
 require_once __DIR__ . '/../config/config.php';
 
 // Parse command-line arguments
