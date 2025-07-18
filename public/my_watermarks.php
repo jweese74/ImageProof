@@ -11,7 +11,7 @@
  * Integrates with database to store and retrieve watermark metadata for use in downstream image processing.
  *
  * @package    PixlKey
- * @subpackage Core/Public
+ * @subpackage Public
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
