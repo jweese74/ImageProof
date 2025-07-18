@@ -1,12 +1,25 @@
 <?php
-// store_data.php
 
 /**
- * This script gathers and maps data from process.php into the infinite_image_tools database.
- * It expects a 'runId' parameter to locate the processed data directory.
+ * store_data.php — Maps processed artwork and metadata into database records
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Handles the final step in artwork processing by ingesting metadata, verifying user ownership,
+ * and committing artwork, keyword, genre, image, certificate, and AI metadata records to the database.
+ * Ensures integrity through authentication, CSRF protection, and transactional storage. 
+ * Supports many-to-many relationships and prepares artwork for certificate issuance and provenance tracking.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Processing
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        process.php, process_helpers.php, config.php, auth.php
  */
 
-// 1. Include necessary files
 require_once __DIR__ . '/../auth/auth.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/functions.php';
