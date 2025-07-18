@@ -1,14 +1,34 @@
 <?php
-/***************************************************************
- * Infinite Muse Toolbox - Configuration & Helper Functions
- *
- * - This file defines global configuration variables
- *   and utility functions used by index.php and process.php.
- ***************************************************************/
 
-// ---------------------------
-// Configuration
-// ---------------------------
+/**
+ * functions.php — Core helper utilities for image processing and watermarking
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Provides shared utility functions and configuration for image processing,
+ * including watermark application, directory setup, logging steps, and file cleanup.
+ * This module is called by controller scripts such as index.php and process.php.
+ *
+ * Key functions include:
+ *  - echoStep() – real-time JavaScript feedback to browser
+ *  - addWatermark() – overlays primary and randomised watermarks
+ *  - clearProcessedFiles() – purges outdated output directories
+ *
+ * Security considerations:
+ *  - Avoids HTML/script injection via message sanitisation
+ *  - Uses filesystem isolation for user image operations
+ *  - Employs shell command sanitisation via `escapeshellarg`
+ *
+ * @package    PixlKey
+ * @subpackage core\helpers
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/config/config.php, /public/process.php
+ */
+
 require_once __DIR__ . '/../config/config.php';
 
 $maxFileSizeMb     = 250;  // 250 MB
