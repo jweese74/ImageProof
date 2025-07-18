@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../core/auth/auth.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/helpers/functions.php';
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         session_regenerate_id(true);
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));  // 🔐 rotate CSRF on new login
         login_user($userId);
-        header('Location: index.php');
+        header('Location: /index.php');
         exit;
     } else {
         record_failed_attempt($rateKey);
