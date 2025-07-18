@@ -1,10 +1,21 @@
 <?php
 
 /**
- * download_zip.php
- * ---------------------------------------------------------------
- * Serve the ZIP archive created by process.php for the
- * currently-logged-in user and the requested runId.
+ * download_zip.php — Securely serves a processed ZIP archive to the authenticated user
+ *
+ * PixlKey Project – Beta 0.5.0
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Handles secure download of final image asset archives by validating session auth,
+ * verifying user-runId ownership, and applying rate limiting to mitigate abuse.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/process.php, /core/auth/rate_limiter.php, /processed/
  */
 
 require_once __DIR__ . '/../core/auth/auth.php';
