@@ -1,4 +1,24 @@
 <?php
+
+/**
+ * logout.php — Securely terminates user sessions and rotates CSRF token post-logout
+ *
+ * PixlKey Project – Beta 0.5.0
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Handles secure user logout by clearing session data, expiring cookies,
+ * regenerating session identifiers, and rotating CSRF tokens to mitigate
+ * fixation and replay attacks. Redirects users to the login screen.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /public/login.php, /core/auth/auth.php
+ */
+
 require_once __DIR__ . '/../core/auth/auth.php';
 require_once __DIR__ . '/../core/config/config.php';
 
