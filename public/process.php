@@ -11,7 +11,7 @@ $userId = current_user()['user_id'];
 
 /* =====  constants & helpers  =================================== */
 $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp'];   // for upload filter
-$processedDir      = __DIR__ . '/processing';       // if not coming from helpers
+$processedDir      = __DIR__ . '/../processed';
 
 /* ================================================================
    1.  Resolve watermark to use
@@ -208,7 +208,7 @@ flush();
 function fakePath($path)
 {
     global $processedDir;
-    $fakeBase = '.../processing';
+    $fakeBase = '.../processed';
     // Ensure $processedDir ends with a slash for accurate replacement
     $processedDirWithSlash = rtrim($processedDir, '/\\') . '/';
     // Remove the base processed directory from the path
@@ -630,7 +630,7 @@ EOF;
 
                 echoStep(
                     "<button class='btn' onclick=\"window.location.href='{$dlUrl}'\">Download ZIP</button>"
-                        . "<button class='btn' onclick=\"window.location.href='/../index.php'\">Return to index</button>",
+                        . "<button class='btn' onclick=\"window.location.href='/index.php'\">Return to index</button>",
                     'download'
                 );
             } else {
