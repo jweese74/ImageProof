@@ -1,11 +1,24 @@
 <?php
 
 /**
- * My Watermarks – CRUD dashboard
- * • Upload PNG/JPEG/WEBP watermark images
- * • List / delete / set default
- * --------------------------------------------------------------
+ * my_watermarks.php — Authenticated user dashboard for managing watermark images
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Handles secure upload, listing, deletion, and default-setting of watermark files (PNG, JPG, JPEG, WEBP)  
+ * for authenticated users. Implements CSRF protection and per-user/IP rate limiting.  
+ * Integrates with database to store and retrieve watermark metadata for use in downstream image processing.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/helpers/functions.php, /core/auth/rate_limiter.php, /core/config/config.php
  */
+
 require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
 require_once __DIR__ . '/../core/config/config.php';
