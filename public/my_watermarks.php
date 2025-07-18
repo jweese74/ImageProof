@@ -10,6 +10,7 @@ require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
+require_once __DIR__ . '/../core/helpers/functions.php';
 
 /**
  * Watermark-specific rate-limit thresholds.
@@ -20,7 +21,7 @@ defined('WM_DECAY_SECONDS')  || define('WM_DECAY_SECONDS',  DOWNLOAD_DECAY_SECON
 
 $user       = current_user();
 $userId     = $user['user_id'];
-$uploadDir  = __DIR__ . "/watermarks/$userId/";
+$uploadDir  = dirname(__DIR__) . "/watermarks/$userId/";
 $errors     = [];
 $messages   = [];
 
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $newName  = uniqid('wm_') . '.' . $ext;
                 $destAbs  = $uploadDir . $newName;
                 if (move_uploaded_file($_FILES['wm_file']['tmp_name'], $destAbs)) {
-                    $relPath  = "watermarks/$userId/$newName";
+                    $relPath  = "/watermarks/$userId/$newName";
                     /* first watermark? → mark as default */
                     $stmt = $pdo->prepare(
                         'SELECT 1 FROM watermarks WHERE user_id = ? AND is_default = 1'
@@ -104,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         $row->execute([$wmId, $userId]);
         if ($r = $row->fetch()) {
-            @unlink(__DIR__ . '/' . $r['path']);
+            @unlink(dirname(__DIR__) . '/' . ltrim($r['path'], '/'));
         }
         $pdo->prepare(
             'DELETE FROM watermarks WHERE watermark_id = ? AND user_id = ?'
@@ -165,7 +166,7 @@ $watermarks->execute([$userId]);
 <body>
 
     <h1>My Watermarks</h1>
-    <p><a href="/../index.php">← back to uploader</a></p>
+    <p><a href="/index.php">← back to uploader</a></p>
 
     <?php foreach ($messages as $m) {
         echo "<p class='msg'>" . htmlspecialchars($m) . "</p>";
@@ -197,7 +198,7 @@ $watermarks->execute([$userId]);
         <tbody>
             <?php foreach ($watermarks as $wm): ?>
                 <tr>
-                    <td><img src="<?= htmlspecialchars($wm['path']) ?>" class="thumb" alt=""></td>
+                    <td><img src="<?= htmlspecialchars('/' . ltrim($wm['path'], '/')) ?>" class="thumb" alt=""></td>
                     <td><?= htmlspecialchars($wm['filename']) ?></td>
                     <td><?= $wm['is_default'] ? '✔' : '' ?></td>
                     <td>
