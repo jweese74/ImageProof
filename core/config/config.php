@@ -1,13 +1,22 @@
 <?php
+
 /**
- * PixlKey – central configuration & PDO bootstrap
- * Location: /core/config/config.php
+ * config.php — Bootstrap for secure environment variables, constants, and PDO setup
  *
- * This file sets up PDO, secure headers, HTTPS enforcement, and global constants
- * such as upload limits and rate-limiting thresholds.
- * Sensitive values are pulled from environment variables that can be supplied
- * either by a `.env` file (loaded via php-dotenv) or by Apache SetEnv
- * directives.  Hard-coding secrets is no longer necessary.
+ * PixlKey Project – Beta 0.5.0
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * This file enforces HTTPS transport, loads sensitive config from environment or `.env`,
+ * and defines global constants for app metadata, upload limits, and rate limiting.
+ * It also establishes a hardened PDO database connection and sets secure HTTP headers.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Config
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/config/.env.example, /vendor/vlucas/phpdotenv
  */
 
 declare(strict_types=1);
