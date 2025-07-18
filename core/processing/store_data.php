@@ -9,11 +9,12 @@
 // 1. Include necessary files
 require_once __DIR__ . '/../auth/auth.php';
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../helpers/functions.php';
 
 require_login();
 
 session_regenerate_id(true);
-$_SESSION['csrf_token'] = bin2hex(random_bytes(32));  // 🔐 Rotate CSRF defensively post-login
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf_token();
 }
@@ -54,7 +55,7 @@ if (!$stmt->fetchColumn()) {
     die("Error: You do not have permission to access this runId.");
 }
 
-$runDir = __DIR__ . "/processed/{$runId}";
+$runDir = __DIR__ . "/../../processed/{$runId}";
 
 if (!is_dir($runDir)) {
     die("Error: Processing directory for runId '{$runId}' does not exist.");
