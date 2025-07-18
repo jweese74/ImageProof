@@ -11,7 +11,7 @@
  * fixation and replay attacks. Redirects users to the login screen.
  *
  * @package    PixlKey
- * @subpackage Core/Public
+ * @subpackage Public
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
