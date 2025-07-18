@@ -36,7 +36,7 @@ function record_failed_attempt(string $key): void
 
     // Optional logging for future audit trail (disabled by default)
     /*
-    error_log(sprintf("[RateLimiter] Key=%s Time=%s IP=%s\n", $key, date('c'), $_SERVER['REMOTE_ADDR'] ?? 'unknown'), 3, __DIR__ . '/logs/rate_limiter.log');
+    error_log(sprintf("[RateLimiter] Key=%s Time=%s IP=%s\n", $key, date('c'), $_SERVER['REMOTE_ADDR'] ?? 'unknown'), 3, dirname(__DIR__, 2) . '/logs/rate_limiter.log');
     */
 }
 
