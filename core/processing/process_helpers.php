@@ -1,5 +1,25 @@
 <?php
-// process_helpers.php
+
+/**
+ * process_helpers.php — Utility functions for image processing and UI feedback
+ *
+ * PixlKey Project – Beta 0.5.0  
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Provides low-level helpers for real-time progress streaming and watermarking 
+ * during artwork processing runs. This module supports image transformation 
+ * using external tools (ImageMagick) and ensures secure shell execution via 
+ * proper escaping. Also supports integration with the processing UI.
+ *
+ * @package    PixlKey
+ * @subpackage Core\Processing
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/processing/process.php, /public/process.php
+ */
+
 require_once __DIR__ . '/../config/config.php';
 
 /**
