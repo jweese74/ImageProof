@@ -15,7 +15,6 @@
  * rate limiting, and secure user data handling with HTML escaping.
  *
  * @package    PixlKey
- * @subpackage public
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
