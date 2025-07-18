@@ -1,4 +1,24 @@
 <?php
+
+/**
+ * register.php — Handles secure user registration, input validation, and login initiation
+ *
+ * PixlKey Project – Beta 0.5.0
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * Accepts registration form input, enforces CSRF protection, rate limits abusive attempts,
+ * hashes and stores passwords securely, prevents duplicate accounts, and logs in the user.
+ * Implements session regeneration and rotates CSRF tokens on successful account creation.
+ *
+ * @package    PixlKey
+ * @subpackage Public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/auth/auth.php, /core/auth/rate_limiter.php, /core/helpers/functions.php
+ */
+
 require_once __DIR__ . '/../core/auth/auth.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
