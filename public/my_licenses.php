@@ -1,11 +1,25 @@
 <?php
 
 /**
- * My Licences – CRUD dashboard
- * • Create / update / delete licence text blobs
- * • Mark one licence as default
- * --------------------------------------------------------------
+ * my_licenses.php — Authenticated dashboard to manage user licensing text and defaults
+ *
+ * Provides a secure interface for authenticated users to create, edit, delete, and mark default
+ * licensing text blocks tied to their PixlKey account. Enforces CSRF protection and rate limiting
+ * to prevent abuse, and sanitises output for safe HTML rendering. Includes Markdown preview
+ * for licence display using Parsedown in safe mode.
+ *
+ * PixlKey Project – Beta 0.5.0
+ * Part of a secure PHP platform for managing digital artwork.
+ *
+ * @package    PixlKey
+ * @subpackage Core/Public
+ * @author     Jeffrey Weese
+ * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
+ * @license    MIT
+ * @version    0.5.0-beta
+ * @see        /core/auth/auth.php, /core/helpers/functions.php, Parsedown
  */
+
 require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
 require_once __DIR__ . '/../core/config/config.php';
