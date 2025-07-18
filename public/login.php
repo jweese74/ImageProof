@@ -12,7 +12,7 @@
  * secure session and redirects the user accordingly.
  *
  * @package    PixlKey
- * @subpackage Core\Public
+ * @subpackage Public
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
