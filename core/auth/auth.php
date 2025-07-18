@@ -78,7 +78,7 @@ function require_login(): void
 {
     if (empty($_SESSION['user_id'])) {
         $dest = urlencode($_SERVER['REQUEST_URI'] ?? '/');
-        header('Location: /login.php?next=' . $dest);
+        header('Location: /public/login.php?next=' . $dest);
         exit;
     }
 }
