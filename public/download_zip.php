@@ -55,7 +55,7 @@ if (!$stmt->fetchColumn()) {
    2.  Build expected file path
 ----------------------------------------------------------------- */
 $userId       = current_user()['user_id'];             // UUID from session
-$processedDir = __DIR__ . '/../processing';            // root-level directory outside /public
+$processedDir = __DIR__ . '/../processed';
 $zipFile      = $processedDir . '/' . $userId . '/' . $runId . '/final_assets.zip';
 
 if (!file_exists($zipFile)) {
