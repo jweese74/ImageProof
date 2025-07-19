@@ -67,15 +67,19 @@ if (!$stmt->fetchColumn()) {
 ----------------------------------------------------------------- */
 $userId       = current_user()['user_id'];             // UUID from session
 $processedDir = __DIR__ . '/../processed';
-$zipFile      = $processedDir . '/' . $userId . '/' . $runId . '/final_assets.zip';
 
-if (!file_exists($zipFile)) {
+// Accept whatever .zip the run actually produced
+$runDir  = $processedDir . '/' . $userId . '/' . $runId;
+$hits    = glob($runDir . '/*.zip');
+if (!$hits) {
     header('HTTP/1.1 404 Not Found');
     echo 'File not found.';
     record_failed_attempt($rateKey);
     exit;
 }
+$zipFile = $hits[0];                       // first (and only) archive
 
+// Optional: verify writable ownership checks here
 // Passed all checks: don't count as abuse
 clear_failed_attempts($rateKey);
 
@@ -83,7 +87,7 @@ clear_failed_attempts($rateKey);
    3.  Stream the archive
 ----------------------------------------------------------------- */
 header('Content-Type: application/zip');
-header('Content-Disposition: attachment; filename="final_assets.zip"');
+header('Content-Disposition: attachment; filename="' . basename($zipFile) . '"');
 header('Content-Length: ' . filesize($zipFile));
 readfile($zipFile);
 exit;
