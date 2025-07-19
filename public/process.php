@@ -56,7 +56,15 @@ if (!empty($_POST['watermark_id'])) {
     );
     $stmt->execute([$_POST['watermark_id'], $userId]);
     if ($row = $stmt->fetch()) {
-        $selectedWatermark = __DIR__ . '/' . $row['path'];
+        // DB stores path relative to project root, e.g. "watermarks/{$userId}/sig.png"
+        // Real path must be resolved from the PROCESS script which sits in /public.
+        $candidate = realpath(__DIR__ . '/../' . ltrim($row['path'], '/'));
+        $selectedWatermark = $candidate ?: '';
+
+        // Fallback: if the DB ever stores an absolute path just accept it
+        if (!$selectedWatermark && file_exists($row['path'])) {
+            $selectedWatermark = $row['path'];
+        }
     }
 }
 
