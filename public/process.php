@@ -379,6 +379,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $numFiles = count($uploadedFiles['name']);
     echoStep("Number of images to process: {$numFiles}", 'info');
 
+    /* -----------------------------------------------------------
+       Decide what to call the ZIP archive
+       -----------------------------------------------------------
+       • Single file  →  <original-name>.zip   (sanitised)
+       • Multi-file   →  final_assets.zip      (current behaviour)
+    ----------------------------------------------------------- */
+    $zipBaseName = 'final_assets';
+    if ($numFiles === 1) {
+        $firstName   = pathinfo($uploadedFiles['name'][0], PATHINFO_FILENAME);
+        $zipBaseName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $firstName);
+        if ($zipBaseName === '') {
+            $zipBaseName = 'final_assets';
+        }
+    }
+
     // Prepare final results array
     $resultsToZip = [];
 
@@ -474,7 +489,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Embed metadata (including Keywords & IntellectualGenre)
         echoStep("Embedding metadata into '" . fakePath($signedImage) . "'...", 'info');
-        $licenseInfo = "Sold for personal use and enjoyment only.";
         $cmdEmbed    = "exiftool -overwrite_original "
             . "-Iptc:By-line=" . escapeshellarg($bylineName) . " "
             . "-Iptc:CopyrightNotice=" . escapeshellarg($copyrightNotice) . " "
@@ -491,7 +505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             . "-XMP-iptcCore:IntellectualGenre=" . escapeshellarg($genre) . " "
             . "-XMP-xmpMM:DocumentID=uuid:" . escapeshellarg($imageHash) . " "
             . "-XMP-xmpMM:InstanceID=uuid:" . escapeshellarg($imageHash) . " "
-            . "-XMP:Rights=" . escapeshellarg($licenseInfo) . " "
+            . "-XMP:Rights=" . escapeshellarg($resolvedLicense) . " "
             . escapeshellarg($signedImage);
 
         exec($cmdEmbed . " 2>&1", $outputEmbed, $retEmbed);
@@ -618,9 +632,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ### Rights
 
-*{$licenseInfo}*  
-{$copyrightNotice}  
-
+*{$resolvedLicense}*  
+ {$copyrightNotice}
 ---
 
 ### Additional Details
@@ -649,7 +662,7 @@ EOF;
     // If files were processed, zip them
     if (!empty($resultsToZip)) {
         echoStep("Creating ZIP archive of processed files...", 'info');
-        $zipFile = $runDir . "/final_assets.zip";
+        $zipFile = $runDir . "/{$zipBaseName}.zip";
         $zipPath = trim(shell_exec("which zip"));
         if (!empty($zipPath) && file_exists($zipPath)) {
             // We'll zip only the final result files
@@ -662,7 +675,7 @@ EOF;
             exec($cmdZip . " 2>&1", $outputZip, $retZip);
 
             if ($retZip === 0 && file_exists($zipFile)) {
-                echoStep("ZIP archive created successfully: final_assets.zip", 'success');
+                echoStep("ZIP archive created successfully: {$zipBaseName}.zip", 'success');
                 // Provide link to download via a separate script
                 $dlUrl = "download_zip.php?runId=" . urlencode($runId);
 
