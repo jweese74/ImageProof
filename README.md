@@ -4,12 +4,24 @@ _PixlKey_ is a secure PHP-based platform for digital artists and content creator
 
 ## 🎯 Project Goals
 
-The core goal of PixlKey is to create a **searchable, decentralized registry of digital images, ownership rights, and licensing**, anchored by each image's **cryptographic fingerprint** rather than just file content or metadata. This enables:
+## 🎯 Project Goals — Implementation Snapshot
 
-- Verifiable proof of authorship and modification history.
-- Immutable links between artwork, metadata, and license.
-- A decentralized-friendly, off-chain registry system for provenance.
-- Rights management that is resilient across formats, platforms, and duplicates.
+PixlKey’s purpose is to build a **searchable, decentralised registry of digital images, ownership rights, and licences**, anchored by each image’s **SHA-256 cryptographic fingerprint**.
+
+That foundation unlocks four concrete capabilities:
+
+| Goal                                                                   | How We Deliver It                                                                                                                                                                                                                                                                |                                            Status                                            |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------: |
+| **Verifiable proof of authorship & modification history**              | • Dual SHA-256 hashes captured *before* and *after* processing.<br>• Markdown **Certificate of Authenticity** records hash, UUID, timestamp, user ID.<br>• Submission log tracks IP, user-agent, and run time for every job.                                                     |                                          ✅ **Done**                                          |
+| **Immutable links between artwork, metadata & licence**                | • UUID + licence text embedded directly into IPTC/XMP of final PNG **and** persisted in the database.<br>• Join-tables (creators, genres, keywords) bind all related entities atomically.<br>• Certificate mirrors the same UUID / licence for double-entry assurance.           |                                          ✅ **Done**                                          |
+| **Decentralised-friendly, off-chain provenance registry**              | • Every asset is identified by its content-addressable SHA-256 digest.<br>• Database schema already contains `blockchain_tx` placeholder for future anchoring.<br>• Certificates export cleanly for IPFS pinning or on-chain notarisation.                                       |        🚧 **In Progress** — external anchoring & signature workflow slated for 0.6.0-Beta        |
+| **Rights management resilient across formats, platforms & duplicates** | • All derivatives (thumb, preview, full) are normalised to PNG and carry the same watermark + embedded licence.<br>• Default-licence selector prevents conflicting terms across uploads.<br>• Duplicate-email and per-user watermark folders guard against ownership collisions. | 🚧 **In Progress** — perceptual-hash duplicate detection & bulk re-licensing toolkit planned |
+
+> **Next Milestones**
+> • Implement search/query API for public discovery.
+> • Integrate IPFS + signed JSON manifest (or similar) for decentralised anchoring.
+> • Add pHash duplicate detection and version-history table for airtight provenance.
+
 
 ## 📜 Changelog
 
@@ -101,49 +113,53 @@ No changes to database, API, or core logic—this is a visual/UI refinement patc
 - Initial alpha release and proof-of-concept build completed.
 - Functional upload → watermark → package flow working with database integration.
 
-## What It Does
+## What It Does – Beta 0.5.0 snapshot
 
-- Upload high-resolution artwork (PNG, JPG, WebP up to 10MB).
-- Apply dynamic or default watermarking via user controls.
-- Embed metadata and author statements using ExifTool.
-- Generate markdown certificates of authenticity.
-- Package processed image, thumbnail, metadata, and cert into a ZIP.
-- Persist image fingerprint, metadata, license ID, and ownership to a relational database.
-- Allow users to manage watermark and license templates.
-- Extract and publish signed metadata reports from processed files.
-- Adaptive rate limiting across authentication, downloads, uploads, watermark and licence actions (configurable via `config.php` / `.env`).
+* **Accept high-resolution uploads** (PNG, JPG, WebP ≤ 200 MB; size ceiling read from `.env`/`config.php`).
+* **Normalise to a canonical PNG**, strip legacy EXIF, then compute a pre-process **SHA-256 fingerprint**.
+* **Apply default or on-the-fly watermarking**
 
+  * bitmap overlay (bottom-right, auto-scaled) **plus** five oblique text marks for tamper deterrence.
+* **Embed rights & provenance** with ExifTool – writes UUID, licence text, keywords, creators into IPTC/XMP.
+* **Hash again post-embed**, write both digests to DB, and include them in a Markdown *Certificate of Authenticity*.
+* **Generate derivative assets** – 400 px thumbnail and 800 px preview, both watermarked.
+* **Package everything** (final PNG, thumbnail, preview, metadata dump, certificate) into a lean ZIP and stream it to the browser.
+* **Persist complete registry row**: artwork UUID, both hashes, licence-ID, user-ID, timestamps, plus placeholders for future on-chain Tx.
+* **User dashboards** to upload / delete watermarks and to create, edit, or set-default licences (Markdown rendered safely).
+* **One-click metadata report extraction** – produces a signed\* Markdown digest from any processed file (*signature workflow in progress*).
+* **Adaptive rate limiting** guards log-in, registration, uploads, watermark & licence actions, ZIP generation, and downloads – all tunable via ENV constants.
 
-Authentication & Security Enhancements **(updated in 0.4.9-beta)**:
-- Passwords are now securely verified using `password_verify()` and hashed with `password_hash()` using `PASSWORD_DEFAULT` (Argon2id or bcrypt).
-- Legacy password hashes are automatically upgraded on login using `password_needs_rehash()`.
-- Removed any legacy or plaintext password validation logic.
-- Rate limiting now extends beyond login/registration to cover `/download_zip.php`, watermark uploads, licence management, ZIP processing and index-page uploads, with a global toggle (`RATE_LIMITING_ENABLED`) and per-endpoint thresholds.
+### Authentication & Security Enhancements **(0.4.9 → 0.5.0)**
 
-Visual/UX enhancements (from 0.4.2-beta):
-- Centered thumbnail grid (5-across) in public and member views.
-- Preview frames for watermark and image uploads.
-- Branding polish with new header font and clearer logo visibility.
+* Passwords verified with `password_verify()`; stored with `password_hash()` using **`PASSWORD_DEFAULT` (Argon2id/bcrypt)**.
+* Old hashes silently upgraded on login via `password_needs_rehash()`.
+* Session fixation defences: ID regeneration on login, registration, and logout, with simultaneous CSRF-token rotation.
+* **Global Secure/HttpOnly/SameSite=Strict** cookies; mandatory HTTPS guard.
+* Expanded **rate-limiting** (IP + user scope) now covers *all* sensitive endpoints, emits `429 Retry-After`.
 
-## Roadmap (Top Priorities)
+### Visual / UX Enhancements **(0.4.2 → 0.5.0)**
 
-### Security & Session Hardening
-1. **Regenerate session ID on login** to mitigate fixation attacks. *(Implemented in `auth.php` and `logout.php`)*
-2. **Strict `runId` sanitization and ownership checks** in download & store logic. ✅ *(Enforced in 0.4.1-beta)*
-3. **Rate limiting and brute-force protection** across authentication, downloads, uploads and critical POST actions. ✅ *(Expanded in 0.4.9-beta via deeper `rate_limiter.php` integrations)*
-4. **CSRF failure, login, and download event logging** for audit and security.
-5. **Enforce secure password hashing/verification** using `password_hash()` and `password_verify()` with `PASSWORD_DEFAULT`. ✅ *(Patched in 0.4.8-beta with rehash fallback support)*
+* Dark-theme, responsive **login & registration** pages with inline error messaging.
+* Centred thumbnail grid (5-across) in public/member galleries; live preview frames for uploads.
+* Real-time, colour-coded **progress stream** during processing; glow-button download on completion.
+* Subtle branding refresh – new header font, clearer logo, rotating poetic taglines for each request.
 
 
-### Configuration & Validation
-5. **Validate required environment variables** (`DB_PASS`, `DB_NAME`, etc.) at runtime.
-6. **MIME-type validation** for uploads (`mime_content_type`) in addition to file extension checks.
-7. **Restrict watermark and upload directories** to correct permissions (`0700`, `0750`).
-8. **Centralize config values** like `$allowedExtensions`, watermark paths, max file size, **and rate-limiting thresholds** into `.env` or `config.php`. ✅
+## Roadmap to 0.6.0-beta
 
-### Maintainability & Modularity
-9. **Refactor monolithic `store_data.php`** into modular handlers per table (e.g., `Artworks`, `Images`, `Submissions`).
-10. **Replace silent errors (`@unlink`, `die()`)** with structured logging and exception handling.
+| Priority | Area                                | Action Item                                               | Notes / Acceptance Test                                                                                                                                                                      |
+| -------: | ----------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|    **1** | **Decentralised Provenance**        | **External anchor & signature workflow**                  | • Push artwork‐hash + certificate JSON to IPFS *and* store returned CID in `blockchain_tx` column.<br>• Sign certificate with project signing key (PGP or Ed25519) and publish detached sig. |
+|    **2** | **Discovery & Searchability**       | **Public search API + UI**                                | • `/api/artworks` endpoint: query by SHA-256, UUID, keyword.<br>• Lightweight Vue/HTMX page for human search.<br>• Rate-limited, paginated JSON responses.                                   |
+|    **3** | **Rights Management / Duplication** | **Perceptual-hash (pHash) duplicate detection**           | • Generate 64-bit pHash during ingestion.<br>• Flag visually identical but re-encoded uploads; prompt user to link or reject.                                                                |
+|    **4** | **Provenance Audit Trail**          | **Append-only versions table**                            | • `artwork_versions` (`artwork_id`, `hash`, `created_at`, `modifier_id`).<br>• Automatically insert new row on every re-process.                                                             |
+|    **5** | **Rights Management / Maintenance** | **Bulk re-licence updater**                               | • CLI script to re-embed updated licence text across historical uploads and regenerate certificates.                                                                                         |
+|    **6** | **Security & Session Hardening**    | **Event logging for CSRF failures, logins, downloads**    | • Write to `security_events` table and `error_log`; include IP, UA, user\_id, outcome.                                                                                                       |
+|    **7** | **Configuration & Validation**      | **Runtime ENV validation**                                | • Abort startup if `DB_PASS`, `DB_NAME`, `JWT_SECRET`, etc. are unset.                                                                                                                       |
+|    **8** | **Configuration & Validation**      | **MIME-type validation on upload**                        | • Reject files where `mime_content_type()` ≠ declared extension.                                                                                                                             |
+|    **9** | **Configuration & Validation**      | **Tighten directory permissions**                         | • Set watermark/upload dirs to `0750` (`0700` if private storage).                                                                                                                           |
+|   **10** | **Maintainability & Modularity**    | **Refactor `store_data.php` into table-centric handlers** | • Separate classes: `ArtworksDAO`, `ImagesDAO`, `SubmissionsDAO`, wrapped in single transaction manager.                                                                                     |
+|   **11** | **Maintainability & Modularity**    | **Replace silent failures with structured exceptions**    | • Swap `@unlink`, `die()` etc. for try/catch + PSR-3 logger.                                                                                                                                 |
 
 ---
 
@@ -155,31 +171,79 @@ Visual/UX enhancements (from 0.4.2-beta):
 - **Persistence**: UUID-based relational schema with SHA-256 image fingerprinting
 - **Optional**: `.env` configuration via `php-dotenv`; **Redis** (future) for persistent rate-limiting buckets
 
-## 🔐 Security Enhancements
+## 🔐 Security Enhancements — Beta 0.5 recap
 
-- Session ID regeneration on login and logout to prevent fixation.
-- Registration flow now also regenerates session ID post-account creation.
-- `store_data.php` enforces redundant session ID regeneration before processing.
-- Secure cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`.
-- CSRF token protection on all forms.
-- Passwords securely hashed using `password_hash()` with `PASSWORD_DEFAULT` (Argon2id or bcrypt).
-- Passwords verified using `password_verify()` across all authentication flows.
-- Automatic hash upgrades on login using `password_needs_rehash()` to future-proof security.
+### Session & Cookies
 
-- Adaptive rate limiting enforced across authentication, downloads, watermark uploads, licence actions and ZIP processing, driven by `rate_limiter.php`.
-  - Protects against brute-force, scraping and bandwidth abuse.
-  - Central thresholds (`LOGIN_ATTEMPT_LIMIT`, `DOWNLOAD_ATTEMPT_LIMIT`, etc.) overrideable via environment variables.
-  - Optional global toggle (`RATE_LIMITING_ENABLED`) plus graceful **429** responses with `Retry-After`.
+* Session ID regenerated on **login**, **registration**, **logout**, and again before long-running jobs (`store_data.php`) to foil fixation/replay.
+* All session cookies now ship with `Secure`, `HttpOnly`, `SameSite=Strict`.
 
-- HTTPS is now **strictly required** for all web access:
-  - Non-TLS requests are rejected with `403 Forbidden`.
-  - Application emits browser-hardening headers globally via `config.php`.
+### Cross-Site Request Forgery (CSRF)
 
-## Status
+* 32-byte cryptographically random token created once per session.
+* Token embedded in every POST form *and* accepted via `X-CSRFTOKEN` header for AJAX/API calls.
+* Token automatically rotated after each authentication event and on logout.
 
-- Core upload, watermark, and metadata functions complete.
-- Testing phase: security, concurrency, and error handling enhancements in progress.
-- Stable builds pending rollout after roadmap completion.
+### Password Security
+
+* Passwords hashed with `password_hash()` using `PASSWORD_DEFAULT` (Argon2id/bcrypt, depending on PHP build).
+* Automatic re-hashing on login via `password_needs_rehash()` keeps algorithms current.
+* `password_verify()` with constant-time comparison mitigates timing attacks.
+
+### Adaptive Rate Limiting (`rate_limiter.php`)
+
+| Protected action | Default limit | Decay window |
+| ---------------- | ------------- | ------------ |
+| Login            | `5` attempts  | `15 min`     |
+| Registration     | `3` attempts  | `30 min`     |
+| Downloads        | `10` files    | `10 min`     |
+| Watermarks       | `10` actions  | `1 min`      |
+| Licence edits    | `10` actions  | `1 min`      |
+| ZIP packaging    | `3` jobs      | `10 min`     |
+
+* All thresholds overrideable via environment variables (`*_ATTEMPT_LIMIT`, `*_DECAY_SECONDS`).
+* Global toggle `RATE_LIMITING_ENABLED`.
+* Graceful **429** responses include `Retry-After` for client back-off.
+* Optional audit logging to `error_log` for forensic review.
+
+### Transport & Header Hardening
+
+* **HTTPS is mandatory**; plain-HTTP requests return **403 Forbidden**.
+* Global headers:
+
+  * `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+  * `X-Content-Type-Options: nosniff`
+
+### Input Validation & Sanitisation
+
+* `htmlspecialchars()`, `addslashes()`, and `escapeshellarg()` applied wherever user data touches HTML, SQL, or the shell.
+* Upload guard: image files only, ≤ **200 MB** → otherwise **413 Payload Too Large**.
+* IDs and paths validated/sanitised to block traversal and injection.
+
+### Filesystem & Process Isolation
+
+* Each processing run lives in a user-scoped, time-stamped directory; internal paths are masked in UI/logs.
+* Temporary files auto-purged post-process; periodic cron cleans aged processed folders.
+
+### Provenance & Integrity
+
+* Pre- and post-process **SHA-256** digests stored with artwork to detect tampering.
+* Database includes placeholder column for future on-chain (blockchain) anchoring.
+
+## Status — Beta 0.5.0 snapshot
+
+| Area                   | Current state                                                                                                                    | Next up                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Core pipeline**      | Upload → watermark → hash → metadata embed/extract → certificate generation **fully operational** and passing integration tests. | Performance profiling on large (250 MB) batches.                            |
+| **Security hardening** | Session-regeneration, strict cookies, CSRF rotation, adaptive rate-limiting and mandatory HTTPS *all merged to `main`*.          | Finish automated penetration test suite (OWASP ZAP & custom scripts).       |
+| **Dashboards**         | User-facing Licence and Watermark CRUD UIs live; dark-mode auth screens polished.                                                | Add role-based admin view for system-wide metrics.                          |
+| **CLI tooling**        | Metadata-extractor and batch-processing flags stable on Linux/macOS.                                                             | Windows PowerShell wrapper & man-page generation.                           |
+| **Database layer**     | Strict PDO with transactions, UUID ids, and provenance tables frozen—no breaking migrations planned.                             | Lightweight read-replica strategy for search scaling.                       |
+| **Docs & Ops**         | README security section updated; `.env.example` and sample Nginx config published.                                               | Dockerfile, CI pipeline, and automated cron-cleanup script.                 |
+| **Provenance R\&D**    | SHA-256 digests stored; DB column reserved for future blockchain anchor.                                                         | Evaluate Arweave vs. Polygon for on-chain proof.                            |
+| **Release track**      | **Feature-freeze** declared for Beta 0.5.x; only bug-fixes and test coverage improvements accepted.                              | Beta 0.6: accessibility audit, localisation scaffold, public API endpoints. |
+
+**Bottom line:** core functionality is feature-complete and secure; we’re in a stabilisation sprint aimed at a public beta roll-out once automated tests, ops scripts, and performance benchmarks pass.
 
 ---
 
