@@ -1,29 +1,42 @@
 # 🖼️ PixlKey
 
-_PixlKey_ is a secure PHP-based platform for digital artists and content creators to upload, watermark, license, and register their digital artwork. The system ensures verifiable ownership, metadata preservation, and flexible licensing—tying these not just to the artwork file, but to its unique cryptographic fingerprint (SHA-256 hash).
-
-## 🎯 Project Goals
+_PixlKey_ is a secure PHP-based platform for digital artists and content creators to upload, watermark, license, and register their digital artwork. The system ensures verifiable ownership, metadata preservation, and flexible licensing—tying these not just to the artwork file, but to its unique cryptographic fingerprints (**SHA-256 hash** and **High-Fidelity Visual (HFV) digest**).
 
 ## 🎯 Project Goals — Implementation Snapshot
 
-PixlKey’s purpose is to build a **searchable, decentralised registry of digital images, ownership rights, and licences**, anchored by each image’s **SHA-256 cryptographic fingerprint**.
+PixlKey’s purpose is to build a **searchable, decentralised registry of digital images, ownership rights, and licences**, anchored by each image’s **cryptographic fingerprints** (**SHA-256** and **HFV**).
 
 That foundation unlocks four concrete capabilities:
 
 | Goal                                                                   | How We Deliver It                                                                                                                                                                                                                                                                |                                            Status                                            |
 | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------: |
-| **Verifiable proof of authorship & modification history**              | • Dual SHA-256 hashes captured *before* and *after* processing.<br>• Markdown **Certificate of Authenticity** records hash, UUID, timestamp, user ID.<br>• Submission log tracks IP, user-agent, and run time for every job.                                                     |                                          ✅ **Done**                                          |
+| **Verifiable proof of authorship & modification history**              | • Dual SHA-256 hashes captured *before* and *after* processing.<br>• **High-Fidelity Visual (HFV) fingerprint** generated for each signed image, pepper-salted for forgery resistance.<br>• Markdown **Certificate of Authenticity** records hashes, UUID, timestamp, user ID.<br>• Submission log tracks IP, user-agent, and run time for every job.                                                     |                                          ✅ **Done**                                          |
 | **Immutable links between artwork, metadata & licence**                | • UUID + licence text embedded directly into IPTC/XMP of final PNG **and** persisted in the database.<br>• Join-tables (creators, genres, keywords) bind all related entities atomically.<br>• Certificate mirrors the same UUID / licence for double-entry assurance.           |                                          ✅ **Done**                                          |
-| **Decentralised-friendly, off-chain provenance registry**              | • Every asset is identified by its content-addressable SHA-256 digest.<br>• Database schema already contains `blockchain_tx` placeholder for future anchoring.<br>• Certificates export cleanly for IPFS pinning or on-chain notarisation.                                       |        🚧 **In Progress** — external anchoring & signature workflow slated for 0.6.0-Beta        |
+| **Decentralised-friendly, off-chain provenance registry**              | • Every asset is identified by its content-addressable SHA-256 digest and HFV fingerprint.<br>• Database schema already contains `blockchain_tx` placeholder for future anchoring.<br>• Certificates export cleanly for IPFS pinning or on-chain notarisation.                                       |        🚧 **In Progress** — external anchoring & signature workflow slated for 0.6.0-Beta        |
 | **Rights management resilient across formats, platforms & duplicates** | • All derivatives (thumb, preview, full) are normalised to PNG and carry the same watermark + embedded licence.<br>• Default-licence selector prevents conflicting terms across uploads.<br>• Duplicate-email and per-user watermark folders guard against ownership collisions. | 🚧 **In Progress** — perceptual-hash duplicate detection & bulk re-licensing toolkit planned |
 
-> **Next Milestones**
-> • Implement search/query API for public discovery.
-> • Integrate IPFS + signed JSON manifest (or similar) for decentralised anchoring.
-> • Add pHash duplicate detection and version-history table for airtight provenance.
-
+> **Next Milestones**  
+> • Implement search/query API for public discovery.  
+> • Integrate IPFS + signed JSON manifest (or similar) for decentralised anchoring.  
+> • Add pHash duplicate detection and version-history table for airtight provenance.  
 
 ## 📜 Changelog
+
+### [0.5.1-alpha] – 2025-07-24
+### High-Fidelity Visual (HFV) Fingerprinting & Provenance Enhancements
+- **New Python utility** `generate_hvf.py` generates a **deterministic, pepper-salted SHA-256 HFV digest** for each signed image using pixel data, histogram stats, and a perceptual hash.  
+- **New PHP helper** `generateHFV()` in `/core/helpers/functions.php` integrates HFV generation into the processing pipeline.  
+- **Database updates**:  
+  - Added `hfv_fingerprint` field to `images` table.  
+  - `/core/processing/store_data.php` now records HFV digests alongside SHA-256 for each signed image.  
+  - Added SHA-256 of the **first signed image** to the `Artworks` table for certification anchoring.  
+- **Certificates**: Markdown Certificates of Authenticity now include the **HFV fingerprint** in addition to SHA-256.  
+- **Audit & Logging**:  
+  - `/public/download_zip.php` now reads `hfv_fingerprint.txt` (if present) and logs fingerprints for provenance tracking.  
+  - HFV digest saved as `hfv_fingerprint.txt` in each processing run directory for audit trails.  
+- **Config**: Added `HVF_PEPPER` constant to `/core/config/config.php` for secure, server-only salting of HFV fingerprints.  
+
+> This update establishes a second, content-aware fingerprint for assets, making ownership verification stronger and more resistant to visual forgery.
 
 ### [0.4.9-beta] – 2025-07-17
 ### Critical Security Task – Rate Limiting for Auth & Downloads
@@ -116,46 +129,49 @@ No changes to database, API, or core logic—this is a visual/UI refinement patc
 ## What It Does – Beta 0.5.0 snapshot
 
 * **Accept high-resolution uploads** (PNG, JPG, WebP ≤ 200 MB; size ceiling read from `.env`/`config.php`).
-* **Normalise to a canonical PNG**, strip legacy EXIF, then compute a pre-process **SHA-256 fingerprint**.
+* **Normalise to a canonical PNG**, strip legacy EXIF, then compute a pre-process **SHA-256 fingerprint** and **HFV digest**.
 * **Apply default or on-the-fly watermarking**
-
   * bitmap overlay (bottom-right, auto-scaled) **plus** five oblique text marks for tamper deterrence.
 * **Embed rights & provenance** with ExifTool – writes UUID, licence text, keywords, creators into IPTC/XMP.
-* **Hash again post-embed**, write both digests to DB, and include them in a Markdown *Certificate of Authenticity*.
+* **Hash again post-embed**, generate **HFV digest**, write both digests to DB, and include them in a Markdown *Certificate of Authenticity*.
 * **Generate derivative assets** – 400 px thumbnail and 800 px preview, both watermarked.
-* **Package everything** (final PNG, thumbnail, preview, metadata dump, certificate) into a lean ZIP and stream it to the browser.
-* **Persist complete registry row**: artwork UUID, both hashes, licence-ID, user-ID, timestamps, plus placeholders for future on-chain Tx.
+* **Package everything** (final PNG, thumbnail, preview, metadata dump, certificate, `hfv_fingerprint.txt`) into a lean ZIP and stream it to the browser.
+* **Persist complete registry row**: artwork UUID, both hashes, HFV digest, licence-ID, user-ID, timestamps, plus placeholders for future on-chain Tx.
 * **User dashboards** to upload / delete watermarks and to create, edit, or set-default licences (Markdown rendered safely).
 * **One-click metadata report extraction** – produces a signed\* Markdown digest from any processed file (*signature workflow in progress*).
 * **Adaptive rate limiting** guards log-in, registration, uploads, watermark & licence actions, ZIP generation, and downloads – all tunable via ENV constants.
 
-### Authentication & Security Enhancements **(0.4.9 → 0.5.0)**
+### Authentication & Security Enhancements **(0.4.9 → 0.5.1)**
 
 * Passwords verified with `password_verify()`; stored with `password_hash()` using **`PASSWORD_DEFAULT` (Argon2id/bcrypt)**.
 * Old hashes silently upgraded on login via `password_needs_rehash()`.
 * Session fixation defences: ID regeneration on login, registration, and logout, with simultaneous CSRF-token rotation.
 * **Global Secure/HttpOnly/SameSite=Strict** cookies; mandatory HTTPS guard.
 * Expanded **rate-limiting** (IP + user scope) now covers *all* sensitive endpoints, emits `429 Retry-After`.
+* **High-Fidelity Visual (HFV) fingerprinting** added:  
+  * Pepper-salted HFV digests generated for all signed images via `generate_hvf.py`.  
+  * Fingerprints stored in DB (`images.hfv_fingerprint`) and included in Certificates of Authenticity.  
+  * `hfv_fingerprint.txt` saved per run for auditable downloads.  
 
-### Visual / UX Enhancements **(0.4.2 → 0.5.0)**
+### Visual / UX Enhancements **(0.4.2 → 0.5.1)**
 
 * Dark-theme, responsive **login & registration** pages with inline error messaging.
 * Centred thumbnail grid (5-across) in public/member galleries; live preview frames for uploads.
 * Real-time, colour-coded **progress stream** during processing; glow-button download on completion.
 * Subtle branding refresh – new header font, clearer logo, rotating poetic taglines for each request.
-
+* **Certificates** now display both SHA-256 and HFV digests for stronger visual provenance assurance.
 
 ## Roadmap to 0.6.0-beta
 
 | Priority | Area                                | Action Item                                               | Notes / Acceptance Test                                                                                                                                                                      |
 | -------: | ----------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |    **1** | **Decentralised Provenance**        | **External anchor & signature workflow**                  | • Push artwork‐hash + certificate JSON to IPFS *and* store returned CID in `blockchain_tx` column.<br>• Sign certificate with project signing key (PGP or Ed25519) and publish detached sig. |
-|    **2** | **Discovery & Searchability**       | **Public search API + UI**                                | • `/api/artworks` endpoint: query by SHA-256, UUID, keyword.<br>• Lightweight Vue/HTMX page for human search.<br>• Rate-limited, paginated JSON responses.                                   |
-|    **3** | **Rights Management / Duplication** | **Perceptual-hash (pHash) duplicate detection**           | • Generate 64-bit pHash during ingestion.<br>• Flag visually identical but re-encoded uploads; prompt user to link or reject.                                                                |
-|    **4** | **Provenance Audit Trail**          | **Append-only versions table**                            | • `artwork_versions` (`artwork_id`, `hash`, `created_at`, `modifier_id`).<br>• Automatically insert new row on every re-process.                                                             |
+|    **2** | **Discovery & Searchability**       | **Public search API + UI**                                | • `/api/artworks` endpoint: query by SHA-256, HFV, UUID, keyword.<br>• Lightweight Vue/HTMX page for human search.<br>• Rate-limited, paginated JSON responses.                              |
+|    **3** | **Rights Management / Duplication** | **Perceptual-hash (pHash) duplicate detection**           | • Generate 64-bit pHash during ingestion (alongside HFV).<br>• Flag visually identical but re-encoded uploads; prompt user to link or reject.                                                |
+|    **4** | **Provenance Audit Trail**          | **Append-only versions table**                            | • `artwork_versions` (`artwork_id`, `hash`, `hfv_fingerprint`, `created_at`, `modifier_id`).<br>• Automatically insert new row on every re-process.                                          |
 |    **5** | **Rights Management / Maintenance** | **Bulk re-licence updater**                               | • CLI script to re-embed updated licence text across historical uploads and regenerate certificates.                                                                                         |
 |    **6** | **Security & Session Hardening**    | **Event logging for CSRF failures, logins, downloads**    | • Write to `security_events` table and `error_log`; include IP, UA, user\_id, outcome.                                                                                                       |
-|    **7** | **Configuration & Validation**      | **Runtime ENV validation**                                | • Abort startup if `DB_PASS`, `DB_NAME`, `JWT_SECRET`, etc. are unset.                                                                                                                       |
+|    **7** | **Configuration & Validation**      | **Runtime ENV validation**                                | • Abort startup if `DB_PASS`, `DB_NAME`, `JWT_SECRET`, `HVF_PEPPER`, etc. are unset.                                                                                                         |
 |    **8** | **Configuration & Validation**      | **MIME-type validation on upload**                        | • Reject files where `mime_content_type()` ≠ declared extension.                                                                                                                             |
 |    **9** | **Configuration & Validation**      | **Tighten directory permissions**                         | • Set watermark/upload dirs to `0750` (`0700` if private storage).                                                                                                                           |
 |   **10** | **Maintainability & Modularity**    | **Refactor `store_data.php` into table-centric handlers** | • Separate classes: `ArtworksDAO`, `ImagesDAO`, `SubmissionsDAO`, wrapped in single transaction manager.                                                                                     |
@@ -165,13 +181,13 @@ No changes to database, API, or core logic—this is a visual/UI refinement patc
 
 ## Tech Stack
 
-- **Backend**: PHP 8+, ImageMagick, ExifTool, MySQL/MariaDB
-- **Frontend**: Vanilla JS, dynamic HTML form generation, live processing feedback
-- **Security**: Session hardening, CSRF protection, XSS filtering, SQL injection prevention
-- **Persistence**: UUID-based relational schema with SHA-256 image fingerprinting
-- **Optional**: `.env` configuration via `php-dotenv`; **Redis** (future) for persistent rate-limiting buckets
+- **Backend**: PHP 8+, ImageMagick, ExifTool, Python 3 (for HFV generation), MySQL/MariaDB  
+- **Frontend**: Vanilla JS, dynamic HTML form generation, live processing feedback  
+- **Security**: Session hardening, CSRF protection, XSS filtering, SQL injection prevention, **pepper-salted HFV fingerprinting**  
+- **Persistence**: UUID-based relational schema with **SHA-256** and **High-Fidelity Visual (HFV)** image fingerprinting  
+- **Optional**: `.env` configuration via `php-dotenv`; **Redis** (future) for persistent rate-limiting buckets  
 
-## 🔐 Security Enhancements — Beta 0.5 recap
+## 🔐 Security Enhancements — Beta 0.5.1 recap
 
 ### Session & Cookies
 
@@ -228,22 +244,23 @@ No changes to database, API, or core logic—this is a visual/UI refinement patc
 ### Provenance & Integrity
 
 * Pre- and post-process **SHA-256** digests stored with artwork to detect tampering.
+* **High-Fidelity Visual (HFV) fingerprints** generated for all signed images using a pepper-salted pipeline (`generate_hvf.py`), stored in the database, and included in Certificates of Authenticity.
 * Database includes placeholder column for future on-chain (blockchain) anchoring.
 
-## Status — Beta 0.5.0 snapshot
+## Status — Alpha 0.5.1 snapshot
 
 | Area                   | Current state                                                                                                                    | Next up                                                                     |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| **Core pipeline**      | Upload → watermark → hash → metadata embed/extract → certificate generation **fully operational** and passing integration tests. | Performance profiling on large (250 MB) batches.                            |
-| **Security hardening** | Session-regeneration, strict cookies, CSRF rotation, adaptive rate-limiting and mandatory HTTPS *all merged to `main`*.          | Finish automated penetration test suite (OWASP ZAP & custom scripts).       |
+| **Core pipeline**      | Upload → watermark → **SHA-256 + HFV fingerprinting** → metadata embed/extract → certificate generation **fully operational** and passing integration tests. | Performance profiling on large (250 MB) batches.                            |
+| **Security hardening** | Session-regeneration, strict cookies, CSRF rotation, adaptive rate-limiting, **pepper-salted HFV digesting**, and mandatory HTTPS *all merged to `main`*. | Finish automated penetration test suite (OWASP ZAP & custom scripts).       |
 | **Dashboards**         | User-facing Licence and Watermark CRUD UIs live; dark-mode auth screens polished.                                                | Add role-based admin view for system-wide metrics.                          |
-| **CLI tooling**        | Metadata-extractor and batch-processing flags stable on Linux/macOS.                                                             | Windows PowerShell wrapper & man-page generation.                           |
-| **Database layer**     | Strict PDO with transactions, UUID ids, and provenance tables frozen—no breaking migrations planned.                             | Lightweight read-replica strategy for search scaling.                       |
-| **Docs & Ops**         | README security section updated; `.env.example` and sample Nginx config published.                                               | Dockerfile, CI pipeline, and automated cron-cleanup script.                 |
-| **Provenance R\&D**    | SHA-256 digests stored; DB column reserved for future blockchain anchor.                                                         | Evaluate Arweave vs. Polygon for on-chain proof.                            |
+| **CLI tooling**        | Metadata-extractor, HFV generator, and batch-processing flags stable on Linux/macOS.                                             | Windows PowerShell wrapper & man-page generation.                           |
+| **Database layer**     | Strict PDO with transactions, UUID ids, **SHA-256 + HFV provenance columns**, and related tables frozen—no breaking migrations planned. | Lightweight read-replica strategy for search scaling.                       |
+| **Docs & Ops**         | README and changelog updated for HFV support; `.env.example` and sample Nginx config published.                                  | Dockerfile, CI pipeline, and automated cron-cleanup script.                 |
+| **Provenance R\&D**    | SHA-256 and **HFV** digests stored; DB column reserved for future blockchain anchor.                                              | Evaluate Arweave vs. Polygon for on-chain proof.                            |
 | **Release track**      | **Feature-freeze** declared for Beta 0.5.x; only bug-fixes and test coverage improvements accepted.                              | Beta 0.6: accessibility audit, localisation scaffold, public API endpoints. |
 
-**Bottom line:** core functionality is feature-complete and secure; we’re in a stabilisation sprint aimed at a public beta roll-out once automated tests, ops scripts, and performance benchmarks pass.
+**Bottom line:** core functionality is feature-complete and secure; now with **High-Fidelity Visual fingerprinting** for enhanced provenance. We’re in a stabilisation sprint aimed at a public beta roll-out once automated tests, ops scripts, and performance benchmarks pass.
 
 ---
 

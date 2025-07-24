@@ -7,6 +7,30 @@ and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/
 
 ---
 
+## [0.5.1-alpha] – 2025-07-24
+### 🖼 High-Fidelity Visual (HFV) Fingerprinting
+- Added **HFV fingerprint generation** for all signed images:
+  - Implemented `generate_hvf.py` (Python) to create deterministic, **pepper-salted SHA-256** visual fingerprints.
+  - Integrated new `generateHFV()` helper in `/core/helpers/functions.php` for pipeline use.
+  - Fingerprints now included in **certificates** and stored in the `images.hfv_fingerprint` column.
+  - **Server-side pepper (`HVF_PEPPER`)** added in `/core/config/config.php` for forgery-resistant digesting.
+  - Created `hfv_fingerprint.txt` per processing run for **auditable downloads**.
+
+### 📂 Data Pipeline & Storage
+- Updated `/core/processing/store_data.php` to:
+  - Persist HFV fingerprints alongside SHA-256 hashes.
+  - Record the SHA-256 of the **first signed image** in the `Artworks` table for certification anchoring.
+- Enhanced `/public/process.php` to:
+  - Generate HFV fingerprints after image signing.
+  - Embed HFV digests into generated certificates.
+  - Save fingerprints for download-time logging.
+
+### 🔍 Auditing & Delivery
+- **HFV logging for downloads**:  
+  - `/public/download_zip.php` now reads `hfv_fingerprint.txt` (if present) and logs fingerprints for audit trails.
+
+---
+
 ## [0.4.9-beta] – 2025-07-17
 ### 🔒 Critical Security Enhancements
 - 🚦 **Global rate limiting** introduced to harden authentication and asset-download endpoints:  

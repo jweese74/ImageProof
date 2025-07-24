@@ -22,7 +22,7 @@
 declare(strict_types=1);
 
 // ---- App Metadata ---------------------------------------------------
-define('APP_VERSION', '0.5.0-Alpha');
+define('APP_VERSION', '0.5.1-Alpha');
 define('APP_NAME', 'PixlKey');
 
 // Rotating tagline pool

@@ -140,40 +140,35 @@ Each entry follows the same heading order for clarity:
 
 `/core/config/config.php`
 
-1. **Purpose**
-   Bootstraps the PixlKey runtime environment by securely loading environment variables, enforcing transport security, and establishing a hardened PDO connection to the MySQL/MariaDB database. It also defines constants for upload limits, branding metadata, and system-wide **rate-limiting thresholds** used across all modules.
+1. **Purpose**  
+   Bootstraps the PixlKey runtime environment by securely loading environment variables, enforcing transport security, and establishing a hardened PDO connection to the MySQL/MariaDB database. It also defines constants for upload limits, branding metadata, **High-Fidelity Visual (HFV) fingerprinting**, and system-wide **rate-limiting thresholds** used across all modules.
 
-2. **Agent Role**
-   Acts as the **Configuration & Connection Agent**. It serves as the system’s trusted source for app metadata, environment secrets, database connectivity, and runtime policy enforcement.
+2. **Agent Role**  
+   Acts as the **Configuration & Connection Agent**. It serves as the system’s trusted source for app metadata, environment secrets, database connectivity, runtime policy enforcement, and **fingerprint-salting parameters** for visual identity hashing.
 
 3. **Key Responsibilities**
 
    * **Environment Bootstrap**
-
      * Loads optional `.env` via `vlucas/phpdotenv` if available.
      * Parses secrets into constants with fallback defaults.
 
    * **Security & Transport Enforcement**
-
      * Blocks all non-HTTPS requests unless from CLI or trusted proxy.
      * Emits `Strict-Transport-Security` and `X-Content-Type-Options` headers.
 
    * **Application Constants**
-
      * Defines `APP_NAME`, `APP_VERSION`, `APP_TITLE`, and `APP_HEADER` using a rotating tagline system.
      * Loads upload limits and debug flags (`DB_DEBUG`, `MAX_UPLOAD_MB`).
+     * Defines `HVF_PEPPER` — an **optional server-side “pepper”** used to salt High-Fidelity Visual (HFV) fingerprints for enhanced security and forgery resistance.
 
    * **Rate-Limiting Configuration**
-
      * Centralizes limits and decay durations for login, registration, and downloads.
      * Provides global toggle via `RATE_LIMITING_ENABLED`.
 
    * **Upload Size Controls**
-
      * Sets `upload_max_filesize` and `post_max_size` at runtime using `MAX_UPLOAD_MB`.
 
    * **PDO Setup**
-
      * Uses native prepared statements, exception mode, and associative fetches.
      * Logs errors server-side but suppresses them client-side unless `DB_DEBUG=true`.
 
@@ -185,103 +180,101 @@ Each entry follows the same heading order for clarity:
    * **Debug Mode** – `DB_DEBUG=true` reveals sensitive error messages—**never enable in production**.
    * **Secrets Management** – Suggest rotating secrets via volume mounts or secure stores.
    * **Rate-Limiting Safety** – Keep `RATE_LIMITING_ENABLED=true` in production to prevent brute-force or abuse.
+   * **HFV Pepper Security** – The `HVF_PEPPER` value should be **random, high-entropy**, and never exposed to clients; changing it will alter all HFV outputs (use with care).
    * **PDO Integrity** – All connection attributes are hardened by default, minimizing SQL injection surface.
 
 5. **Dependencies**
 
    * **Runtime**
-
      * PHP 7.4+ with `pdo_mysql`
      * A reachable MySQL or MariaDB instance with the PixlKey schema
 
    * **Libraries**
-
      * *(Optional)* `vlucas/phpdotenv` via Composer
 
    * **Downstream Consumers**
-
      * `auth.php`, `process.php`, `index.php`, and other PixlKey modules that rely on the `$pdo` handle
 
 6. **Additional Notes**
 
    * Replace the development database credentials (`pixlkey_user`, `pixlkey_password!`) before deploying.
    * Recommended: Use `.env` for all secrets and exclude it from version control.
+   * **Changing `HVF_PEPPER`** will invalidate previously generated HFV fingerprints — only do this if rotating all dependent certificates.
    * Consider future failover support with PDO read-replica attributes or retry logic for distributed environments.
 
 7. **CHANGELOG**
-
+   * **0.5.1-alpha** – Added `HVF_PEPPER` constant for salting High-Fidelity Visual (HFV) fingerprints; updated documentation to include fingerprinting support.
    * **0.5.0-beta** – Consolidated and documented all runtime constants, rate-limiting policies, and environment loading behavior. Hardened PDO logic and clarified debug exposure rules.
 
 -----
 
 `/core/helpers/functions.php`
 
-1. **Purpose**
-   Centralised utility module for PixlKey's backend image handling and system hygiene.
-   Provides helper functions for watermark application, real-time UI feedback during processing, and safe cleanup of temporary artefacts. Also ensures secure runtime setup by importing `config.php`, which applies HTTPS enforcement and security headers across all use cases—including CLI or direct script calls.
+1. **Purpose**  
+   Centralised utility module for PixlKey's backend image handling, High-Fidelity Visual (HFV) fingerprint generation, and system hygiene.  
+   Provides helper functions for watermark application, HFV digest computation, real-time UI feedback during processing, and safe cleanup of temporary artefacts.  
+   Ensures secure runtime setup by importing `config.php`, which applies HTTPS enforcement and security headers across all use cases—including CLI or direct script calls.
 
-2. **Agent Role**
+2. **Agent Role**  
    Acts as the **Utility & Media-Processing Agent**, abstracting complex or repetitive backend logic. Supports controller scripts such as `process.php`, `index.php`, and background cron tasks.
 
 3. **Key Responsibilities**
 
 * **Global Constants & Paths**
-
-  * Defines `$maxFileSizeMb`, allowed image extensions, and paths to `watermarks/` and `processed/`.
+  * Defines `$maxFileSizeMb`, allowed image extensions, paths to `watermarks/`, `processed/`, and the location of the HFV generator script (`generate_hvf.py`).
 
 * **Directory Bootstrapping**
-
   * Automatically creates critical folders (`watermarks`, `processed`) if missing.
 
 * **Real-Time Feedback**
-
   * `echoStep($msg, $type)` injects dynamic HTML updates into the browser console, useful for multi-step image processing pipelines.
 
 * **Image Cleanup**
-
   * `clearProcessedFiles()` purges all files in the `processed/` directory. Intended for nightly cron use or emergency resets.
 
 * **ImageMagick-Powered Watermarking**
-
   * `addWatermark()` composites both a user-supplied watermark and multiple randomized, transparent text overlays onto submitted images.
   * Ensures the main watermark is resized proportionally to target image height (1/8), centered horizontally and bottom-aligned.
   * Random text is rendered in translucent colours using shell `convert` calls.
 
-* **Security Header Inheritance**
+* **High-Fidelity Visual (HFV) Fingerprinting**
+  * `generateHFV()` securely calls the Python-based `generate_hvf.py` utility to produce a deterministic, peppered SHA-256 digest of an image combined with timestamped certification data.
+  * Supports optional server-side “pepper” salting (via `HVF_PEPPER`) to prevent third-party forgery of HFV fingerprints.
 
+* **Security Header Inheritance**
   * By including `config.php`, inherits all global security headers and HTTPS blocking policies—even when this script is called in isolation.
 
 4. **Security Considerations**
 
 * **Shell Sanitisation**
+  * All shell commands use `escapeshellarg()` and `escapeshellcmd()`.  
+  * `addslashes()` is still used for injected draw-text—should be monitored for future improvements.
 
-  * All shell commands use `escapeshellarg()`. However, `addslashes()` is still used for injected draw-text—should be monitored for future improvements.
+* **HFV Fingerprint Security**
+  * HFV fingerprints incorporate an optional **server-only pepper** (`HVF_PEPPER`). Ensure this value is never exposed to clients or external services.  
+  * Timestamp binding makes fingerprints specific to the certification moment.
 
 * **Filename Collision / Temp Races**
-
   * Currently uses deterministic filenames (`wm_*`). A future version should switch to UUID-based or timestamped names to avoid concurrency issues.
 
 * **Path Validation**
-
   * Assumes upstream code verifies paths and filenames. Add stricter sanitation before direct user input is passed.
 
 * **EXIF Attacks / Zip Bombs**
-
   * `addWatermark()` does not check image dimensions explicitly; recommend enforcing size/MIME guards earlier in pipeline (`process.php`).
 
 * **Directory Permissions**
-
   * Directories are created with `0775`. Make sure web server group ownership is secure (e.g., `www-data` only).
 
 * **Debug Info Leakage**
-
   * `echoStep()` outputs directly to the browser. Wrap in a dev-mode condition or route through a logger for production use.
 
 5. **Dependencies**
 
-* `config.php` – Defines `$pdo`, security headers, environment constants.
+* `config.php` – Defines `$pdo`, security headers, environment constants (including `HVF_PEPPER`).
 * PHP ≥ 7.4 with shell access.
 * CLI ImageMagick tools: `convert`, `identify`
+* Python 3 with `Pillow`, `NumPy`, `imagehash` (for HFV generation).
 * Filesystem access to `watermarks/`, `processed/`
 
 6. **Additional Notes**
@@ -290,9 +283,11 @@ Each entry follows the same heading order for clarity:
 * Consider formalising a log system for `echoStep()` events.
 * Randomised watermark overlay could draw from a secure dictionary of cryptographic phrases or timestamp hashes in future builds.
 * Cron job usage of `clearProcessedFiles()` should be paired with logging to avoid accidental wipes.
+* **Changing `HVF_PEPPER`** will alter all HFV outputs; plan rotations carefully if dependent certificates exist.
 
 7. **CHANGELOG**
 
+* **0.5.1-alpha** – Added `generateHFV()` helper to call Python-based HFV fingerprinting with optional pepper salting. Updated path constants for integration with new visual identity hashing workflows.
 * **0.5.0-beta** – Improved watermark dimension logic; centralised directory bootstrapping; echoStep styling now CSS-aware; random overlay logic hardened.
 * **0.4.7-beta** – `config.php` is now required to enforce HTTPS headers on direct/CLI entry points.
 * **0.4.2-beta** – Refactored from legacy helper bundle; renamed, namespace updated, and watermark logic made modular.
@@ -446,104 +441,99 @@ Each entry follows the same heading order for clarity:
 
 `/core/processing/store_data.php`
 
-1. **Purpose**
-   Commits the full results of a completed image-processing run (identified by `runId`) into the PixlKey database. This includes storing artwork metadata, signed image files, certificates, submission logs, AI metadata, and related entity references using a transactionally safe, UUID-driven model.
+1. **Purpose**  
+   Commits the full results of a completed image-processing run (identified by `runId`) into the PixlKey database. This includes storing artwork metadata, signed image files, certificates, submission logs, High-Fidelity Visual (HFV) fingerprints, AI metadata, and related entity references using a transactionally safe, UUID-driven model.  
 
-   As of `v0.5.0-beta`, the script is hardened against session fixation, CSRF reuse, and non-HTTPS access.
+   As of `v0.5.1-beta`, the script captures and stores HFV fingerprints for every signed image, binding them to artwork records for enhanced provenance and certification integrity.  
 
-2. **Agent Role**
-   Acts as the **Data-Ingestion & Persistence Agent**, transforming a temporary processing directory into permanent, relationally linked records that underpin provenance, copyright, and certificate generation.
+2. **Agent Role**  
+   Acts as the **Data-Ingestion & Persistence Agent**, transforming a temporary processing directory into permanent, relationally linked records that underpin provenance, copyright, HFV fingerprinting, and certificate generation.
 
 3. **Key Responsibilities**
 
-   * **Session & CSRF Security**
+   * **Session & CSRF Security**  
+     * Enforces login with `require_login()`.  
+     * Rotates session ID (`session_regenerate_id(true)`).  
+     * Refreshes CSRF token.  
+     * Validates CSRF on POST requests.  
 
-     * Enforces login with `require_login()`
-     * Rotates session ID (`session_regenerate_id(true)`)
-     * Refreshes CSRF token
-     * Validates CSRF on POST requests
+   * **Ownership & Run Validation**  
+     * Requires a valid `runId` via GET/POST.  
+     * Confirms ownership by querying `processing_runs`.  
 
-   * **Ownership & Run Validation**
+   * **Filesystem Verification**  
+     * Validates presence of `processed/<runId>/`.  
+     * Verifies required files like `data.json`, `*_metadata.txt`, and `*_certificate.md`.  
 
-     * Requires a valid `runId` via GET/POST
-     * Confirms ownership by querying `processing_runs`
+   * **Transactional Import**  
+     * All inserts occur within a single `BEGIN … COMMIT` block.  
+     * Rolls back on failure for consistency.  
 
-   * **Filesystem Verification**
-
-     * Validates presence of `processed/<runId>/`
-     * Verifies required files like `data.json`, `*_metadata.txt`, and `*_certificate.md`
-
-   * **Transactional Import**
-
-     * All inserts occur within a single `BEGIN … COMMIT` block
-     * Rolls back on failure for consistency
-
-   * **Database Mapping**
-
-     * Inserts a new `Artworks` record
-     * Computes SHA-256 of signed images; stores in `Images`
-     * Inserts human-readable certificates
-     * Inserts AI metadata (if present)
-     * Adds submission logs (IP, UA, timestamp)
-     * De-duplicates and links:
-
-       * Keywords → `ArtworkKeywords`
-       * Genres   → `ArtworkGenres`
-       * Creators → `ArtworkCreators`
-       * Bylines  → `ArtworkBylines`
+   * **Database Mapping**  
+     * Inserts a new `Artworks` record.  
+     * Computes **SHA-256** of signed images; stores in `Images`.  
+     * Generates and stores **HFV fingerprints** for each signed image.  
+     * Updates the associated `Artworks` row with the SHA-256 of the first signed image (for certificate integrity).  
+     * Inserts human-readable certificates.  
+     * Inserts AI metadata (if present).  
+     * Adds submission logs (IP, UA, timestamp).  
+     * De-duplicates and links:  
+       * Keywords → `ArtworkKeywords`.  
+       * Genres   → `ArtworkGenres`.  
+       * Creators → `ArtworkCreators`.  
+       * Bylines  → `ArtworkBylines`.  
 
 4. **Security Considerations**
 
-   * **HTTPS Required** – Enforced via `config.php` at bootstrap
-   * **Session Fixation** – Session ID regenerated at entry
-   * **CSRF Reuse** – Token refreshed on entry
-   * **Access Control** – `runId` ownership validated by `processing_runs.user_id`
-   * **Path Safety** – `runId` treated as a literal UUID; must match known structure
-   * **File Sanity** – Checks for presence and validity of required artefacts
-   * **SQL Injection** – Fully protected via prepared statements
-   * **Race Conditions** – Entire import wrapped in transaction; prevents double-ingestion
-   * **Size/MIME Handling** – `mime_content_type` and `filesize` used for signed images, but further hardening (e.g. `finfo`) recommended
+   * **HTTPS Required** – Enforced via `config.php` at bootstrap.  
+   * **Session Fixation** – Session ID regenerated at entry.  
+   * **CSRF Reuse** – Token refreshed on entry.  
+   * **Access Control** – `runId` ownership validated by `processing_runs.user_id`.  
+   * **Path Safety** – `runId` treated as a literal UUID; must match known structure.  
+   * **File Sanity** – Checks for presence and validity of required artefacts.  
+   * **SQL Injection** – Fully protected via prepared statements.  
+   * **Race Conditions** – Entire import wrapped in transaction; prevents double-ingestion.  
+   * **Size/MIME Handling** – `mime_content_type` and `filesize` used for signed images, but further hardening (e.g. `finfo`) recommended.  
+   * **HFV Peppering** – HFV fingerprints are salted using a server-side `HVF_PEPPER` value (if set), ensuring only PixlKey can generate matching digests.  
 
 5. **Dependencies**
 
-   * **Internal**
+   * **Internal**  
+     * `auth.php` – Login + CSRF.  
+     * `config.php` – PDO, HTTPS headers, `HVF_PEPPER`.  
+     * `functions.php` – UUID and helper logic, `generateHFV()`.  
+     * `process_helpers.php` – Shared ingestion tools.  
 
-     * `auth.php` – Login + CSRF
-     * `config.php` – PDO, HTTPS headers
-     * `functions.php` – UUID and helper logic
-     * `process_helpers.php` – shared ingestion tools
+   * **Database Tables**  
+     * `Artworks`, `Images`, `Certificates`, `AIMetadata`, `Submissions`.  
+     * `Keywords`, `Genres`, `Creators`, `Bylines` + respective many-to-many junctions.  
 
-   * **Database Tables**
+   * **Filesystem Layout**  
+     * `processed/<runId>/` directory containing:  
+       * `data.json`, `submission.json` (optional).  
+       * `*_signed.png`.  
+       * `*_metadata.txt`, `*_certificate.md`, `*_ai_metadata.json`.  
 
-     * `Artworks`, `Images`, `Certificates`, `AIMetadata`, `Submissions`
-     * `Keywords`, `Genres`, `Creators`, `Bylines` + respective many-to-many junctions
-
-   * **Filesystem Layout**
-
-     * `processed/<runId>/` directory containing:
-
-       * `data.json`, `submission.json` (optional)
-       * `*_signed.png`
-       * `*_metadata.txt`, `*_certificate.md`, `*_ai_metadata.json`
-
-   * **PHP Extensions**
-
-     * `PDO`, `PDO_MYSQL`, `json`, `openssl`
+   * **PHP & External Extensions**  
+     * `PDO`, `PDO_MYSQL`, `json`, `openssl`.  
+     * Python 3 with `Pillow`, `NumPy`, `imagehash` (for HFV generation).  
 
 6. **Additional Notes**
 
-   * `getOrCreateId()` assumes UUIDs are returned by MySQL’s native `UUID()` call.
-   * Consider abstracting keyword/genre/creator logic into modular service classes.
-   * Future versions may include optional blockchain anchoring upon commit.
-   * Server-side MIME inspection (`finfo_file`) is advised to prevent spoofed image types.
-   * Certificate and metadata parsing assumes conventional naming—document this for third-party ingestion tools.
+   * `getOrCreateId()` assumes UUIDs are returned by MySQL’s native `UUID()` call.  
+   * Consider abstracting keyword/genre/creator logic into modular service classes.  
+   * Future versions may include optional blockchain anchoring upon commit.  
+   * Server-side MIME inspection (`finfo_file`) is advised to prevent spoofed image types.  
+   * Certificate and metadata parsing assumes conventional naming—document this for third-party ingestion tools.  
+   * Changing `HVF_PEPPER` will invalidate all stored HFV fingerprints; use with caution.  
 
 7. **CHANGELOG**
 
-   * **0.5.0-beta** – Full refactor to enforce session/csrf/token rotation, simplify UUID handling, and modernise filesystem layout validation. Supports AI metadata, full provenance linkage, and safer error handling.
-   * **0.4.7-beta** – Enforced HTTPS at bootstrap via `config.php`.
-   * **0.4.6-beta** – Added CSRF token regeneration after session ID refresh.
-   * **0.4.4-beta** – Introduced session hardening for post-login integrity.
+   * **0.5.1-alpha** – Added HFV fingerprint generation and storage for all signed images, including peppered digest support. Updated `Artworks` row to store the SHA-256 of the first signed image for certification.  
+   * **0.5.0-beta** – Full refactor to enforce session/csrf/token rotation, simplify UUID handling, and modernise filesystem layout validation. Supports AI metadata, full provenance linkage, and safer error handling.  
+   * **0.4.7-beta** – Enforced HTTPS at bootstrap via `config.php`.  
+   * **0.4.6-beta** – Added CSRF token regeneration after session ID refresh.  
+   * **0.4.4-beta** – Introduced session hardening for post-login integrity.  
    * **0.4.2-beta** – Initial PixlKey-branded ingestion logic, transaction-wrapped, with referential inserts.
 
 -----
@@ -619,57 +609,64 @@ Each entry follows the same heading order for clarity:
 
 `/public/download_zip.php`
 
-1. **Purpose**
-   Serves the user’s final packaged asset bundle (`final_assets.zip`) corresponding to a validated `runId`. Enforces **authentication**, **ownership**, **rate limits**, and **secure file handling** for all download requests.
+1. **Purpose**  
+   Serves the user’s final packaged asset bundle (`final_assets.zip`) corresponding to a validated `runId`.  
+   Enforces **authentication**, **ownership**, **rate limits**, **HFV audit logging**, and **secure file handling** for all download requests.  
 
-Now features:
+   Now features:  
+   * HTTPS enforcement and secure headers via `config.php`.  
+   * Fine-grained throttling via `rate_limiter.php`.  
+   * Per-request validation and structured HTTP error handling.  
+   * Optional **HFV fingerprint logging** for auditing and traceability.
 
-* HTTPS enforcement and secure headers via `config.php`
-* Fine-grained throttling via `rate_limiter.php`
-* Per-request validation and structured HTTP error handling
-
-2. **Agent Role**
-   Acts as the **Download & Delivery Agent**, sitting at the end of PixlKey’s processing pipeline. It ensures that only the rightful owner can retrieve their archive, prevents abuse through rate-limiting, and streams the archive directly to the user with appropriate headers.
+2. **Agent Role**  
+   Acts as the **Download & Delivery Agent**, sitting at the end of PixlKey’s processing pipeline. It ensures that only the rightful owner can retrieve their archive, prevents abuse through rate-limiting, and streams the archive directly to the user with appropriate headers.  
+   Additionally, it logs the **High-Fidelity Visual (HFV) fingerprint** of downloaded assets (if present) to support certification tracking and forensic auditing.
 
 3. **Key Responsibilities**
 
-* Enforce user authentication via `require_login()`
-* Validate the `runId` parameter and sanitize input
-* Verify that the `runId` belongs to the current session user
-* Locate the final `.zip` archive in `processed/<user_id>/<runId>/`
-* Apply download throttling via a composite key: IP + user ID + `runId`
-* Emit appropriate HTTP responses (`400`, `403`, `404`, or `429`) with clear messages
-* Stream the file with secure headers: `Content-Type`, `Content-Disposition`, `Content-Length`
+* Enforce user authentication via `require_login()`.  
+* Validate the `runId` parameter and sanitize input.  
+* Verify that the `runId` belongs to the current session user.  
+* Locate the final `.zip` archive in `processed/<user_id>/<runId>/`.  
+* Read and log any associated `hfv_fingerprint.txt` file for auditing.  
+* Apply download throttling via a composite key: IP + user ID + `runId`.  
+* Emit appropriate HTTP responses (`400`, `403`, `404`, or `429`) with clear messages.  
+* Stream the file with secure headers: `Content-Type`, `Content-Disposition`, `Content-Length`.  
 
 4. **Security Considerations**
 
-* **Authentication**: Strict `require_login()` session enforcement
-* **Input validation**: Regex whitelist to eliminate traversal and injection risks
-* **Path traversal mitigation**: Controlled directory layout + ZIP detection via `glob()`; `realpath()` still recommended
-* **Rate Limiting**: Default 10 downloads per 60 seconds (`DOWNLOAD_ATTEMPT_LIMIT` / `DOWNLOAD_DECAY_SECONDS`) via `.env`
-* **Audit Logging**: Failed attempts recorded; successful downloads can be logged for traceability
-* **Transport Security**: HTTPS enforced, HSTS and `nosniff` headers automatically applied via `config.php`
-* **Timing Attacks**: Minimal footprint, but `hash_equals()` could be added if `runId` becomes sensitive or user-enumerable
-* **Response Integrity**: Consistent structured error messages reduce ambiguity and exposure
+* **Authentication**: Strict `require_login()` session enforcement.  
+* **Input validation**: Regex whitelist to eliminate traversal and injection risks.  
+* **Path traversal mitigation**: Controlled directory layout + ZIP detection via `glob()`; `realpath()` still recommended.  
+* **Rate Limiting**: Default 10 downloads per 60 seconds (`DOWNLOAD_ATTEMPT_LIMIT` / `DOWNLOAD_DECAY_SECONDS`) via `.env`.  
+* **Audit Logging**:  
+  * Failed attempts recorded.  
+  * **HFV fingerprints** of downloaded runs optionally logged for forensic tracking.  
+* **Transport Security**: HTTPS enforced, HSTS and `nosniff` headers automatically applied via `config.php`.  
+* **Timing Attacks**: Minimal footprint, but `hash_equals()` could be added if `runId` becomes sensitive or user-enumerable.  
+* **Response Integrity**: Consistent structured error messages reduce ambiguity and exposure.  
 
 5. **Dependencies**
 
-* `auth.php` – Session auth, user validation
-* `config.php` – PDO connection, HTTPS enforcement
-* `rate_limiter.php` – Download throttling logic
-* Database: `processing_runs` (`run_id`, `user_id`)
-* File structure: `processed/<user_id>/<runId>/final_assets.zip`
+* `auth.php` – Session auth, user validation.  
+* `config.php` – PDO connection, HTTPS enforcement, security headers.  
+* `rate_limiter.php` – Download throttling logic.  
+* Database: `processing_runs` (`run_id`, `user_id`).  
+* File structure: `processed/<user_id>/<runId>/final_assets.zip` and optional `hfv_fingerprint.txt`.  
 
 6. **Additional Notes**
 
-* Large downloads could be offloaded to Nginx (`X-Accel-Redirect`) or Apache (`X-Sendfile`) to save PHP memory
-* Support for pre-signed short-lived URLs would enable future headless/API usage
-* Filenames can be optionally formatted as `pixlkey-<runId>.zip` for clarity
+* Large downloads could be offloaded to Nginx (`X-Accel-Redirect`) or Apache (`X-Sendfile`) to save PHP memory.  
+* Support for pre-signed short-lived URLs would enable future headless/API usage.  
+* Filenames can be optionally formatted as `pixlkey-<runId>.zip` for clarity.  
+* HFV logging adds provenance auditability for compliance or dispute resolution.  
 
 7. **CHANGELOG**
 
-* **0.5.0-beta** – Formalised all responses (`400`, `403`, `404`, `429`); modular rate key now includes IP + user + `runId`; sanitized ZIP lookup logic with glob fallback.
-* **0.4.9-beta** – Integrated `rate_limiter.php`; endpoint now emits `429 Too Many Requests` with `Retry-After` support.
+* **0.5.1-alpha** – Added optional HFV fingerprint logging (`hfv_fingerprint.txt`) for provenance auditing during downloads.  
+* **0.5.0-beta** – Formalised all responses (`400`, `403`, `404`, `429`); modular rate key now includes IP + user + `runId`; sanitized ZIP lookup logic with glob fallback.  
+* **0.4.9-beta** – Integrated `rate_limiter.php`; endpoint now emits `429 Too Many Requests` with `Retry-After` support.  
 * **0.4.7-beta** – Added `config.php` at top-level to enforce HTTPS and inject standard security headers.
 
 -----
@@ -933,109 +930,97 @@ As of `v0.5.0-beta`, rate limiting, secure CSRF workflows, and HTTPS enforcement
 
 `/public/process.php`
 
-1. **Purpose**
-   Executes the full image-processing pipeline when a user submits artwork to PixlKey. Transforms, signs, and fingerprints uploaded images, embeds metadata and rights info, generates thumbnails and previews, writes database records, and packages the deliverables into a ZIP archive alongside a Markdown certificate of authenticity and extracted metadata.
+1. **Purpose**  
+   Executes the full image-processing pipeline when a user submits artwork to PixlKey. Transforms, signs, fingerprints (SHA-256 + High-Fidelity Visual), embeds metadata and rights info, generates thumbnails and previews, writes database records, and packages the deliverables into a ZIP archive alongside a Markdown certificate of authenticity and extracted metadata.
 
-2. **Agent Role**
-   Acts as the **Pipeline Orchestrator Agent**, controlling every stage from ingestion to archival. It ties together PHP logic, CLI tools (ImageMagick, ExifTool), metadata handling, database persistence, and real-time HTML output to guide the user through each processing step.
+2. **Agent Role**  
+   Acts as the **Pipeline Orchestrator Agent**, controlling every stage from ingestion to archival. It ties together PHP logic, CLI tools (ImageMagick, ExifTool, HFV generator), metadata handling, database persistence, and real-time HTML output to guide the user through each processing step.
 
 3. **Key Responsibilities**
 
 * **Form Processing**
-
-  * Validates login and CSRF token
-  * Parses metadata fields (title, date, genre, etc.)
-  * Enforces 200 MB upload cap per image
+  * Validates login and CSRF token.
+  * Parses metadata fields (title, date, genre, etc.).
+  * Enforces 200 MB upload cap per image.
 
 * **Watermark Handling**
-
-  * Chooses saved watermark or processes one-off upload
-  * Applies scaled watermark during compositing phase
+  * Chooses saved watermark or processes one-off upload.
+  * Applies scaled watermark during compositing phase.
 
 * **Rate Limiting**
-
-  * Throttles ZIP packaging (default: 10 requests/min per IP)
-  * Automatically clears counters on successful build
+  * Throttles ZIP packaging (default: 10 requests/min per IP).
+  * Automatically clears counters on successful build.
 
 * **Per-Image Workflow**
-
-  * Moves uploaded files into a user-specific `runId` folder
-  * Strips EXIF metadata and converts to PNG
-  * Generates SHA-256 hash and embeds XMP/IPTC metadata
-  * Applies watermark, produces signed image
-  * Creates 400px thumbnail and 800px preview
-  * Stores file paths and hash into `images` DB table
-  * Runs metadata extractor to produce `*_metadata.md`
-  * Generates Markdown certificate of authenticity
+  * Moves uploaded files into a user-specific `runId` folder.
+  * Strips EXIF metadata and converts to PNG.
+  * Generates **SHA-256** hash and embeds XMP/IPTC metadata.
+  * Applies watermark, produces signed image.
+  * Creates 400px thumbnail and 800px preview.
+  * Generates **High-Fidelity Visual (HFV) fingerprint** using `generate_hvf.py` with optional server-side pepper (`HVF_PEPPER`).
+  * Stores file paths, hashes, and HFV fingerprint into `images` DB table.
+  * Runs metadata extractor to produce `*_metadata.md`.
+  * Generates Markdown certificate of authenticity (including SHA-256 + HFV digest).
 
 * **ZIP Packaging**
-
-  * Zips signed image, thumbnail, preview, metadata, and certificate
-  * Presents download button and return-to-index link
+  * Zips signed image, thumbnail, preview, metadata, and certificate.
+  * Saves `hfv_fingerprint.txt` for auditing.
+  * Presents download button and return-to-index link.
 
 * **User Feedback**
-
-  * Streams visual HTML steps to user in real time
+  * Streams visual HTML steps to user in real time.
 
 4. **Security Considerations**
 
-* **Input Validation** – All form fields sanitised; image extensions and sizes validated
-* **CSRF** – Token required and verified
-* **Shell Injection** – Commands escaped with `escapeshellarg()`, but `proc_open()` is recommended for production hardening
-* **Rate Limiting** – Configurable IP throttling on ZIP creation
-* **Path Traversal** – Input filenames are sanitised; database paths verified
-* **ZIP Poisoning** – Only server-generated files added to ZIP
-* **Resource Exhaustion** – No memory or CPU limits on ImageMagick/ExifTool; consider `ulimit` or job queuing
-* **Session Security** – Handled by `auth.php`; requires `session_regenerate_id()`
-* **Disk Usage** – No auto-cleanup yet; persistent `/processed/` directories may accumulate
+* **Input Validation** – All form fields sanitised; image extensions and sizes validated.  
+* **CSRF** – Token required and verified.  
+* **Shell Injection** – Commands escaped with `escapeshellarg()`, but `proc_open()` is recommended for production hardening.  
+* **Rate Limiting** – Configurable IP throttling on ZIP creation.  
+* **Path Traversal** – Input filenames are sanitised; database paths verified.  
+* **ZIP Poisoning** – Only server-generated files added to ZIP.  
+* **Resource Exhaustion** – No memory or CPU limits on ImageMagick/ExifTool; consider `ulimit` or job queuing.  
+* **Session Security** – Handled by `auth.php`; requires `session_regenerate_id()`.  
+* **Disk Usage** – No auto-cleanup yet; persistent `/processed/` directories may accumulate.  
+* **HFV Security** – Pepper-salted HFV digest ensures only PixlKey can generate verifiable fingerprints.  
 
 5. **Dependencies**
 
 * **Internal**
-
-  * `auth.php`, `config.php`, `rate_limiter.php`, `functions.php`
-  * `process_helpers.php`, `metadata_extractor.php`
+  * `auth.php`, `config.php`, `rate_limiter.php`, `functions.php` (including `generateHFV()`).
+  * `process_helpers.php`, `metadata_extractor.php`.
 
 * **CLI Tools**
-
-  * `exiftool` – metadata manipulation
-  * `convert` / `identify` – ImageMagick operations
-  * `sha256sum` – cryptographic hashing
-  * `zip` – archival packaging
+  * `exiftool` – metadata manipulation.
+  * `convert` / `identify` – ImageMagick operations.
+  * `sha256sum` – cryptographic hashing.
+  * `zip` – archival packaging.
+  * `generate_hvf.py` – HFV fingerprint computation (Python).
 
 * **PHP Extensions**
-
-  * `PDO`, `openssl`, `file_uploads`
+  * `PDO`, `openssl`, `file_uploads`.
 
 * **Database**
-
-  * Tables: `images`, `processing_runs`, `watermarks`, `licenses`, `users`
+  * Tables: `images`, `processing_runs`, `watermarks`, `licenses`, `users`.
 
 * **Filesystem**
-
-  * Writable `/processed/` directory outside web root with `.htaccess` protection
+  * Writable `/processed/` directory outside web root with `.htaccess` protection.
 
 6. **Additional Notes**
 
-* **UX** – Streams live steps in HTML, compatible with most browsers
-* **Refactor Potential** – Split into services (e.g., UploadHandler, ZipBuilder)
-* **Queue-Ready** – Could offload intensive processing to background workers
+* **UX** – Streams live steps in HTML, compatible with most browsers.  
+* **Refactor Potential** – Split into services (e.g., UploadHandler, ZipBuilder).  
+* **Queue-Ready** – Could offload intensive processing to background workers.  
 * **Future Features**
-
-  * Blockchain or notarisation hook for SHA-256 anchors
-  * Internationalisation of metadata fields
-  * Cleanup tasks for old run directories
+  * Blockchain or notarisation hook for SHA-256/HFV anchors.
+  * Internationalisation of metadata fields.
+  * Cleanup tasks for old run directories.
 
 7. **CHANGELOG**
 
-* **0.5.0-beta**
-  Major overhaul for streaming UX, watermark override logic, detailed error handling, metadata previewing, and ZIP throttling cleanup logic.
-
-* **0.4.9-beta**
-  Introduced IP-based rate limiting for ZIP builds via `rate_limiter.php`.
-
-* **0.4.2-beta**
-  Initial rewrite for PixlKey: added CSRF validation, user `runId` scoping, certificate generation, and metadata embedding.
+* **0.5.1-alpha** – Added High-Fidelity Visual (HFV) fingerprint generation for all signed images with optional pepper salting; included HFV digest in certificates and saved `hfv_fingerprint.txt` for audit logging.  
+* **0.5.0-beta** – Major overhaul for streaming UX, watermark override logic, detailed error handling, metadata previewing, and ZIP throttling cleanup logic.  
+* **0.4.9-beta** – Introduced IP-based rate limiting for ZIP builds via `rate_limiter.php`.  
+* **0.4.2-beta** – Initial rewrite for PixlKey: added CSRF validation, user `runId` scoping, certificate generation, and metadata embedding.
 
 -----
 
