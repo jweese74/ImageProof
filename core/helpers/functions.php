@@ -39,6 +39,9 @@ $watermarkDir      = $projectRoot . '/watermarks';  // Storage for watermark ima
 $processedDir      = $projectRoot . '/processed';   // Where processed results go
 $defaultWatermark = ''; // So no default watermark is used
 
+// Path to HFV generator script
+$hvfScriptPath     = $projectRoot . '/core/tools/generate_hvf.py';
+
 // Ensure directories exist
 if (!file_exists($watermarkDir))  { mkdir($watermarkDir, 0775, true); }
 if (!file_exists($processedDir))  { mkdir($processedDir, 0775, true); }
@@ -189,4 +192,28 @@ function addWatermark($imagePath, $mainWatermark, $runDir) {
 
     return true;
 }
+}
+
+/**
+ * Generate a High-Fidelity Visual (HFV) fingerprint for an image.
+ *
+ * @param string $imagePath Path to the final signed image
+ * @param string $timestamp ISO-8601 timestamp for certification
+ * @return string|null The HFV hash or null on failure
+ */
+if (!function_exists('generateHFV')) {
+    function generateHFV(string $imagePath, string $timestamp): ?string {
+        global $hvfScriptPath;
+        $pepper = defined('HVF_PEPPER') ? HVF_PEPPER : '';
+        $cmd = escapeshellcmd("python3 " . escapeshellarg($hvfScriptPath)) .
+               " " . escapeshellarg($imagePath) .
+               " --ts " . escapeshellarg($timestamp) .
+               ($pepper !== '' ? " --pepper " . escapeshellarg($pepper) : '');
+        $output = trim(shell_exec($cmd . " 2>&1"));
+        if (preg_match('/^[a-f0-9]{64}$/i', $output)) {
+            return $output;
+        }
+        error_log("HFV generation failed for $imagePath: $output");
+        return null;
+    }
 }

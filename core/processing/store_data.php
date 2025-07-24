@@ -124,8 +124,8 @@ try {
         )
     ");
 
-    // Placeholder values for some fields; adjust as needed
-    $hashSignedImage = ''; // To be updated after image processing
+    // Will be set when we process the first *_signed.png below
+    $hashSignedImage = null;
     $blockchainRecord = ''; // To be updated based on blockchain integration
     $aiMetadata = json_encode([]); // Populate with actual AI metadata if available
 
@@ -220,6 +220,7 @@ try {
     // 11. Handle Images
     // Iterate through all signed images in runDir
     $imageFiles = glob("{$runDir}/*_signed.png");
+    $timestampIso = gmdate('Y-m-d\TH:i:s\Z');           // single timestamp for all HFV calls
     foreach ($imageFiles as $signedImagePath) {
         $imageBaseName = basename($signedImagePath, '_signed.png');
 
@@ -259,7 +260,10 @@ try {
         $compression   = null; // Determine if needed
         $interlace     = null; // Determine if needed
         $backgroundColor = null; // Determine if needed
-        $hashValue     = hash_file('sha256', $signedImagePath);
+        $hashValue       = hash_file('sha256', $signedImagePath);
+
+        // --- HFV fingerprint -------------------------------------------------
+        $hvfFingerprint  = generateHFV($signedImagePath, $timestampIso);
 
         $imageId = generateUUID($pdo, 'Images');
 
@@ -267,11 +271,11 @@ try {
             INSERT INTO Images (
                 image_id, artwork_id, image_type, file_path, file_size, mime_type,
                 width, height, bit_depth, color_type, compression, interlace,
-                background_color, hash_value
+                background_color, hash_value, hfv_fingerprint
             ) VALUES (
                 :image_id, :artwork_id, :image_type, :file_path, :file_size, :mime_type,
                 :width, :height, :bit_depth, :color_type, :compression, :interlace,
-                :background_color, :hash_value
+                :background_color, :hash_value, :hfv_fingerprint
             )
         ");
 
@@ -289,8 +293,14 @@ try {
             'compression'      => $compression,
             'interlace'        => $interlace,
             'background_color' => $backgroundColor,
-            'hash_value'       => $hashValue
+            'hash_value'       => $hashValue,
+            'hfv_fingerprint'  => $hvfFingerprint
         ]);
+
+        // Use the first signed image’s SHA-256 for the Artworks row
+        if ($hashSignedImage === null) {
+            $hashSignedImage = $hashValue;
+        }
 
         // 12. Insert into Certificates table
         $certificateId = generateUUID($pdo, 'Certificates');
@@ -338,7 +348,20 @@ try {
         // This example focuses on core entities.
     }
 
-    // 15. Insert into Submissions table
+    // 15-a. Update Artwork with SHA-256 of first signed image (if captured)
+    if ($hashSignedImage !== null) {
+        $updateArtwork = $pdo->prepare("
+            UPDATE Artworks
+               SET hash_signed_image = :hash_signed_image
+             WHERE artwork_id = :artwork_id
+        ");
+        $updateArtwork->execute([
+            'hash_signed_image' => $hashSignedImage,
+            'artwork_id'        => $artworkId
+        ]);
+    }
+
+    // 16. Insert into Submissions table
     // Assuming submission data is available, e.g., from a submission.json
     $submissionFile = "{$runDir}/submission.json";
     if (file_exists($submissionFile)) {
@@ -370,7 +393,7 @@ try {
         }
     }
 
-    // 16. Commit Transaction
+    // 17. Commit Transaction
     $pdo->commit();
 
     echo "Data has been successfully stored in the database.";

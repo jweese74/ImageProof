@@ -505,7 +505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             . "-XMP-iptcCore:IntellectualGenre=" . escapeshellarg($genre) . " "
             . "-XMP-xmpMM:DocumentID=uuid:" . escapeshellarg($imageHash) . " "
             . "-XMP-xmpMM:InstanceID=uuid:" . escapeshellarg($imageHash) . " "
-            . "-XMP:Rights=" . escapeshellarg($resolvedLicense) . " "
+            . "-XMP:Rights=" . escapeshellarg($licenseInfo) . " "
             . escapeshellarg($signedImage);
 
         exec($cmdEmbed . " 2>&1", $outputEmbed, $retEmbed);
@@ -519,6 +519,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echoStep("Recomputing SHA-256 hash for '" . fakePath($signedImage) . "'...", 'info');
         $newHash = trim(shell_exec($shaCmd));
         echoStep("New hash generated: {$newHash}", 'success');
+
+        /* -------- Generate HFV fingerprint (final visual state) -------- */
+        $hfvHash = generateHFV($signedImage, gmdate('Y-m-d\\TH:i:s\\Z'));
+        if ($hfvHash === null) {
+            echoStep('Error: HFV fingerprint generation failed – skipping this file.', 'error');
+            continue;
+        }
+        echoStep("HFV fingerprint generated: {$hfvHash}", 'success');
+
+        /* Save once for download-audit */
+        $hfvTxt = $runDir . '/hfv_fingerprint.txt';
+        if (!file_exists($hfvTxt)) {
+            file_put_contents($hfvTxt, $hfvHash . PHP_EOL);
+        }
 
         // Generate thumbnail & preview
         echoStep("Generating thumbnail and preview for '" . fakePath($signedImage) . "'...", 'info');
@@ -544,12 +558,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 image_id,  user_id,
                 original_path, thumbnail_path,
                 filesize,   width, height, mime_type,
-                sha256,     created_at
+                sha256,     hfv_fingerprint, created_at
             ) VALUES (
                 UUID(),    :uid,
                 :orig,     :thumb,
                 :size,     :w, :h, :mime,
-                :sha,      NOW()
+                :sha,      :hfv, NOW()
             )
         ");
 
@@ -561,7 +575,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':w'     => $imgInfo[0]  ?? null,
             ':h'     => $imgInfo[1]  ?? null,
             ':mime'  => $imgInfo['mime'] ?? null,
-            ':sha'   => hash_file('sha256', $signedImage),
+            ':sha'   => $newHash,
+            ':hfv'   => $hfvHash,
         ]);
         echoStep("Thumbnail and preview generated successfully.", 'success');
 
@@ -642,6 +657,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 **Web Statement:** {$webStatement}  
 **Metadata ID (UUID):** uuid:{$imageHash}  
 **Hash of Signed Image:** {$newHash}  
+**HFV Fingerprint (PixlKey):** {$hfvHash}  
+*{$licenseInfo}*  
 
 ---
 

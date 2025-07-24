@@ -134,6 +134,10 @@ define('DOWNLOAD_DECAY_SECONDS',  (int)(getenv('DOWNLOAD_DECAY_SECONDS')  ?: 60)
 // Optional global toggle (future-proofing for IP/user-agent persistence)
 define('RATE_LIMITING_ENABLED',   filter_var(getenv('RATE_LIMITING_ENABLED'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true);
 
+// ---- HVF Configuration ---------------------------------------------
+// Optional server-side pepper for HFV digest salting
+define('HVF_PEPPER', getenv('HVF_PEPPER') ?: '');
+
 // ---- Enforce PHP upload limits at runtime ---------------------------
  @ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');
  @ini_set('post_max_size',       (MAX_UPLOAD_MB + 10) . 'M'); // +10 MB head-room

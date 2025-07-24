@@ -79,6 +79,15 @@ if (!$hits) {
 }
 $zipFile = $hits[0];                       // first (and only) archive
 
+// Optional: log HFV for download auditing if present
+$hfvPath = $runDir . '/hfv_fingerprint.txt';
+if (file_exists($hfvPath)) {
+    $hfvValue = trim(file_get_contents($hfvPath));
+    if (preg_match('/^[a-f0-9]{64}$/i', $hfvValue)) {
+        error_log("Download of runId $runId by user $userId includes HFV: $hfvValue");
+    }
+}
+
 // Optional: verify writable ownership checks here
 // Passed all checks: don't count as abuse
 clear_failed_attempts($rateKey);
