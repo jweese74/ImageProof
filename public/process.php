@@ -25,11 +25,13 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /download_zip.php, /core/processing/process_helpers.php, /core/metadata/metadata_extractor.php
  */
 
+require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 require_once __DIR__ . '/../core/auth/auth.php';
+\PixlKey\Session\startSecureSession();
 require_login();
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';

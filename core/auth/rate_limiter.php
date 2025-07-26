@@ -15,11 +15,15 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /core/auth/login.php, /download_zip.php, /register.php
  */
 
 require_once __DIR__ . '/../config/config.php';
+
+// Ensure secure session is active (in case called standalone)
+require_once __DIR__ . '/../session/SessionBootstrap.php';
+\PixlKey\Session\startSecureSession();
 
 // Default thresholds — override in config.php or .env
 defined('LOGIN_ATTEMPT_LIMIT') || define('LOGIN_ATTEMPT_LIMIT', 5);

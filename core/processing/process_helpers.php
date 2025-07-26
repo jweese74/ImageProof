@@ -16,11 +16,14 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /core/processing/process.php, /public/process.php
  */
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../session/SessionBootstrap.php';
+
+\PixlKey\Session\startSecureSession();
 
 /**
  * Streams one progress line to the “Processing” page.

@@ -18,16 +18,19 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /public/process.php, /public/my_watermarks.php, /public/my_licenses.php
  */
 
-require_once __DIR__ . '/core/auth/auth.php';                 // session, CSRF, login
-require_once __DIR__ . '/core/config/config.php';             // DB + HTTPS headers
-require_once __DIR__ . '/core/auth/rate_limiter.php';         // request throttling
-require_once __DIR__ . '/core/helpers/functions.php';         // misc shared utils
+require_once __DIR__ . '/core/auth/auth.php';
+require_once __DIR__ . '/core/session/SessionBootstrap.php';
+require_once __DIR__ . '/core/config/config.php';
+require_once __DIR__ . '/core/auth/rate_limiter.php';
+require_once __DIR__ . '/core/helpers/functions.php';
 
-$user      = current_user();           // null when signed-out
+\PixlKey\Session\startSecureSession();
+
+$user      = current_user();
 $loggedIn  = $user !== null;
 
 // --- Per-IP upload throttling (members only) ------------------------

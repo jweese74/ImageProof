@@ -15,12 +15,13 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /public/login.php, /core/auth/auth.php
  */
 
 require_once __DIR__ . '/../core/auth/auth.php';
 require_once __DIR__ . '/../core/config/config.php';
+require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 
 // Clear all session variables
 session_unset();
@@ -38,15 +39,11 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// 🔐 Start fresh session to prevent fixation reuse
-session_start([
-    'cookie_samesite' => 'Strict',
-    'cookie_secure'   => isset($_SERVER['HTTPS']),
-    'cookie_httponly' => true,
-]);
+// Start fresh session using centralised secure bootstrap
+\PixlKey\Session\startSecureSession();
 session_regenerate_id(true);
 
-// 🔐 Rotate CSRF token post-logout to prevent token replay
+// Rotate CSRF token post-logout to prevent token replay
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 // Redirect to login
