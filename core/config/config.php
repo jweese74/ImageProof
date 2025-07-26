@@ -15,14 +15,14 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /core/config/.env.example, /vendor/vlucas/phpdotenv
  */
 
 declare(strict_types=1);
 
 // ---- App Metadata ---------------------------------------------------
-define('APP_VERSION', '0.5.1-beta');
+define('APP_VERSION', '0.5.1.1-alpha');
 define('APP_NAME', 'PixlKey');
 
 // Rotating tagline pool

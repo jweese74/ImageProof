@@ -14,27 +14,18 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /core/config/config.php, /core/auth/rate_limiter.php
  */
 
 declare(strict_types=1);
+
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/rate_limiter.php';
 
-// Enforce secure cookie flags globally (before session_start)
-ini_set('session.cookie_secure', '1');
-ini_set('session.cookie_httponly', '1');
-ini_set('session.cookie_samesite', 'Strict');
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start([
-        'cookie_samesite' => 'Strict',
-        'cookie_secure'   => isset($_SERVER['HTTPS']),
-        'cookie_httponly' => true,
-    ]);
-    session_start();
-}
+// Start secure session
+\PixlKey\Session\startSecureSession();
 
 /* ---------------------------------------------------------------
    CSRF
