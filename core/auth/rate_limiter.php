@@ -15,15 +15,16 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.2-alpha
  * @see        /core/auth/login.php, /download_zip.php, /register.php
  */
 
 require_once __DIR__ . '/../config/config.php';
-
-// Ensure secure session is active (in case called standalone)
 require_once __DIR__ . '/../session/SessionBootstrap.php';
 \PixlKey\Session\startSecureSession();
+
+// Ensure CSRF helpers are available if this file is used in standalone scripts
+require_once __DIR__ . '/../security/CsrfToken.php';
 
 // Default thresholds — override in config.php or .env
 defined('LOGIN_ATTEMPT_LIMIT') || define('LOGIN_ATTEMPT_LIMIT', 5);

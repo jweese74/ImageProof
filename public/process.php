@@ -25,14 +25,16 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.2-alpha
  * @see        /download_zip.php, /core/processing/process_helpers.php, /core/metadata/metadata_extractor.php
  */
 
 require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/security/CsrfToken.php';
 \PixlKey\Session\startSecureSession();
 require_login();
+use function PixlKey\Security\validateToken as validate_csrf_token;
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';

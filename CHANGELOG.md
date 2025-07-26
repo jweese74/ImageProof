@@ -6,6 +6,25 @@ This project adheres to [Semantic Versioning](https://semver.org/)
 and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
 ---
+
+## [0.5.1.2-alpha] – 2025-07-26
+### 🧩 Refactor – Modular CSRF Token Management
+- **New module:** `core/security/CsrfToken.php`
+  - Introduced `PixlKey\Security\generateToken()`, `validateToken()`, and `rotateToken()` to **centralise CSRF token handling**.
+  - Supports **form-based** (`csrf_token`) and **header-based** (`X-CSRFTOKEN`) token validation, making it compatible with browser forms and API/AJAX calls.
+  - Adds **explicit token rotation** for critical privilege changes (login, logout, registration), mitigating CSRF replay risks.
+- **Updated:** `core/auth/auth.php`
+  - Removed inline CSRF helper functions.
+  - Now imports and uses `PixlKey\Security\CsrfToken` for token generation, validation, and rotation.
+- **Security benefits:**  
+  - **Single point of truth** for CSRF management simplifies auditing and enhances maintainability.  
+  - Hardened privilege boundary by ensuring fresh tokens are issued after authentication state changes.  
+  - Provides a foundation for future enhancements (e.g., double-submit cookies, per-route nonces).  
+
+> This modularisation improves consistency across all routes using CSRF protection (login, registration, uploads, API endpoints) and sets the stage for advanced CSRF strategies in future releases.
+
+---
+
 ## [0.5.1.1-alpha] – 2025-07-26
 ### 🧩 Refactor – Modular Session Bootstrapping
 - **New module:** `core/session/SessionBootstrap.php`

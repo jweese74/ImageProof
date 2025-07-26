@@ -16,13 +16,14 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.2-alpha
  * @see        /core/auth/auth.php, /core/helpers/functions.php, Parsedown
  */
 
 require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 \PixlKey\Session\startSecureSession();
 require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/security/CsrfToken.php';
 require_login();
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
@@ -31,6 +32,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $md = new Parsedown();
 $md->setSafeMode(true); // Strips raw HTML → XSS protection
+
+// Alias CSRF functions for convenience
+use function PixlKey\Security\generateToken as generate_csrf_token;
+use function PixlKey\Security\validateToken as validate_csrf_token;
+use function PixlKey\Security\rotateToken as rotate_csrf_token;
 
 $user       = current_user();
 $userId     = $user['user_id'];
@@ -48,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     record_failed_attempt($rateKey);  // Always track POSTs — not tied to validity
-
     validate_csrf_token();
     $action = $_POST['action'] ?? '';
 
@@ -93,6 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->execute([$_POST['lic_id'], $userId]);
         $messages[] = 'Licence deleted.';
     }
+
+    // Rotate CSRF token after any successful state-changing action
+    rotate_csrf_token();
 }
 
 /* ------------------------------------------------------------------

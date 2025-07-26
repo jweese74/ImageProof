@@ -15,14 +15,14 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.2-alpha
  * @see        /core/config/.env.example, /vendor/vlucas/phpdotenv
  */
 
 declare(strict_types=1);
 
 // ---- App Metadata ---------------------------------------------------
-define('APP_VERSION', '0.5.1.1-alpha');
+define('APP_VERSION', '0.5.1.2-alpha');
 define('APP_NAME', 'PixlKey');
 
 // Rotating tagline pool
@@ -103,13 +103,15 @@ header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload'
 
 // ---------------------------------------------------------------------
 // Optional: load a .env file if one exists and you’re using Composer.
-// Comment these three lines out if you’re not using php-dotenv yet.
+// Comment this block out if php-dotenv is not installed.
 // ---------------------------------------------------------------------
-require_once __DIR__ . '/../../vendor/autoload.php';
+if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
+    require_once __DIR__ . '/../../vendor/autoload.php';
+}
 
 if (class_exists(\Dotenv\Dotenv::class)) {
-    // Loads into $_ENV *and* putenv(), so getenv() keeps working
-    $dotenv = Dotenv\Dotenv::createUnsafeImmutable(dirname(__DIR__, 2));
+    // Load into $_ENV *and* putenv(), so getenv() continues working
+    $dotenv = \Dotenv\Dotenv::createUnsafeImmutable(dirname(__DIR__, 2));
     $dotenv->safeLoad();   // no exception if .env is missing
 
     // Fail fast if anything critical is missing
@@ -141,8 +143,12 @@ define('DOWNLOAD_DECAY_SECONDS',  (int)(getenv('DOWNLOAD_DECAY_SECONDS')  ?: 60)
 define('RATE_LIMITING_ENABLED',   filter_var(getenv('RATE_LIMITING_ENABLED'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true);
 
 // ---- Enforce PHP upload limits at runtime ---------------------------
- @ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');
- @ini_set('post_max_size',       (MAX_UPLOAD_MB + 10) . 'M'); // +10 MB head-room
+@ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');
+@ini_set('post_max_size',       (MAX_UPLOAD_MB + 10) . 'M'); // +10 MB head-room
+
+// ---- Security module includes --------------------------------------
+// Include CSRF helpers globally (used in forms and API endpoints)
+require_once __DIR__ . '/../security/CsrfToken.php';
 
 // ---- Enforce PHP upload limits at runtime ---------------------------
 @ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');

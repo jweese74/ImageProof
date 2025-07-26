@@ -16,61 +16,66 @@ Each entry follows the same heading order for clarity:
 
 `/core/auth/auth.php`
 
-1. **Purpose**
+1. **Purpose**  
    Provides robust authentication, session security, and CSRF protection for the PixlKey platform. Handles login state, user lookups, brute-force login rate-limiting, and session lifecycle control.
 
-   As of `v0.5.1.1-alpha`, **session bootstrap logic has been modularised** into a dedicated helper (`SessionBootstrap.php`), centralising cookie-flag configuration and secure startup behaviour.
+   As of `v0.5.1.2-alpha`, **CSRF logic has been fully modularised** into `PixlKey\Security\CsrfToken`, centralising token generation, validation, and rotation for consistent usage across controllers (upload, watermark, licence, API routes).
 
    Key integrated features:
 
-   * **Centralised secure session bootstrap** (moved to `PixlKey\Session\SessionBootstrap::startSecureSession()`).
+   * **Centralised secure session bootstrap** via `PixlKey\Session\SessionBootstrap::startSecureSession()`.
    * **Rate-limited login attempts** to prevent brute-force attacks.
-   * **CSRF token generation and verification** for all non-GET requests.
+   * **Modular CSRF utilities** (`PixlKey\Security\CsrfToken`) for generation, validation, and rotation.
    * **Modern password hashing with rehash fallback** for ongoing cryptographic strength.
 
-2. **Agent Role**
-   Core **Security & Session Agent**. Offers system-wide login enforcement, user session tracking, form security, and brute-force prevention using shared rate-limiter utilities.
+2. **Agent Role**  
+   Core **Security & Session Agent**. Provides system-wide login enforcement, user session tracking, form security, and brute-force prevention using shared rate-limiter utilities.
 
-3. **Key Responsibilities**
+3. **Key Responsibilities**  
 
-   * Initialise sessions securely via `PixlKey\Session\SessionBootstrap::startSecureSession()` (centralised).
-   * Generate and validate CSRF tokens, skipping `GET` requests by default.
+   * Initialise sessions securely via `PixlKey\Session\SessionBootstrap::startSecureSession()`.
+   * Delegate CSRF handling to `PixlKey\Security\CsrfToken`:
+
+     * `generateToken()` – lazily generates a 32-byte cryptographically random token.
+     * `validateToken()` – enforces token checks on all non-GET requests.
+     * `rotateToken()` – rotates token after privilege changes (e.g., login/logout).
+
    * Authenticate users using `password_verify()` and upgrade hashes if `password_needs_rehash()` applies.
-   * Enforce login attempt throttling using shared `rate_limiter.php`:
-
-     * `too_many_attempts()` and `rate_limit_exceeded_response()` enforce per-IP ceilings.
+   * Enforce login attempt throttling using `too_many_attempts()` and `rate_limit_exceeded_response()` from `rate_limiter.php`.
    * Rotate session ID and CSRF token after successful login (`login_user()`).
    * Expose `require_login()` to protect authenticated routes.
    * Provide `current_user()` as a cached accessor for the session-bound user row.
 
-4. **Security Considerations**
+4. **Security Considerations**  
 
-   * **CSRF** – Token required for all non-GET requests; rotated on login and logout.
-   * **Session Fixation** – Mitigated by calling `session_regenerate_id(true)` on login.
+   * **CSRF** – Token required for all non-GET requests; rotated on login, logout, and other privilege boundaries.
+   * **Session Fixation** – Mitigated by `session_regenerate_id(true)` on login.
    * **Rate Limiting** – Login attempts are throttled per IP; emits `429 Too Many Requests`.
    * **Password Security** – Uses `password_verify()`; rehashes old hashes with `PASSWORD_DEFAULT`.
-   * **Secure Cookies** – All session cookies are `Secure`, `HttpOnly`, and `SameSite=Strict`, now enforced centrally by `SessionBootstrap`.
-   * **Transport Security** – TLS enforced upstream via `config.php`; critical for session integrity.
+   * **Secure Cookies** – All session cookies are `Secure`, `HttpOnly`, and `SameSite=Strict`, enforced centrally by `SessionBootstrap`.
+   * **Transport Security** – TLS enforced via `config.php`; critical for session integrity.
    * **Header Hardening** – Recommend centralising `X-Frame-Options: DENY` and `Content-Security-Policy`.
 
-5. **Dependencies**
+5. **Dependencies**  
 
    * `config.php` – Establishes `$pdo`, sets global rate-limit constants.
    * `../session/SessionBootstrap.php` – Provides centralised session startup.
+   * `../security/CsrfToken.php` – Provides namespaced CSRF utilities.
    * `rate_limiter.php` – Provides login throttling logic and response helpers.
    * DB Table: `users` – Includes `user_id`, `email`, `password_hash`, `display_name`, `is_admin`, `last_login`.
-   * PHP Extensions: `session`, `openssl` (for `random_bytes`)
+   * PHP Extensions: `session`, `openssl` (for `random_bytes`).
 
-6. **Additional Notes**
+6. **Additional Notes**  
 
    * File is intentionally free of business logic; safe to mock/stub for unit testing.
-   * For distributed deployments, consider externalising rate-limit counters (e.g. Redis).
+   * For distributed deployments, consider externalising rate-limit counters (e.g., Redis).
    * `SameSite=Lax` may be required if third-party services are added in future.
 
-7. **CHANGELOG**
+7. **CHANGELOG**  
 
-   * **0.5.1.1-alpha** – Modularised session bootstrap: cookie-flag configuration and `session_start()` moved to `core/session/SessionBootstrap.php::startSecureSession()`. Ensures consistent session security across all entry scripts.
-   * **0.5.0-beta** – Finalised session hardening, password rehash logic, and IP-based login rate limiting. `authenticate_user()` now cleanly separates credential checks.
+   * **0.5.1.2-alpha** – Extracted CSRF logic into `PixlKey\Security\CsrfToken`. Added `rotateToken()` for explicit rotation after login/logout and privilege changes. Updated all internal calls to reference the new module.  
+   * **0.5.1.1-alpha** – Modularised session bootstrap: cookie-flag configuration and `session_start()` moved to `core/session/SessionBootstrap.php::startSecureSession()`. Ensures consistent session security across all entry scripts.  
+   * **0.5.0-beta** – Finalised session hardening, password rehash logic, and IP-based login rate limiting. `authenticate_user()` now cleanly separates credential checks.  
    * Legacy changelog entries prior to `0.5.0` have been consolidated as security milestones.
 
 -----
@@ -548,6 +553,55 @@ Each entry follows the same heading order for clarity:
    * **0.4.6-beta** – Added CSRF token regeneration after session ID refresh.
    * **0.4.4-beta** – Introduced session hardening for post-login integrity.
    * **0.4.2-beta** – Initial PixlKey-branded ingestion logic, transaction-wrapped, with referential inserts.
+
+-----
+
+`/core/security/CsrfToken.php`
+
+1. **Purpose**  
+   Provides **centralised Cross-Site Request Forgery (CSRF) utilities** for the PixlKey platform.  
+   Handles secure **token generation**, **validation**, and **rotation**, consolidating previously scattered CSRF logic into a single, namespaced module for consistent use across controllers (upload, watermark, licence, registration, API routes).
+
+   As of `v0.5.1.2-alpha`, all CSRF-related functions have been extracted from `auth.php` into this module.
+
+   Key integrated features:
+   * **Single source of truth** for CSRF token operations (`generateToken()`, `validateToken()`, `rotateToken()`).
+   * **Header and form token validation** to support both browser forms and AJAX/API calls.
+   * **Privilege boundary hardening** with explicit token rotation after login, logout, and other state changes.
+
+2. **Agent Role**  
+   Acts as the **CSRF Security Agent** for PixlKey, providing reusable, cryptographically secure token management to prevent cross-site request forgery attacks.
+
+3. **Key Responsibilities**  
+   * **Token Generation**:  
+     * `generateToken()` lazily creates a 32-byte cryptographically random token if one does not exist in the session.  
+   * **Token Validation**:  
+     * `validateToken()` enforces token checks on all non-GET requests.  
+     * Accepts tokens from either a form field (`csrf_token`) or the `X-CSRFTOKEN` header for API/AJAX use.  
+   * **Token Rotation**:  
+     * `rotateToken()` creates a fresh CSRF token after privilege changes (e.g., login, logout, or registration).  
+
+4. **Security Considerations**  
+   * **Strong Randomness** – Tokens are generated using `random_bytes(32)` for cryptographic strength.  
+   * **Defence-in-Depth** – Tokens are session-bound and rotated on sensitive state changes to prevent reuse.  
+   * **Header Support** – Supports the **double-submit cookie** pattern for AJAX/API endpoints.  
+   * **Error Handling** – Invalid or missing tokens result in a `403 Forbidden` response, immediately terminating the request.  
+   * **Transport Security** – Relies on TLS enforced by `config.php` for token confidentiality.  
+   * **Future-Proofing** – Easily extendable to support per-route tokens or nonce-style one-time tokens.  
+
+5. **Dependencies**  
+   * PHP session support (`session_start()` must be active before use).  
+   * **Internal**: Used by `auth.php`, `process.php`, `my_watermarks.php`, `my_licenses.php`, `register.php`, and other controllers handling state changes.  
+   * **External**: None — purely native PHP (`random_bytes()`, `hash_equals()`).  
+
+6. **Additional Notes**  
+   * Namespaced as `PixlKey\Security` to avoid global collisions.  
+   * Designed for **idempotent** use: safe to call `generateToken()` multiple times in a session.  
+   * Rotation after login, logout, and registration helps mitigate **CSRF replay** at privilege boundaries.  
+   * Ideal for extension with a **double-submit cookie** mechanism or **per-request nonce** strategy in future releases.  
+
+7. **CHANGELOG**  
+   * **0.5.1.2-alpha** – Initial release. Extracted CSRF functions from `auth.php` into this dedicated module. Added `rotateToken()` for explicit rotation after authentication and privilege changes.  
 
 -----
 

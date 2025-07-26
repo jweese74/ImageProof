@@ -14,7 +14,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.2-alpha
  * @see        /core/config/config.php, /core/auth/rate_limiter.php
  */
 
@@ -22,36 +22,16 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
+require_once __DIR__ . '/../security/CsrfToken.php';
 require_once __DIR__ . '/rate_limiter.php';
 
 // Start secure session
 \PixlKey\Session\startSecureSession();
 
-/* ---------------------------------------------------------------
-   CSRF
----------------------------------------------------------------- */
-function generate_csrf_token(): string
-{
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-    return $_SESSION['csrf_token'];
-}
-
-function validate_csrf_token(): void
-{
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        return;                             // nothing to check
-    }
-    $good = $_SESSION['csrf_token'] ?? '';
-    $sent = $_POST['csrf_token']
-        ?? $_SERVER['HTTP_X_CSRFTOKEN']
-        ?? '';
-    if (!hash_equals($good, $sent)) {
-        http_response_code(403);
-        die('Invalid CSRF token');
-    }
-}
+// CSRF utilities are now handled by PixlKey\Security\CsrfToken
+use function PixlKey\Security\generateToken as generate_csrf_token;
+use function PixlKey\Security\validateToken as validate_csrf_token;
+use function PixlKey\Security\rotateToken as rotate_csrf_token;
 
 /* ---------------------------------------------------------------
    Login helpers
@@ -68,11 +48,11 @@ function login_user(string $user_id): void
 
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user_id;
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));  // 🔒 rotate CSRF on login
+    \PixlKey\Security\rotateToken();
     $pdo->prepare('UPDATE users SET last_login = NOW() WHERE user_id = ?')
         ->execute([$user_id]);
 
-    clear_failed_attempts($rateKey); // ✅ reset on successful login
+    clear_failed_attempts($rateKey);
 }
 
 function require_login(): void
@@ -117,7 +97,7 @@ function authenticate_user(string $email, string $password): ?array
     $rateKey = 'login_' . $ip;
 
     if (!$user || !password_verify($password, $user['password_hash'])) {
-        record_failed_attempt($rateKey); // ❌ increment on failure
+        record_failed_attempt($rateKey); // increment on failure
         return null;
     }
 

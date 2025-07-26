@@ -15,11 +15,17 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.2-alpha
  * @see        /process.php, /core/watermark/watermark_embedder.php
  */
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../security/CsrfToken.php';
+
+// If invoked via web context (not CLI), enforce CSRF for POST
+if (php_sapi_name() !== 'cli') {
+    \PixlKey\Security\validateToken();
+}
 
 // Parse command-line arguments
 $options = getopt("", ["input:", "output:"]);

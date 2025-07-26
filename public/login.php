@@ -22,11 +22,17 @@
 
 require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/security/CsrfToken.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
 
 \PixlKey\Session\startSecureSession();
+
+// Alias CSRF helpers for form usage
+use function PixlKey\Security\generateToken as generate_csrf_token;
+use function PixlKey\Security\validateToken as validate_csrf_token;
+use function PixlKey\Security\rotateToken as rotate_csrf_token;
 
 $next   = $_GET['next']
        ?? ($_POST['next'] ?? '/index.php');

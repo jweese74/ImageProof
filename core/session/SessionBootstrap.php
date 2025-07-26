@@ -9,12 +9,15 @@
  * @package    PixlKey
  * @subpackage Core\Session
  * @author     Jeffrey Weese
+ * @version    0.5.1.2-alpha
  * @license    MIT
  */
 
 declare(strict_types=1);
 
 namespace PixlKey\Session;
+
+use function PixlKey\Security\rotateToken;
 
 function startSecureSession(): void
 {
@@ -30,7 +33,12 @@ function startSecureSession(): void
     // Start the session with enforced flags
     session_start([
         'cookie_samesite' => 'Strict',
-        'cookie_secure'   => isset($_SERVER['HTTPS']),
+        'cookie_secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
         'cookie_httponly' => true,
     ]);
+
+    // Ensure CSRF token is initialized for all sessions
+    if (empty($_SESSION['csrf_token'])) {
+        rotateToken();
+    }
 }

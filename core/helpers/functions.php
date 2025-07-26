@@ -25,13 +25,19 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.2-alpha
  * @see        /core/config/config.php, /public/process.php
  */
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
+require_once __DIR__ . '/../security/CsrfToken.php';
 \PixlKey\Session\startSecureSession();
+
+// Alias CSRF functions for downstream compatibility
+use function PixlKey\Security\generateToken as generate_csrf_token;
+use function PixlKey\Security\validateToken as validate_csrf_token;
+use function PixlKey\Security\rotateToken as rotate_csrf_token;
 
 $maxFileSizeMb     = 250;  // 250 MB
 $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif'];

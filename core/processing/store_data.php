@@ -16,12 +16,13 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.2-alpha
  * @see        process.php, process_helpers.php, config.php, auth.php
  */
 
 require_once __DIR__ . '/../auth/auth.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
+require_once __DIR__ . '/../security/CsrfToken.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/functions.php';
 
@@ -30,9 +31,9 @@ require_once __DIR__ . '/../helpers/functions.php';
 require_login();
 
 session_regenerate_id(true);
-$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+\PixlKey\Security\rotateToken();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    validate_csrf_token();
+    \PixlKey\Security\validateToken();
 }
 
 require_once __DIR__ . '/process_helpers.php';

@@ -22,8 +22,18 @@ That foundation unlocks four concrete capabilities:
 > • Integrate IPFS + signed JSON manifest (or similar) for decentralised anchoring.
 > • Add pHash duplicate detection and version-history table for airtight provenance.
 
-
 ## 📜 Changelog
+
+### [0.5.1.2-alpha] – 2025-07-27  
+### Modularization – CSRF Utilities Extraction
+- **New module** `CsrfToken.php` (`core/security/CsrfToken.php`) provides a centralised suite of CSRF helpers:  
+  - `generateToken()` – lazily creates a 32-byte cryptographically secure token.  
+  - `validateToken()` – validates tokens from form fields or `X-CSRFTOKEN` headers.  
+  - `rotateToken()` – rotates tokens after login, logout, and privilege changes.  
+- All CSRF token logic has been removed from `auth.php` and relocated to this new module.  
+- **Namespace:** `PixlKey\Security`. Ensures clean autoloading and prevents global function collisions.  
+- **API-friendly:** Supports token submission via HTTP headers, enabling AJAX and API use cases.  
+- **Security:** Maintains strong random token generation, immediate 403 termination on validation failure, and explicit rotation for privilege-boundary hardening.  
 
 ### [0.5.1.1-alpha] – 2025-07-26
 ### Modularization – Session Bootstrap Extraction
