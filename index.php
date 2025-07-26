@@ -529,7 +529,11 @@ if ($loggedIn) {
         </div>
     <?php endif; ?>
 
+    <p style="text-align:center; font-size:.9em; margin-top:20px;">
+        Feeling adventurous? <a href="https://beta.pixlkey.net" style="color:#d2b648;text-decoration:none;">Try our alpha features</a>
+    </p>
     <p class="notice">Original uploads are capped at 10 MB. Thumbnails shown above refresh automatically.</p>
+
     <p class="fine-print">&copy; 2025 PixlKey by Infinite Muse Arts</p>
 </body>
 
