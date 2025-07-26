@@ -113,9 +113,9 @@ if (class_exists(\Dotenv\Dotenv::class)) {
 // ---- ENV → constants ------------------------------------------------
 define('DB_HOST',  getenv('DB_HOST')  ?: 'localhost');
 define('DB_PORT',  getenv('DB_PORT')  ?: '3306');
-define('DB_NAME',  getenv('DB_NAME')  ?: 'pixlkey_database');
-define('DB_USER',  getenv('DB_USER')  ?: 'pixlkey_user');
-define('DB_PASS',  getenv('DB_PASS')  ?: 'pixlkey_password!');
+define('DB_NAME',  getenv('DB_NAME')  ?: 'infinite_image_tools');
+define('DB_USER',  getenv('DB_USER')  ?: 'infinite_image_user');
+define('DB_PASS',  getenv('DB_PASS')  ?: 'JASmine is D3ad!');
 define('DB_DEBUG', filter_var(getenv('DB_DEBUG'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false);
 
 define('MAX_UPLOAD_MB', (int)(getenv('MAX_UPLOAD_MB') ?: 200));
