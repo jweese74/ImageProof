@@ -107,18 +107,28 @@ header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload'
 // ---------------------------------------------------------------------
 require_once __DIR__ . '/../../vendor/autoload.php';
 if (class_exists(\Dotenv\Dotenv::class)) {
-    \Dotenv\Dotenv::createImmutable(__DIR__ . '/../../')->safeLoad();
+    // 1.  Load .env into $_ENV/$_SERVER *and* make each key visible to getenv()
+    //     (usePutenv() is OFF by default in php-dotenv ≥5).
+    Dotenv\Dotenv::usePutenv(true);
+
+    $dotenv = Dotenv\Dotenv::createImmutable(
+        dirname(__DIR__, 2)   // project root =  two levels up
+    );
+
+    $dotenv->safeLoad();      // never throws if .env is missing
+
+    // 2.  (Optional but recommended)  fail fast if any required secrets are absent
+    $dotenv->required(['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS']);
 }
-
 // ---- ENV → constants ------------------------------------------------
-define('DB_HOST',  getenv('DB_HOST')  ?: 'localhost');
-define('DB_PORT',  getenv('DB_PORT')  ?: '3306');
-define('DB_NAME',  getenv('DB_NAME')  ?: 'infinite_image_tools');
-define('DB_USER',  getenv('DB_USER')  ?: 'infinite_image_user');
-define('DB_PASS',  getenv('DB_PASS')  ?: 'JASmine is D3ad!');
-define('DB_DEBUG', filter_var(getenv('DB_DEBUG'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false);
+define('DB_HOST',  $_ENV['DB_HOST']  ?? getenv('DB_HOST')  ?? 'localhost');
+define('DB_PORT',  $_ENV['DB_PORT']  ?? getenv('DB_PORT')  ?? '3306');
+define('DB_NAME',  $_ENV['DB_NAME']  ?? getenv('DB_NAME')  ?? 'infinite_image_tools');
+define('DB_USER',  $_ENV['DB_USER']  ?? getenv('DB_USER')  ?? 'infinite_image_user');
+define('DB_PASS',  $_ENV['DB_PASS']  ?? getenv('DB_PASS')  ?? '');
+define('DB_DEBUG', filter_var($_ENV['DB_DEBUG'] ?? getenv('DB_DEBUG'), FILTER_VALIDATE_BOOLEAN) ?? false);
 
-define('MAX_UPLOAD_MB', (int)(getenv('MAX_UPLOAD_MB') ?: 200));
+define('MAX_UPLOAD_MB', (int)($_ENV['MAX_UPLOAD_MB'] ?? getenv('MAX_UPLOAD_MB') ?? 200));
 
 // ---- Rate Limiting Configuration -----------------------------------
 // Default limits can be overridden by environment or .env
