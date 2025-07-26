@@ -14,11 +14,14 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /core/process.php, /core/auth/rate_limiter.php, /processed/
  */
-
 require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/session/SessionBootstrap.php';
+
+\PixlKey\Session\startSecureSession();
+
 require_login();                       // ensure session + user
 
 require_once __DIR__ . '/../core/config/config.php';

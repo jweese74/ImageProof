@@ -16,16 +16,18 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        /core/auth/auth.php, /core/helpers/functions.php, Parsedown
  */
 
+require_once __DIR__ . '/../core/session/SessionBootstrap.php';
+\PixlKey\Session\startSecureSession();
 require_once __DIR__ . '/../core/auth/auth.php';
 require_login();
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
-require_once __DIR__ . '/../vendor/autoload.php'; // Composer autoloader for Parsedown and others
+require_once __DIR__ . '/../vendor/autoload.php';
 
 $md = new Parsedown();
 $md->setSafeMode(true); // Strips raw HTML → XSS protection

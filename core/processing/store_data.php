@@ -16,13 +16,16 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.0-beta
+ * @version    0.5.1.1-alpha
  * @see        process.php, process_helpers.php, config.php, auth.php
  */
 
 require_once __DIR__ . '/../auth/auth.php';
+require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/functions.php';
+
+\PixlKey\Session\startSecureSession();
 
 require_login();
 

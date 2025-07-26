@@ -25,6 +25,16 @@ That foundation unlocks four concrete capabilities:
 
 ## 📜 Changelog
 
+### [0.5.1.1-alpha] – 2025-07-26
+### Modularization – Session Bootstrap Extraction
+- **New module** `SessionBootstrap.php` (`core/session/SessionBootstrap.php`) provides a centralised `startSecureSession()` helper.  
+- All session initialization boilerplate (cookie flags, HTTPS enforcement, guarded `session_start()`) has been removed from `auth.php` and placed into this new module.  
+- **Namespace:** `PixlKey\Session`. Ensures clean autoloading and prevents global function collisions.
+- **Silent safety:** `startSecureSession()` automatically returns if a session is already active, avoiding duplicate `session_start()` warnings.
+- **Security:** Retains `Secure`, `HttpOnly`, and `SameSite=Strict` cookie flags and enforces HTTPS-only cookies when available.
+
+> This refactor reduces duplication, centralizes session security policy, and makes future session configuration changes (e.g., `SameSite` mode, cookie lifetime) trivial.
+
 ### [0.4.9-beta] – 2025-07-17
 ### Critical Security Task – Rate Limiting for Auth & Downloads
 - **New module** `rate_limiter.php` introduces `too_many_attempts()`, `record_failed_attempt()`, and `rate_limit_exceeded_response()`—sending RFC-compliant **429 Too Many Requests** with `Retry-After`.

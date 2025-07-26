@@ -17,22 +17,23 @@ Each entry follows the same heading order for clarity:
 `/core/auth/auth.php`
 
 1. **Purpose**
-   Provides robust authentication, session security, and CSRF protection for the PixlKey platform. Handles login state, user lookups, brute-force login rate-limiting, secure cookie settings, and session lifecycle control.
+   Provides robust authentication, session security, and CSRF protection for the PixlKey platform. Handles login state, user lookups, brute-force login rate-limiting, and session lifecycle control.
 
-   As of `v0.5.0-beta`, all major security hardening features are fully integrated:
+   As of `v0.5.1.1-alpha`, **session bootstrap logic has been modularised** into a dedicated helper (`SessionBootstrap.php`), centralising cookie-flag configuration and secure startup behaviour.
 
-   * **Rate-limited login attempts**
-   * **CSRF token generation and verification**
-   * **Secure cookie/session handling**
-   * **Modern password hashing with rehash fallback**
+   Key integrated features:
+
+   * **Centralised secure session bootstrap** (moved to `PixlKey\Session\SessionBootstrap::startSecureSession()`).
+   * **Rate-limited login attempts** to prevent brute-force attacks.
+   * **CSRF token generation and verification** for all non-GET requests.
+   * **Modern password hashing with rehash fallback** for ongoing cryptographic strength.
 
 2. **Agent Role**
    Core **Security & Session Agent**. Offers system-wide login enforcement, user session tracking, form security, and brute-force prevention using shared rate-limiter utilities.
 
 3. **Key Responsibilities**
 
-   * Configure session cookie flags (`Secure`, `HttpOnly`, `SameSite=Strict`) before startup.
-   * Start session safely with defaults appropriate for HTTPS deployments.
+   * Initialise sessions securely via `PixlKey\Session\SessionBootstrap::startSecureSession()` (centralised).
    * Generate and validate CSRF tokens, skipping `GET` requests by default.
    * Authenticate users using `password_verify()` and upgrade hashes if `password_needs_rehash()` applies.
    * Enforce login attempt throttling using shared `rate_limiter.php`:
@@ -48,13 +49,14 @@ Each entry follows the same heading order for clarity:
    * **Session Fixation** – Mitigated by calling `session_regenerate_id(true)` on login.
    * **Rate Limiting** – Login attempts are throttled per IP; emits `429 Too Many Requests`.
    * **Password Security** – Uses `password_verify()`; rehashes old hashes with `PASSWORD_DEFAULT`.
-   * **Secure Cookies** – All session cookies are `Secure`, `HttpOnly`, and `SameSite=Strict`.
+   * **Secure Cookies** – All session cookies are `Secure`, `HttpOnly`, and `SameSite=Strict`, now enforced centrally by `SessionBootstrap`.
    * **Transport Security** – TLS enforced upstream via `config.php`; critical for session integrity.
    * **Header Hardening** – Recommend centralising `X-Frame-Options: DENY` and `Content-Security-Policy`.
 
 5. **Dependencies**
 
    * `config.php` – Establishes `$pdo`, sets global rate-limit constants.
+   * `../session/SessionBootstrap.php` – Provides centralised session startup.
    * `rate_limiter.php` – Provides login throttling logic and response helpers.
    * DB Table: `users` – Includes `user_id`, `email`, `password_hash`, `display_name`, `is_admin`, `last_login`.
    * PHP Extensions: `session`, `openssl` (for `random_bytes`)
@@ -67,6 +69,7 @@ Each entry follows the same heading order for clarity:
 
 7. **CHANGELOG**
 
+   * **0.5.1.1-alpha** – Modularised session bootstrap: cookie-flag configuration and `session_start()` moved to `core/session/SessionBootstrap.php::startSecureSession()`. Ensures consistent session security across all entry scripts.
    * **0.5.0-beta** – Finalised session hardening, password rehash logic, and IP-based login rate limiting. `authenticate_user()` now cleanly separates credential checks.
    * Legacy changelog entries prior to `0.5.0` have been consolidated as security milestones.
 
@@ -545,6 +548,54 @@ Each entry follows the same heading order for clarity:
    * **0.4.6-beta** – Added CSRF token regeneration after session ID refresh.
    * **0.4.4-beta** – Introduced session hardening for post-login integrity.
    * **0.4.2-beta** – Initial PixlKey-branded ingestion logic, transaction-wrapped, with referential inserts.
+
+-----
+
+`/core/session/SessionBootstrap.php`
+
+1. **Purpose**  
+   Provides a **centralised, reusable helper** for starting PixlKey sessions securely.  
+   Encapsulates cookie-flag configuration (`Secure`, `HttpOnly`, `SameSite=Strict`) and session-start logic into a single function to eliminate copy-paste boilerplate across entry points.
+
+   As of `v0.5.1.1-alpha`, this module replaces inline `ini_set()` and `session_start()` calls previously scattered across authentication and controller scripts.
+
+2. **Agent Role**  
+   Acts as a **Session Bootstrap Agent**, ensuring all PixlKey components initialise sessions consistently and with strict security flags.
+
+3. **Key Responsibilities**  
+
+   * Configure PHP session cookie flags:  
+     * `session.cookie_secure = 1`  
+     * `session.cookie_httponly = 1`  
+     * `session.cookie_samesite = Strict`  
+   * Initialise the session via `session_start()` with strict cookie parameters for HTTPS deployments.
+   * Silently return without action if the session is already active.
+   * Provide a single entry-point function:  
+     * `PixlKey\Session\startSecureSession()`
+
+4. **Security Considerations**  
+
+   * **Secure Cookies** – Enforces `Secure`, `HttpOnly`, and `SameSite=Strict` by default.
+   * **Session Hygiene** – Prevents repeated or unsafe session restarts by returning early if `session_status() === PHP_SESSION_ACTIVE`.
+   * **Transport Security** – Flags rely on HTTPS; paired with upstream TLS enforcement in `config.php`.
+   * **Defence-in-depth** – Centralisation reduces the risk of inconsistent session initialisation across scripts.
+
+5. **Dependencies**  
+
+   * PHP session extension (native).  
+   * Included by:  
+     * `/core/auth/auth.php`  
+     * Any future controller or script requiring secure session handling.
+
+6. **Additional Notes**  
+
+   * Namespaced under `PixlKey\Session` to prevent global function collisions.  
+   * Provides an **idempotent session starter** (safe to call multiple times).  
+   * Future versions could support configurable SameSite mode (`Lax` for third-party integrations).
+
+7. **CHANGELOG**  
+
+   * **0.5.1.1-alpha** – Initial release. Extracted session bootstrap logic from `auth.php` into a dedicated, namespaced helper for reuse across PixlKey entry scripts.
 
 -----
 
