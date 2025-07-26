@@ -6,6 +6,23 @@ This project adheres to [Semantic Versioning](https://semver.org/)
 and follows a simplified [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
 ---
+## [0.5.1.1-alpha] – 2025-07-26
+### 🧩 Refactor – Modular Session Bootstrapping
+- **New module:** `core/session/SessionBootstrap.php`
+  - Introduced `PixlKey\Session\startSecureSession()` to **centralise session initialisation**.
+  - Applies strict cookie flags (`Secure`, `HttpOnly`, `SameSite=Strict`) in one place, ensuring consistency across all entry points.
+  - Silently returns if the session is already active, preventing duplicate `session_start()` warnings.
+- **Updated:** `core/auth/auth.php`
+  - Removed inline cookie/`session_start()` boilerplate.
+  - Now imports and calls `startSecureSession()` for session initialisation.
+- **Security benefits:**  
+  - **Single point of truth** for session flags reduces misconfiguration risk.  
+  - Eliminates duplicated session setup logic across scripts, simplifying audits.  
+  - Keeps session-handling extensible (future: configurable SameSite policies, custom session handlers).  
+
+> This change lays the groundwork for further modularisation (e.g., separate CSRF & LoginManager classes) while improving maintainability and consistency.
+
+---
 
 ## [0.4.9-beta] – 2025-07-17
 ### 🔒 Critical Security Enhancements
