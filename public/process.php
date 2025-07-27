@@ -25,12 +25,13 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /download_zip.php, /core/processing/process_helpers.php, /core/metadata/metadata_extractor.php
  */
 
 require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/dao/UserDAO.php';
 require_once __DIR__ . '/../core/security/CsrfToken.php';
 \PixlKey\Session\startSecureSession();
 require_login();
@@ -41,7 +42,15 @@ require_once __DIR__ . '/../core/helpers/functions.php';
 
 validate_csrf_token();                //  ← run early
 
-$userId = current_user()['user_id'];
+// Use DAO to fetch the current user
+$userDAO = new \PixlKey\DAO\UserDAO($pdo);
+$currentUser = current_user();
+if (!$currentUser) {
+    http_response_code(403);
+    echoStep("Error: Unable to resolve current user session.", 'error');
+    exit;
+}
+$userId = $currentUser['user_id'];
 
 /* =====  constants & helpers  =================================== */
 $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp'];   // for upload filter

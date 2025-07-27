@@ -15,7 +15,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/config/.env.example, /vendor/vlucas/phpdotenv
  */
 
@@ -149,6 +149,10 @@ define('RATE_LIMITING_ENABLED',   filter_var(getenv('RATE_LIMITING_ENABLED'), FI
 // ---- Security module includes --------------------------------------
 // Include CSRF helpers globally (used in forms and API endpoints)
 require_once __DIR__ . '/../security/CsrfToken.php';
+
+// ---- DAO includes ---------------------------------------------------
+// Provide database access abstraction for user-related queries
+require_once __DIR__ . '/../dao/UserDAO.php';
 
 // ---- Enforce PHP upload limits at runtime ---------------------------
 @ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');

@@ -25,13 +25,15 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/config/config.php, /public/process.php
  */
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../security/CsrfToken.php';
+
+// Start secure session for any scripts using these helpers
 \PixlKey\Session\startSecureSession();
 
 // Alias CSRF functions for downstream compatibility

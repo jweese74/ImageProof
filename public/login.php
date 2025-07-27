@@ -16,7 +16,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.1-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/auth/auth.php, /core/auth/rate_limiter.php, /core/session/SessionBootstrap.php
  */
 
@@ -26,8 +26,12 @@ require_once __DIR__ . '/../core/security/CsrfToken.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
+require_once __DIR__ . '/../core/dao/UserDAO.php';
 
 \PixlKey\Session\startSecureSession();
+
+// Initialize DAO
+$userDAO = new \PixlKey\DAO\UserDAO($pdo);
 
 // Alias CSRF helpers for form usage
 use function PixlKey\Security\generateToken as generate_csrf_token;
@@ -50,9 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // rate_limit_exceeded_response(LOGIN_DECAY_SECONDS);
         $errors[] = 'Too many failed login attempts. Please wait before trying again.';
     } else {
-        $stmt = $pdo->prepare('SELECT user_id,password_hash FROM users WHERE email = ?');
-        $stmt->execute([$email]);
-        $u = $stmt->fetch();
+        $u = $userDAO->findByEmail($email);
 
         if (!$u || !password_verify($pwd, $u['password_hash'])) {
             $errors[] = 'Invalid e-mail or password.';
@@ -61,8 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Rehash password if outdated
             if (password_needs_rehash($u['password_hash'], PASSWORD_DEFAULT)) {
                 $newHash = password_hash($pwd, PASSWORD_DEFAULT);
-                $update = $pdo->prepare('UPDATE users SET password_hash = ? WHERE user_id = ?');
-                $update->execute([$newHash, $u['user_id']]);
+                $userDAO->updatePasswordHash($u['user_id'], $newHash);
             }
             clear_failed_attempts($rateKey);
             login_user($u['user_id']);

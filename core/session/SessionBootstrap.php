@@ -9,7 +9,7 @@
  * @package    PixlKey
  * @subpackage Core\Session
  * @author     Jeffrey Weese
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @license    MIT
  */
 
@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace PixlKey\Session;
 
+require_once __DIR__ . '/../security/CsrfToken.php';
 use function PixlKey\Security\rotateToken;
 
 function startSecureSession(): void
@@ -37,7 +38,7 @@ function startSecureSession(): void
         'cookie_httponly' => true,
     ]);
 
-    // Ensure CSRF token is initialized for all sessions
+    // Ensure CSRF token is initialised for all sessions
     if (empty($_SESSION['csrf_token'])) {
         rotateToken();
     }

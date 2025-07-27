@@ -15,7 +15,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/auth/auth.php, /core/auth/rate_limiter.php, /core/helpers/functions.php
  */
 
@@ -25,8 +25,12 @@ require_once __DIR__ . '/../core/security/CsrfToken.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
+require_once __DIR__ . '/../core/dao/UserDAO.php';
 
 \PixlKey\Session\startSecureSession();
+
+// Initialize DAO
+$userDAO = new \PixlKey\DAO\UserDAO($pdo);
 
 // Alias CSRF helpers for local use
 use function PixlKey\Security\generateToken as generate_csrf_token;
@@ -55,23 +59,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // unique e-mail check
-        if (!$errors) {
-            $stmt = $pdo->prepare('SELECT 1 FROM users WHERE email = ?');
-            $stmt->execute([$email]);
-            if ($stmt->fetchColumn()) {
-                $errors[] = 'This e-mail is already registered.';
-            }
+        if (!$errors && $userDAO->findByEmail($email)) {
+            $errors[] = 'This e-mail is already registered.';
         }
 
         if (!$errors) {
-            $stmt = $pdo->prepare(
-                'INSERT INTO users (email,password_hash,display_name)
-             VALUES (?,?,?)'
-            );
-            $stmt->execute([$email, password_hash($pwd, PASSWORD_DEFAULT), $display]);
-            $userId = $pdo->lastInsertId() ?: $pdo->query(
-                'SELECT user_id FROM users WHERE email = ' . $pdo->quote($email)
-            )->fetchColumn();
+            // Insert user and retrieve ID
+            $hash = password_hash($pwd, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare('INSERT INTO users (email,password_hash,display_name) VALUES (?,?,?)');
+            $stmt->execute([$email, $hash, $display]);
+            $userId = $pdo->lastInsertId();
+            if (!$userId) {
+                // fallback lookup if lastInsertId fails (UUID)
+                $user = $userDAO->findByEmail($email);
+                $userId = $user['user_id'] ?? null;
+            }
             clear_failed_attempts($rateKey);
 
             // Prevent session fixation on registration

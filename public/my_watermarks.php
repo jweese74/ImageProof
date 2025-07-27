@@ -15,13 +15,14 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/helpers/functions.php, /core/auth/rate_limiter.php, /core/config/config.php
  */
 
 require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 \PixlKey\Session\startSecureSession();
 require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/dao/UserDAO.php';
 require_once __DIR__ . '/../core/security/CsrfToken.php';
 use function PixlKey\Security\generateToken as generate_csrf_token;
 use function PixlKey\Security\validateToken as validate_csrf_token;
@@ -30,6 +31,9 @@ require_login();
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
+
+// Initialize DAO for user-related operations
+$userDAO = new \PixlKey\DAO\UserDAO($pdo);
 
 /**
  * Watermark-specific rate-limit thresholds.
@@ -80,18 +84,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $destAbs  = $uploadDir . $newName;
                 if (move_uploaded_file($_FILES['wm_file']['tmp_name'], $destAbs)) {
                     $relPath  = "/watermarks/$userId/$newName";
-                    /* first watermark? → mark as default */
-                    $stmt = $pdo->prepare(
+                    // First watermark? → mark as default
+                    $hasDefault = $pdo->prepare(
                         'SELECT 1 FROM watermarks WHERE user_id = ? AND is_default = 1'
                     );
-                    $stmt->execute([$userId]);
-                    // true  = first watermark for this user → make it default
-                    $isDefault = ($stmt->fetch() === false);
-
-                    $pdo->prepare(
+                    $hasDefault->execute([$userId]);
+                    $isDefault = ($hasDefault->fetch() === false);
+                    $insert = $pdo->prepare(
                         'INSERT INTO watermarks (watermark_id,user_id,filename,path,is_default)
-             VALUES (UUID(),?,?,?,?)'
-                    )->execute([$userId, $newName, $relPath, $isDefault ? 1 : 0]);
+                         VALUES (UUID(),?,?,?,?)'
+                    );
+                    $insert->execute([$userId, $newName, $relPath, $isDefault ? 1 : 0]);
                     $messages[] = 'Watermark uploaded.';
                 } else {
                     $errors[] = 'Could not move uploaded file.';
@@ -126,9 +129,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($r = $row->fetch()) {
             @unlink(dirname(__DIR__) . '/' . ltrim($r['path'], '/'));
         }
-        $pdo->prepare(
+        $stmt = $pdo->prepare(
             'DELETE FROM watermarks WHERE watermark_id = ? AND user_id = ?'
-        )->execute([$wmId, $userId]);
+        );
+        $stmt->execute([$wmId, $userId]);
         $messages[] = 'Watermark deleted.';
     }
 }

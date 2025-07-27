@@ -16,7 +16,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        process.php, process_helpers.php, config.php, auth.php
  */
 
@@ -25,8 +25,14 @@ require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../security/CsrfToken.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/functions.php';
+require_once __DIR__ . '/../dao/UserDAO.php';
+
+use PixlKey\DAO\UserDAO;
 
 \PixlKey\Session\startSecureSession();
+
+// Initialize DAO
+$userDAO = new UserDAO($pdo);
 
 require_login();
 
@@ -63,8 +69,12 @@ if (!isset($_GET['runId']) && !isset($_POST['runId'])) {
 
 $runId = $_GET['runId'] ?? $_POST['runId'];
 
-// Check that runId belongs to current user
-$userId = current_user()['user_id'];
+$currentUser = $userDAO->findById($_SESSION['user_id']);
+if (!$currentUser) {
+    http_response_code(403);
+    die("Error: User session invalid or user not found.");
+}
+$userId = $currentUser['user_id'];
 $stmt = $pdo->prepare('SELECT 1 FROM processing_runs WHERE run_id = ? AND user_id = ?');
 $stmt->execute([$runId, $userId]);
 if (!$stmt->fetchColumn()) {

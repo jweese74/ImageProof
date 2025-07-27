@@ -9,12 +9,23 @@
  * @subpackage Core\Security
  * @author     Jeffrey Weese
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  */
 
 declare(strict_types=1);
 
 namespace PixlKey\Security;
+
+use function PixlKey\Session\startSecureSession;
+
+// Ensure a secure session is started before working with CSRF tokens
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    if (function_exists('PixlKey\Session\startSecureSession')) {
+        startSecureSession();
+    } else {
+        session_start();
+    }
+}
 
 if (!function_exists(__NAMESPACE__ . '\generateToken')) {
     /**

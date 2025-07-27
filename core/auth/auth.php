@@ -14,7 +14,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/config/config.php, /core/auth/rate_limiter.php
  */
 
@@ -23,10 +23,16 @@ declare(strict_types=1);
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../security/CsrfToken.php';
-require_once __DIR__ . '/rate_limiter.php';
+require_once __DIR__ . '/../auth/rate_limiter.php';
+require_once __DIR__ . '/../dao/UserDAO.php';
+
+use PixlKey\DAO\UserDAO;
 
 // Start secure session
 \PixlKey\Session\startSecureSession();
+
+// Initialize DAO
+$userDAO = new UserDAO($pdo);
 
 // CSRF utilities are now handled by PixlKey\Security\CsrfToken
 use function PixlKey\Security\generateToken as generate_csrf_token;
@@ -38,7 +44,7 @@ use function PixlKey\Security\rotateToken as rotate_csrf_token;
 ---------------------------------------------------------------- */
 function login_user(string $user_id): void
 {
-    global $pdo;
+    global $userDAO;
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $rateKey = 'login_' . $ip;
 
@@ -49,8 +55,7 @@ function login_user(string $user_id): void
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user_id;
     \PixlKey\Security\rotateToken();
-    $pdo->prepare('UPDATE users SET last_login = NOW() WHERE user_id = ?')
-        ->execute([$user_id]);
+    $userDAO->updateLastLogin($user_id);
 
     clear_failed_attempts($rateKey);
 }
@@ -66,7 +71,7 @@ function require_login(): void
 
 function current_user(): ?array
 {
-    global $pdo;
+    global $userDAO;
     if (empty($_SESSION['user_id'])) {
         return null;
     }
@@ -74,11 +79,7 @@ function current_user(): ?array
     if ($cache !== null) {
         return $cache;
     }
-    $stmt  = $pdo->prepare(
-        'SELECT user_id,email,display_name,is_admin FROM users WHERE user_id = ?'
-    );
-    $stmt->execute([$_SESSION['user_id']]);
-    $cache = $stmt->fetch();
+    $cache = $userDAO->findById($_SESSION['user_id']);
     return $cache ?: null;
 }
 
@@ -88,10 +89,8 @@ function current_user(): ?array
  */
 function authenticate_user(string $email, string $password): ?array
 {
-    global $pdo;
-    $stmt = $pdo->prepare('SELECT user_id, password_hash FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    global $userDAO;
+    $user = $userDAO->findByEmail($email);
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $rateKey = 'login_' . $ip;
@@ -104,8 +103,7 @@ function authenticate_user(string $email, string $password): ?array
     // Rehash password if needed (algorithm upgrade, cost adjustment, etc.)
     if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
         $newHash = password_hash($password, PASSWORD_DEFAULT);
-        $update = $pdo->prepare('UPDATE users SET password_hash = ? WHERE user_id = ?');
-        $update->execute([$newHash, $user['user_id']]);
+        $userDAO->updatePasswordHash($user['user_id'], $newHash);
     }
 
     return $user;

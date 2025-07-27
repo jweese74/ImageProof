@@ -15,16 +15,19 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /public/login.php, /core/auth/auth.php
  */
 
-require_once __DIR__ . '/../core/auth/auth.php';
-require_once __DIR__ . '/../core/config/config.php';
-require_once __DIR__ . '/../core/session/SessionBootstrap.php';
-require_once __DIR__ . '/../core/security/CsrfToken.php';
++require_once __DIR__ . '/../core/config/config.php';
++require_once __DIR__ . '/../core/session/SessionBootstrap.php';
++require_once __DIR__ . '/../core/security/CsrfToken.php';
 
 use function PixlKey\Security\rotateToken as rotate_csrf_token;
+
+// Start session securely before making any changes
+\PixlKey\Session\startSecureSession();
+
 
 // Clear all session variables
 session_unset();
@@ -42,7 +45,7 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// Start fresh session using centralised secure bootstrap
+// Start fresh session after destroying old one
 \PixlKey\Session\startSecureSession();
 session_regenerate_id(true);
 

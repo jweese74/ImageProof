@@ -18,11 +18,12 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /public/process.php, /public/my_watermarks.php, /public/my_licenses.php
  */
 
 require_once __DIR__ . '/core/auth/auth.php';
+require_once __DIR__ . '/core/dao/UserDAO.php';
 require_once __DIR__ . '/core/security/CsrfToken.php';
 require_once __DIR__ . '/core/session/SessionBootstrap.php';
 require_once __DIR__ . '/core/config/config.php';
@@ -31,10 +32,13 @@ require_once __DIR__ . '/core/helpers/functions.php';
 
 \PixlKey\Session\startSecureSession();
 
+// Initialize DAO
+$userDAO = new \PixlKey\DAO\UserDAO($pdo);
+
 // Alias CSRF helpers for convenience
 use function PixlKey\Security\generateToken as generate_csrf_token;
 
-$user      = current_user();
+$user      = $userDAO->findById($_SESSION['user_id'] ?? '');
 $loggedIn  = $user !== null;
 
 // --- Per-IP upload throttling (members only) ------------------------

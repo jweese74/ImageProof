@@ -16,19 +16,23 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/auth/auth.php, /core/helpers/functions.php, Parsedown
  */
 
 require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 \PixlKey\Session\startSecureSession();
 require_once __DIR__ . '/../core/auth/auth.php';
+require_once __DIR__ . '/../core/dao/UserDAO.php';
 require_once __DIR__ . '/../core/security/CsrfToken.php';
 require_login();
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+
+use PixlKey\DAO\UserDAO;
+$userDAO = new UserDAO($pdo);
 
 $md = new Parsedown();
 $md->setSafeMode(true); // Strips raw HTML → XSS protection
@@ -38,7 +42,7 @@ use function PixlKey\Security\generateToken as generate_csrf_token;
 use function PixlKey\Security\validateToken as validate_csrf_token;
 use function PixlKey\Security\rotateToken as rotate_csrf_token;
 
-$user       = current_user();
+$user       = current_user(); // still works through auth.php + UserDAO
 $userId     = $user['user_id'];
 $errors     = [];
 $messages   = [];

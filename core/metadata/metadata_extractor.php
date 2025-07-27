@@ -15,15 +15,19 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.2-alpha
+ * @version    0.5.1.3-alpha
  * @see        /process.php, /core/watermark/watermark_embedder.php
  */
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../security/CsrfToken.php';
 
+// Start secure session (for web context)
+\PixlKey\Session\startSecureSession();
+
 // If invoked via web context (not CLI), enforce CSRF for POST
-if (php_sapi_name() !== 'cli') {
+if (php_sapi_name() !== 'cli' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     \PixlKey\Security\validateToken();
 }
 
