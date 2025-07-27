@@ -15,20 +15,28 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.3-alpha
+ * @version    0.5.1.4-alpha
  * @see        /process.php, /core/watermark/watermark_embedder.php
  */
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../security/CsrfToken.php';
+require_once __DIR__ . '/../auth/AuthService.php';
+require_once __DIR__ . '/../dao/UserDAO.php';
 
-// Start secure session (for web context)
+use PixlKey\Auth\AuthService;
+use PixlKey\DAO\UserDAO;
+
+// Start secure session (for web context) and prepare AuthService if needed
 \PixlKey\Session\startSecureSession();
+$authService = new AuthService(new UserDAO($pdo));
 
 // If invoked via web context (not CLI), enforce CSRF for POST
 if (php_sapi_name() !== 'cli' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     \PixlKey\Security\validateToken();
+    // Optionally enforce authenticated session for web invocation
+    $authService->requireLogin();
 }
 
 // Parse command-line arguments

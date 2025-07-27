@@ -1,4 +1,5 @@
 <?php
+
 /**
  * CsrfToken.php — Centralized CSRF token utilities
  *
@@ -9,7 +10,7 @@
  * @subpackage Core\Security
  * @author     Jeffrey Weese
  * @license    MIT
- * @version    0.5.1.3-alpha
+ * @version    0.5.1.4-alpha
  */
 
 declare(strict_types=1);
@@ -17,6 +18,8 @@ declare(strict_types=1);
 namespace PixlKey\Security;
 
 use function PixlKey\Session\startSecureSession;
+use PixlKey\Auth\AuthService;
+use PixlKey\DAO\UserDAO;
 
 // Ensure a secure session is started before working with CSRF tokens
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -26,6 +29,15 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
     }
 }
+
+// Instantiate AuthService if not already available (lazy load for token rotation)
+if (!isset($GLOBALS['authService'])) {
+    require_once __DIR__ . '/../config/config.php';
+    require_once __DIR__ . '/../dao/UserDAO.php';
+    require_once __DIR__ . '/../auth/AuthService.php';
+    $GLOBALS['authService'] = new AuthService(new UserDAO($pdo));
+}
+
 
 if (!function_exists(__NAMESPACE__ . '\generateToken')) {
     /**
@@ -37,6 +49,10 @@ if (!function_exists(__NAMESPACE__ . '\generateToken')) {
     {
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            // Also notify AuthService if loaded (future hook for JWT/session sync)
+            if (isset($GLOBALS['authService']) && method_exists($GLOBALS['authService'], 'onCsrfRotate')) {
+                $GLOBALS['authService']->onCsrfRotate($_SESSION['csrf_token']);
+            }
         }
         return $_SESSION['csrf_token'];
     }

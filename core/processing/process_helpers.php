@@ -16,21 +16,20 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.3-alpha
+ * @version    0.5.1.4-alpha
  * @see        /core/processing/process.php, /public/process.php
  */
 
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../session/SessionBootstrap.php';
-require_once __DIR__ . '/../security/CsrfToken.php';
+ require_once __DIR__ . '/../config/config.php';
+ require_once __DIR__ . '/../auth/auth.php'; // Bootstraps AuthService + session + CSRF
 
-// Start secure session (idempotent)
-\PixlKey\Session\startSecureSession();
+ // Expose CSRF helpers (for interactive POST actions if needed)
+ use function PixlKey\Security\generateToken as generate_csrf_token;
+ use function PixlKey\Security\validateToken as validate_csrf_token;
+ use function PixlKey\Security\rotateToken as rotate_csrf_token;
 
-// Expose CSRF helpers (for future POST actions or interactive processing scripts)
-use function PixlKey\Security\generateToken as generate_csrf_token;
-use function PixlKey\Security\validateToken as validate_csrf_token;
-use function PixlKey\Security\rotateToken as rotate_csrf_token;
+ // Optional: direct access to AuthService (e.g., enforce login inside processing)
+ global $authService;
 
 /**
  * Streams one progress line to the “Processing” page.

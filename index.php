@@ -18,11 +18,12 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.3-alpha
+ * @version    0.5.1.4-alpha
  * @see        /public/process.php, /public/my_watermarks.php, /public/my_licenses.php
  */
 
 require_once __DIR__ . '/core/auth/auth.php';
+require_once __DIR__ . '/core/auth/AuthService.php';
 require_once __DIR__ . '/core/dao/UserDAO.php';
 require_once __DIR__ . '/core/security/CsrfToken.php';
 require_once __DIR__ . '/core/session/SessionBootstrap.php';
@@ -32,14 +33,21 @@ require_once __DIR__ . '/core/helpers/functions.php';
 
 \PixlKey\Session\startSecureSession();
 
-// Initialize DAO
+// Initialize DAO and AuthService
 $userDAO = new \PixlKey\DAO\UserDAO($pdo);
+$authService = new \PixlKey\Auth\AuthService($userDAO);
+
+use function PixlKey\Auth\too_many_attempts;
+use function PixlKey\Auth\rate_limit_exceeded_response;
+use function PixlKey\Auth\record_failed_attempt;
+use function PixlKey\Auth\clear_failed_attempts;
 
 // Alias CSRF helpers for convenience
 use function PixlKey\Security\generateToken as generate_csrf_token;
 
-$user      = $userDAO->findById($_SESSION['user_id'] ?? '');
-$loggedIn  = $user !== null;
+// Retrieve logged-in user via AuthService
+$user = $authService->currentUser();
+$loggedIn = $user !== null;
 
 // --- Per-IP upload throttling (members only) ------------------------
 $ipKey = 'upload:' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');

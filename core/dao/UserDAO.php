@@ -10,7 +10,7 @@
  * @subpackage Core\DAO
  * @author     Jeffrey Weese
  * @license    MIT
- * @version    0.5.1.3-alpha
+ * @version    0.5.1.4-alpha
  */
 
 declare(strict_types=1);
@@ -40,15 +40,26 @@ class UserDAO
         return $user ?: null;
     }
 
-    /** Find user by ID */
+    /**
+     * Find user by ID.
+     * Now returns password_hash as well for session revalidation or JWT issuance.
+     */
     public function findById(string $userId): ?array
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT user_id, email, display_name, is_admin FROM users WHERE user_id = ?'
-        );
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $user ?: null;
+        try {
+            $stmt = $this->pdo->prepare(
+                'SELECT user_id, email, password_hash, display_name, is_admin FROM users WHERE user_id = ?'
+            );
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $user ?: null;
+        } catch (PDOException $e) {
+            // Log silently in production
+            if (defined('DB_DEBUG') && DB_DEBUG) {
+                error_log('UserDAO::findById failed: ' . $e->getMessage());
+            }
+            return null;
+        }
     }
 
     /** Update password hash */

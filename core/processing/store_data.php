@@ -16,11 +16,12 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.3-alpha
+ * @version    0.5.1.4-alpha
  * @see        process.php, process_helpers.php, config.php, auth.php
  */
 
 require_once __DIR__ . '/../auth/auth.php';
+require_once __DIR__ . '/../auth/AuthService.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../security/CsrfToken.php';
 require_once __DIR__ . '/../config/config.php';
@@ -28,13 +29,15 @@ require_once __DIR__ . '/../helpers/functions.php';
 require_once __DIR__ . '/../dao/UserDAO.php';
 
 use PixlKey\DAO\UserDAO;
+use PixlKey\Auth\AuthService;
 
 \PixlKey\Session\startSecureSession();
-
-// Initialize DAO
+// Initialize DAO & AuthService
 $userDAO = new UserDAO($pdo);
+$authService = new AuthService($userDAO);
 
-require_login();
+// Require authentication
+$authService->requireLogin();
 
 session_regenerate_id(true);
 \PixlKey\Security\rotateToken();
@@ -69,7 +72,7 @@ if (!isset($_GET['runId']) && !isset($_POST['runId'])) {
 
 $runId = $_GET['runId'] ?? $_POST['runId'];
 
-$currentUser = $userDAO->findById($_SESSION['user_id']);
+$currentUser = $authService->currentUser();
 if (!$currentUser) {
     http_response_code(403);
     die("Error: User session invalid or user not found.");
