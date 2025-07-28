@@ -15,7 +15,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.4-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/auth/auth.php, /core/auth/rate_limiter.php, /core/helpers/functions.php
  */
 
@@ -26,23 +26,16 @@ require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
 require_once __DIR__ . '/../core/dao/UserDAO.php';
-require_once __DIR__ . '/../core/auth/AuthService.php';
 
 \PixlKey\Session\startSecureSession();
 
 // Initialize DAO
 $userDAO = new \PixlKey\DAO\UserDAO($pdo);
-$authService = new \PixlKey\Auth\AuthService($userDAO);
 
 // Alias CSRF helpers for local use
 use function PixlKey\Security\generateToken as generate_csrf_token;
 use function PixlKey\Security\validateToken as validate_csrf_token;
 use function PixlKey\Security\rotateToken as rotate_csrf_token;
-
-use function PixlKey\Auth\too_many_attempts;
-use function PixlKey\Auth\rate_limit_exceeded_response;
-use function PixlKey\Auth\record_failed_attempt;
-use function PixlKey\Auth\clear_failed_attempts;
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -82,14 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userId = $user['user_id'] ?? null;
             }
             clear_failed_attempts($rateKey);
-            // Use AuthService for secure login/session management
-            $user = $userDAO->findById($userId);
-            if ($user) {
-                // AuthService::login expects email/password normally, but here we simulate direct login by ID
-                $_SESSION['user_id'] = $user['user_id'];
-                session_regenerate_id(true);
-                rotate_csrf_token();
-            }
+
+            // Prevent session fixation on registration
+            session_regenerate_id(true);
+            rotate_csrf_token();  // rotate CSRF on new login
+            login_user($userId);
             header('Location: /index.php');
             exit;
         } else {

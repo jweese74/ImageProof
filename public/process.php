@@ -25,36 +25,26 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.4-alpha
+ * @version    0.5.1.3-alpha
  * @see        /download_zip.php, /core/processing/process_helpers.php, /core/metadata/metadata_extractor.php
  */
 
 require_once __DIR__ . '/../core/session/SessionBootstrap.php';
 require_once __DIR__ . '/../core/auth/auth.php';
-require_once __DIR__ . '/../core/auth/AuthService.php';
 require_once __DIR__ . '/../core/dao/UserDAO.php';
 require_once __DIR__ . '/../core/security/CsrfToken.php';
 \PixlKey\Session\startSecureSession();
-
-// Initialise AuthService
-$userDAO = new \PixlKey\DAO\UserDAO($pdo);
-$authService = new \PixlKey\Auth\AuthService($userDAO);
-$authService->requireLogin();
-
+require_login();
 use function PixlKey\Security\validateToken as validate_csrf_token;
 require_once __DIR__ . '/../core/auth/rate_limiter.php';
 require_once __DIR__ . '/../core/config/config.php';
 require_once __DIR__ . '/../core/helpers/functions.php';
 
-use function PixlKey\Auth\too_many_attempts;
-use function PixlKey\Auth\rate_limit_exceeded_response;
-use function PixlKey\Auth\record_failed_attempt;
-use function PixlKey\Auth\clear_failed_attempts;
-
 validate_csrf_token();                //  ← run early
 
-// Use AuthService to fetch the current user
-$currentUser = $authService->currentUser();
+// Use DAO to fetch the current user
+$userDAO = new \PixlKey\DAO\UserDAO($pdo);
+$currentUser = current_user();
 if (!$currentUser) {
     http_response_code(403);
     echoStep("Error: Unable to resolve current user session.", 'error');

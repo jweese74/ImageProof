@@ -16,7 +16,7 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.4-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/auth/auth.php, /core/auth/rate_limiter.php, /core/session/SessionBootstrap.php
  */
 
@@ -30,8 +30,8 @@ require_once __DIR__ . '/../core/dao/UserDAO.php';
 
 \PixlKey\Session\startSecureSession();
 
-// Initialize AuthService (already created in auth.php)
-global $authService;
+// Initialize DAO
+$userDAO = new \PixlKey\DAO\UserDAO($pdo);
 
 // Alias CSRF helpers for form usage
 use function PixlKey\Security\generateToken as generate_csrf_token;
@@ -39,7 +39,7 @@ use function PixlKey\Security\validateToken as validate_csrf_token;
 use function PixlKey\Security\rotateToken as rotate_csrf_token;
 
 $next   = $_GET['next']
-    ?? ($_POST['next'] ?? '/index.php');
+       ?? ($_POST['next'] ?? '/index.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validate_csrf_token();
@@ -47,15 +47,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = strtolower(trim($_POST['email'] ?? ''));
     $pwd   = $_POST['password'] ?? '';
 
-    // All logic is encapsulated in AuthService via authenticate_user()
-    $user = authenticate_user($email, $pwd);
-    if ($user) {
-        header('Location: ' . $next);
-        exit;
+    // Match back-end bucket name so the same counter is shared everywhere
+    $rateKey = 'login_' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    if (RATE_LIMITING_ENABLED && too_many_attempts($rateKey, LOGIN_ATTEMPT_LIMIT, LOGIN_DECAY_SECONDS)) {
+        // Optional: respond with HTTP 429 instead of HTML form error
+        // rate_limit_exceeded_response(LOGIN_DECAY_SECONDS);
+        $errors[] = 'Too many failed login attempts. Please wait before trying again.';
     } else {
-        // AuthService will handle rate limiting, but you may still want to show an error for UI consistency
-        $errors[] = 'Invalid e-mail or password, or you have exceeded login attempts. Please wait and try again.';
-    }
+        $u = $userDAO->findByEmail($email);
+
+        if (!$u || !password_verify($pwd, $u['password_hash'])) {
+            $errors[] = 'Invalid e-mail or password.';
+            record_failed_attempt($rateKey);
+        } else {
+            // Rehash password if outdated
+            if (password_needs_rehash($u['password_hash'], PASSWORD_DEFAULT)) {
+                $newHash = password_hash($pwd, PASSWORD_DEFAULT);
+                $userDAO->updatePasswordHash($u['user_id'], $newHash);
+            }
+            clear_failed_attempts($rateKey);
+            login_user($u['user_id']);
+            header('Location: ' . $next);
+            exit;
+        }
+    } // end rate limit check
 }
 ?>
 <!DOCTYPE html>

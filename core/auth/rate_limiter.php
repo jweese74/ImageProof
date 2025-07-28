@@ -15,16 +15,16 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.4-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/auth/login.php, /download_zip.php, /register.php
  */
 
-declare(strict_types=1);
-
-namespace PixlKey\Auth;
-
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
+
+// Start a secure session (idempotent)
+\PixlKey\Session\startSecureSession();
+
 
 // Default thresholds — override in config.php or .env
 defined('LOGIN_ATTEMPT_LIMIT') || define('LOGIN_ATTEMPT_LIMIT', 5);

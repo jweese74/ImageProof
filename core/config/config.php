@@ -15,14 +15,14 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.4-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/config/.env.example, /vendor/vlucas/phpdotenv
  */
 
 declare(strict_types=1);
 
 // ---- App Metadata ---------------------------------------------------
-define('APP_VERSION', '0.5.1.4-alpha');
+define('APP_VERSION', '0.5.1.3-alpha');
 define('APP_NAME', 'PixlKey');
 
 // Rotating tagline pool
@@ -154,10 +154,6 @@ require_once __DIR__ . '/../security/CsrfToken.php';
 // Provide database access abstraction for user-related queries
 require_once __DIR__ . '/../dao/UserDAO.php';
 
-// ---- Auth Service ---------------------------------------------------
-// Provide centralised authentication logic for controllers and services
-require_once __DIR__ . '/../auth/AuthService.php';
-
 // ---- Enforce PHP upload limits at runtime ---------------------------
 @ini_set('upload_max_filesize', MAX_UPLOAD_MB . 'M');
 @ini_set('post_max_size',       (MAX_UPLOAD_MB + 10) . 'M'); // +10 MB head-room
@@ -176,10 +172,6 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
-
-    // Initialise shared AuthService instance
-    $userDAO = new \PixlKey\DAO\UserDAO($pdo);
-    $authService = new \PixlKey\Auth\AuthService($userDAO);
 
 } catch (PDOException $e) {
     if (DB_DEBUG) {

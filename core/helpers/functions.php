@@ -25,23 +25,16 @@
  * @author     Jeffrey Weese
  * @copyright  2025 Jeffrey Weese | Infinite Muse Arts
  * @license    MIT
- * @version    0.5.1.4-alpha
+ * @version    0.5.1.3-alpha
  * @see        /core/config/config.php, /public/process.php
  */
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../session/SessionBootstrap.php';
 require_once __DIR__ . '/../security/CsrfToken.php';
-require_once __DIR__ . '/../auth/AuthService.php';
-require_once __DIR__ . '/../dao/UserDAO.php';
 
+// Start secure session for any scripts using these helpers
 \PixlKey\Session\startSecureSession();
-
-// Instantiate AuthService for helper scripts needing authentication
-use PixlKey\Auth\AuthService;
-use PixlKey\DAO\UserDAO;
-$userDAO = new UserDAO($pdo);
-$authService = new AuthService($userDAO);
 
 // Alias CSRF functions for downstream compatibility
 use function PixlKey\Security\generateToken as generate_csrf_token;
